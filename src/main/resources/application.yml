@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: riot-api-mcp-server
+  ai:
+    mcp:
+      server:
+        name: riot-api-mcp-server
+        version: 1.0.0
+        type: SYNC
+        sse-message-endpoint: /mcp/messages
+
+riot:
+  apiKey: "RGAPI-5f460f16-f144-48a7-8cdf-637a38cd18da" # refreshes every day until you register your product
+  region: americas

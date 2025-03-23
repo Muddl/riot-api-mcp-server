@@ -1,0 +1,14 @@
+{
+  "properties": [
+    {
+      "name": "riot.apikey",
+      "type": "java.lang.String",
+      "description": "Api Key for Riot Developer API."
+    },
+    {
+      "name": "riot.region",
+      "type": "com.wkaiser.riotapimcpserver.shared.enums.RiotApiRegionUri",
+      "description": "Region Enum to determine URI for the calls to be made against."
+    }
+  ]
+}
