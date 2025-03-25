@@ -33,7 +33,6 @@ public class MatchService {
         
         RestClient regionClient = RestClient.builder()
                 .baseUrl("https://" + region.getRegionUri())
-                .headers(headers -> headers.addAll(riotRestClient.headersToApply()))
                 .build();
         
         String uri = "/lol/match/v5/matches/by-puuid/{puuid}/ids?";
@@ -73,7 +72,6 @@ public class MatchService {
         
         RestClient regionClient = RestClient.builder()
                 .baseUrl("https://" + region.getRegionUri())
-                .headers(headers -> headers.addAll(riotRestClient.headersToApply()))
                 .build();
         
         return regionClient.get()

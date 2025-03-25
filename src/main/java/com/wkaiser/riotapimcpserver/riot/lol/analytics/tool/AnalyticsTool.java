@@ -6,10 +6,7 @@ import com.wkaiser.riotapimcpserver.shared.enums.RiotApiPlatformUri;
 import com.wkaiser.riotapimcpserver.shared.enums.RiotApiRegionUri;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.ai.mcp.server.tool.Tool;
-import org.springframework.ai.mcp.server.tool.ToolDescription;
-import org.springframework.ai.mcp.server.tool.ToolParameter;
-import org.springframework.ai.mcp.server.tool.ToolParameterType;
+import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.stereotype.Component;
 
 /**
@@ -24,25 +21,13 @@ public class AnalyticsTool {
     
     private final AnalyticsService analyticsService;
     
-    @Tool(name = "get_lol_player_match_analytics")
-    @ToolDescription("Get detailed analytics of a League of Legends player's recent matches")
+    @Tool(name = "get_lol_player_match_analytics", description = "Get detailed analytics of a League of Legends player's recent matches")
     public PlayerMatchAnalytics getPlayerMatchAnalytics(
-            @ToolParameter(name = "riotId", description = "The player's Riot ID (format: 'gameName#tagLine')")
-            @ToolParameterType(type = "string")
             String riotId,
-            
-            @ToolParameter(name = "platform", description = "The game platform (e.g., NA1, EUW1)")
-            @ToolParameterType(type = "string")
             String platformStr,
-            
-            @ToolParameter(name = "region", description = "The game region (e.g., AMERICAS, EUROPE)")
-            @ToolParameterType(type = "string")
             String regionStr,
-            
-            @ToolParameter(name = "matchCount", description = "Number of recent matches to analyze (default: 10, max: 100)")
-            @ToolParameterType(type = "integer")
-            Integer matchCount) {
-        
+            Integer matchCount
+    ) {
         RiotApiPlatformUri platform = RiotApiPlatformUri.valueOf(platformStr);
         RiotApiRegionUri region = RiotApiRegionUri.valueOf(regionStr);
         

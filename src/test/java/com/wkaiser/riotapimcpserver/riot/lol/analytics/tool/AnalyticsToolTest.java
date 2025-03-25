@@ -1,6 +1,7 @@
 package com.wkaiser.riotapimcpserver.riot.lol.analytics.tool;
 
 import com.wkaiser.riotapimcpserver.riot.lol.analytics.dto.PlayerMatchAnalytics;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -11,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Integration test for the Analytics Tool.
  * Note: These tests make actual API calls to the Riot API and require a valid API key.
  */
+@Disabled
 @SpringBootTest
 class AnalyticsToolTest {
 

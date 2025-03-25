@@ -29,7 +29,6 @@ public class SummonerService {
         // We need to switch base URL for platform-specific endpoints
         RestClient platformClient = RestClient.builder()
                 .baseUrl("https://" + platform.getPlatformUri())
-                .headers(headers -> headers.addAll(riotRestClient.headersToApply()))
                 .build();
         
         return platformClient.get()
@@ -49,7 +48,6 @@ public class SummonerService {
         
         RestClient platformClient = RestClient.builder()
                 .baseUrl("https://" + platform.getPlatformUri())
-                .headers(headers -> headers.addAll(riotRestClient.headersToApply()))
                 .build();
         
         return platformClient.get()
@@ -69,7 +67,6 @@ public class SummonerService {
         
         RestClient platformClient = RestClient.builder()
                 .baseUrl("https://" + platform.getPlatformUri())
-                .headers(headers -> headers.addAll(riotRestClient.headersToApply()))
                 .build();
         
         return platformClient.get()

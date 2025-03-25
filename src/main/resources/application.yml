@@ -8,6 +8,14 @@ spring:
         version: 1.0.0
         type: SYNC
         sse-message-endpoint: /mcp/messages
+    anthropic:
+      api-key: "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"
+      chat:
+        enabled: true
+        options:
+          model: "claude-3-5-sonnet-20241022"
+          temperature: 0.7
+
 
 riot:
   apiKey: "RGAPI-5f460f16-f144-48a7-8cdf-637a38cd18da" # refreshes every day until you register your product
