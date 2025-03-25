@@ -1,5 +1,6 @@
 package com.wkaiser.riotapimcpserver.riot.lol.summoner.dto;
 
+import lombok.Builder;
 import lombok.Data;
 
 /**
@@ -7,6 +8,7 @@ import lombok.Data;
  * Contains summoner-specific information like level, name, and IDs.
  */
 @Data
+@Builder
 public class Summoner {
     private String accountId;
     private int profileIconId;

@@ -1,5 +1,6 @@
 package com.wkaiser.riotapimcpserver.riot.lol.match.dto;
 
+import lombok.Builder;
 import lombok.Data;
 
 /**
@@ -7,6 +8,7 @@ import lombok.Data;
  * Contains detailed statistics and information about a player's performance.
  */
 @Data
+@Builder
 public class Participant {
     private int assists;
     private int baronKills;

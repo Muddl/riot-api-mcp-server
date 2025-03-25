@@ -1,5 +1,6 @@
 package com.wkaiser.riotapimcpserver.riot.lol.match.dto;
 
+import lombok.Builder;
 import lombok.Data;
 import java.util.List;
 
@@ -7,6 +8,7 @@ import java.util.List;
  * Detailed information about a League of Legends match.
  */
 @Data
+@Builder
 public class MatchInfo {
     private long gameCreation;
     private long gameDuration;
