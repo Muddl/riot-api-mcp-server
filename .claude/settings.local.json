@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:developer.riotgames.com)",
+      "Bash(./gradlew:*)",
+      "Bash(java:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
