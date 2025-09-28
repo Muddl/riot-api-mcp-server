@@ -3,7 +3,10 @@
     "allow": [
       "WebFetch(domain:developer.riotgames.com)",
       "Bash(./gradlew:*)",
-      "Bash(java:*)"
+      "Bash(java:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nImplement Live Game State Monitor Tool and production deployment planning\n\nMajor feature implementation:\n- Add complete Riot Spectator API v4 integration with DTOs, service layer, and MCP tools\n- Implement LiveGameTool with 4 MCP methods for real-time game monitoring\n- Create comprehensive test suite with unit and integration tests\n- Add SpectatorService with platform-specific RestClient and error handling\n\nProduction deployment planning:\n- Replace PLAN.md with comprehensive 745-line production deployment roadmap\n- Define 6-phase implementation strategy with multi-agent coordination\n- Include AWS infrastructure design, security, monitoring, and CI/CD procedures\n- Add budget planning and operational excellence frameworks\n\nAgent collection optimization:\n- Remove unused subagent configurations to focus on core coordination\n- Retain essential agents for proven multi-agent development workflows\n- Update documentation to reflect production-ready development approach\n\nDocumentation updates:\n- Enhanced CLAUDE.md with live game monitoring and production planning sections\n- Updated architecture documentation and file structure\n- Added multi-agent coordination examples and success patterns\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git log:*)"
     ],
     "deny": [],
     "ask": []

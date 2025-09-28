@@ -1,7 +1,9 @@
 package com.wkaiser.riotapimcpserver.riot.lol.summoner.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * Represents a League of Legends summoner profile.
@@ -9,6 +11,8 @@ import lombok.Data;
  */
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Summoner {
     private String accountId;
     private int profileIconId;

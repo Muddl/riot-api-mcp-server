@@ -1,8 +1,10 @@
 package com.wkaiser.riotapimcpserver.riot.lol.spectator.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
@@ -12,6 +14,8 @@ import java.util.List;
  */
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CurrentGameParticipant {
     private long championId;
@@ -22,6 +26,7 @@ public class CurrentGameParticipant {
     private String summonerName;
     private String summonerId;
     private String puuid;
+    private long summonerLevel;
     private long spell1Id;
     private long spell2Id;
     private List<GameCustomizationObject> gameCustomizationObjects;

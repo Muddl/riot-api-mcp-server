@@ -20,6 +20,8 @@ The project now includes a comprehensive collection of 83 specialized Claude Cod
 - Integration tests are disabled by default (`@Disabled`) as they require valid Riot API keys
 - The application runs on Java 21 with Spring Boot 3.4.4
 - Lombok is used throughout for reducing boilerplate code
+- **Required Lombok Pattern**: All DTOs must include `@Data`, `@Builder`, `@NoArgsConstructor`, `@AllArgsConstructor` for proper compilation and Jackson deserialization
+- **Nested Class Requirement**: Inner static classes with `@Builder` must also have `@NoArgsConstructor` and `@AllArgsConstructor` to prevent builder method conflicts
 
 ## Architecture Overview
 
@@ -104,6 +106,25 @@ Services orchestrate multiple API calls:
 - **Integration Tests**: Disabled by default, require live API keys
 - **Test Data**: Use placeholder Riot IDs in format "GameName#TAG"
 - **Mocking**: Mock Riot API responses for reliable unit testing
+
+## Documentation Suite
+
+The project includes comprehensive documentation for all stakeholders:
+
+| Document | Purpose | Audience |
+|----------|---------|----------|
+| **[README.md](README.md)** | Main project documentation with quick start guide | All users & developers |
+| **[CLAUDE.md](CLAUDE.md)** | Development guidance & patterns (this file) | Developers & AI assistants |
+| **[FEATURES.md](FEATURES.md)** | Current features & strategic roadmap | Product & Technical teams |
+| **[PLAN.md](PLAN.md)** | Production deployment strategy | DevOps & Leadership |
+| **[CHANGELOG.md](CHANGELOG.md)** | Version history & changes | All stakeholders |
+| **[LICENSE](LICENSE)** | MIT License for open source usage | Legal & Compliance |
+
+### Professional Features
+- **Badge Integration**: Build status, Java version, Spring Boot version indicators
+- **Mermaid Diagrams**: Visual architecture and flow documentation
+- **Structured Navigation**: Cross-referenced documentation with clear purpose definitions
+- **Version Tracking**: Semantic versioning with detailed change documentation
 
 ## MCP Server Details
 
@@ -215,7 +236,7 @@ Target Infrastructure:
   - CI/CD: GitHub Actions with blue-green deployments
 ```
 
-## Recent Updates (Updated: 2025-01-20)
+## Recent Updates (Updated: 2025-01-28)
 
 ### Major Feature Addition: Live Game State Monitor Tool
 - **Complete Spectator API Integration**: Added full Riot Spectator API v4 support with DTOs, service layer, and MCP tools
@@ -248,6 +269,21 @@ Target Infrastructure:
 - **Enhanced MCP Integration**: Additional tools for live game analysis and monitoring
 - **Enterprise Deployment**: Complete infrastructure and operational procedures defined
 
+### Critical Bug Fix: Gradle Test Compilation (2025-01-28)
+- **Lombok Annotation Standardization**: Fixed `:compileTestJava` Gradle task failures across all DTO classes
+- **Nested Class Builder Conflicts**: Resolved complex Lombok builder conflicts in `Perks.java` nested static classes
+- **Test Builder Alignment**: Updated test helper methods to match actual DTO field structures
+- **Complete DTO Pattern**: Applied consistent `@Data`, `@Builder`, `@NoArgsConstructor`, `@AllArgsConstructor` pattern
+- **Jackson Integration**: Ensured proper `@JsonIgnoreProperties(ignoreUnknown = true)` for API response handling
+- **Compilation Verification**: Added comprehensive `CompilationVerificationTest.java` to prevent future regressions
+
+### Complete Documentation Suite (2025-01-28)
+- **README.md**: Comprehensive project documentation with quick start guide, architecture overview, and production deployment details
+- **FEATURES.md**: Detailed feature documentation and strategic roadmap with three-phase implementation plan
+- **CHANGELOG.md**: Complete version history following Keep a Changelog format with semantic versioning
+- **LICENSE**: MIT License for open source usage and distribution
+- **Professional Project Presentation**: Badge integration, Mermaid diagrams, and structured navigation across all documentation
+
 ## File Structure
 
 ```
@@ -272,10 +308,15 @@ Target Infrastructure:
 │   │       └── shared/      - Configuration, exceptions, enums
 │   └── test/java/
 │       └── com/wkaiser/riotapimcpserver/
+│           ├── CompilationVerificationTest.java - **NEW: DTO compilation verification**
 │           └── riot/lol/spectator/  - **NEW: Comprehensive test suite**
 │               ├── service/     - SpectatorService unit & integration tests
 │               └── tool/        - LiveGameTool unit & integration tests
+├── CHANGELOG.md        - **NEW: Complete version history and change tracking**
 ├── CLAUDE.md           - Project documentation (this file)
+├── FEATURES.md         - **NEW: Comprehensive features documentation and roadmap**
+├── LICENSE             - **NEW: MIT License for open source usage**
 ├── PLAN.md             - **UPDATED: Production deployment roadmap**
+├── README.md           - **NEW: Main project documentation and quick start guide**
 └── build.gradle        - Build configuration
 ```

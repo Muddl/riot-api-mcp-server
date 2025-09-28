@@ -33,13 +33,13 @@ import static org.mockito.Mockito.when;
 /**
  * Unit tests for SpectatorService.
  * Tests service methods and error handling logic.
- *
+ * <p>
  * Note: Since SpectatorService creates its own RestClient instances internally,
  * these tests focus on logic validation and exception handling patterns.
  * Full API integration is tested in the integration test class.
  */
 @ExtendWith(MockitoExtension.class)
-class SpectatorServiceTest {
+public class SpectatorServiceTest {
 
     private SpectatorService spectatorService;
 
@@ -215,9 +215,11 @@ class SpectatorServiceTest {
                 .teamId(teamId)
                 .summonerName(summonerName)
                 .summonerId("encrypted_summoner_id_" + summonerName)
+                .puuid("test_puuid_" + summonerName)
                 .summonerLevel(150L)
                 .spell1Id(4L)
                 .spell2Id(7L)
+                .gameCustomizationObjects(List.of())
                 .build();
     }
 

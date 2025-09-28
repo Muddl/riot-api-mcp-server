@@ -1,11 +1,8 @@
 package com.wkaiser.riotapimcpserver.riot.lol.spectator.tool;
 
-import com.wkaiser.riotapimcpserver.riot.lol.spectator.dto.BannedChampion;
 import com.wkaiser.riotapimcpserver.riot.lol.spectator.dto.CurrentGameInfo;
 import com.wkaiser.riotapimcpserver.riot.lol.spectator.dto.CurrentGameParticipant;
 import com.wkaiser.riotapimcpserver.riot.lol.spectator.dto.FeaturedGames;
-import com.wkaiser.riotapimcpserver.riot.lol.spectator.dto.Observer;
-import com.wkaiser.riotapimcpserver.riot.lol.spectator.dto.Perks;
 import com.wkaiser.riotapimcpserver.riot.lol.spectator.service.SpectatorService;
 import com.wkaiser.riotapimcpserver.riot.lol.spectator.service.SpectatorServiceTest;
 import com.wkaiser.riotapimcpserver.riot.lol.summoner.dto.Summoner;
@@ -18,12 +15,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
