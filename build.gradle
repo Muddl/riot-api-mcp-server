@@ -30,7 +30,7 @@ ext {
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'io.github.wimdeblauwe:htmx-spring-boot:4.0.1'
+	implementation 'io.github.wimdeblauwe:htmx-spring-boot:5.1.0'
 	implementation 'org.springframework.ai:spring-ai-anthropic-spring-boot-starter'
 	implementation 'org.springframework.ai:spring-ai-mcp-server-webmvc-spring-boot-starter'
 	compileOnly 'org.projectlombok:lombok'
