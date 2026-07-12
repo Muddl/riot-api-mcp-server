@@ -23,15 +23,15 @@
    ```
 
 2. **Configure API Keys**
-   ```yaml
-   # application.yml
-   riot:
-     apiKey: "YOUR_RIOT_API_KEY"
-     region: "AMERICAS"  # or EUROPE, ASIA, SEA
 
-   anthropic:
-     apiKey: "YOUR_ANTHROPIC_API_KEY"
+   `application.yml` reads both keys from environment variables — set these before running:
+   ```bash
+   export RIOT_API_KEY="YOUR_RIOT_API_KEY"
+   export ANTHROPIC_API_KEY="YOUR_ANTHROPIC_API_KEY"
    ```
+   (On Windows PowerShell: `$env:RIOT_API_KEY = "..."`)
+
+   Never commit real keys into `application.yml` — it's tracked in git.
 
 3. **Build and Run**
    ```bash
