@@ -2,7 +2,7 @@
 
 [![Build Status](https://github.com/your-username/riot-api-mcp-server/workflows/CI/badge.svg)](https://github.com/Muddl/riot-api-mcp-server/actions)
 [![Java Version](https://img.shields.io/badge/Java-21-blue.svg)](https://openjdk.java.net/projects/jdk/21/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.4-green.svg)](https://spring.io/projects/spring-boot)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.0-green.svg)](https://spring.io/projects/spring-boot)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 > **AI-First Gaming API Platform** - A Spring Boot middleware server that bridges AI models with the Riot Games API ecosystem through the Model Context Protocol (MCP).
@@ -23,15 +23,15 @@
    ```
 
 2. **Configure API Keys**
-   ```yaml
-   # application.yml
-   riot:
-     apiKey: "YOUR_RIOT_API_KEY"
-     region: "AMERICAS"  # or EUROPE, ASIA, SEA
 
-   anthropic:
-     apiKey: "YOUR_ANTHROPIC_API_KEY"
+   `application.yml` reads both keys from environment variables — set these before running:
+   ```bash
+   export RIOT_API_KEY="YOUR_RIOT_API_KEY"
+   export ANTHROPIC_API_KEY="YOUR_ANTHROPIC_API_KEY"
    ```
+   (On Windows PowerShell: `$env:RIOT_API_KEY = "..."`)
+
+   Never commit real keys into `application.yml` — it's tracked in git.
 
 3. **Build and Run**
    ```bash
@@ -151,7 +151,7 @@ graph LR
 
 ### Example Usage
 ```java
-@Tool(name = "check_if_summoner_in_game")
+@McpTool(name = "check_if_summoner_in_game")
 public boolean checkIfSummonerInGame(String summonerName, String platform) {
     // Returns true/false for live game status
 }

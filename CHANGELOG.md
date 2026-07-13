@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Spring Boot 4.1.0 / Spring AI 2.0.0 Migration**: Upgraded from Spring Boot 3.4.4 / Spring AI 1.0.0-M6 (both past end-of-life) to current supported versions
+  - Gradle wrapper bumped 8.13 → 9.6.1 (required for the Spring Boot 4.x Gradle plugin)
+  - Spring AI dependency artifact IDs renamed to match 2.0's starter naming convention
+  - All four MCP tool classes (`RiotAccountTool`, `SummonerTool`, `AnalyticsTool`, `LiveGameTool`) migrated from `@Tool`/`@ToolParam` to `@McpTool`/`@McpToolParam` — the old annotation still compiles under Spring AI 2.0 but is silently dropped from MCP registration
+  - Resolves the majority of open Dependabot alerts via Spring Boot 4.1's managed dependency versions
+
 ### Fixed
 - **Gradle Test Compilation**: Fixed `:compileTestJava` task failures across all DTO classes (2025-01-28)
   - Standardized Lombok annotations with `@Data`, `@Builder`, `@NoArgsConstructor`, `@AllArgsConstructor` pattern

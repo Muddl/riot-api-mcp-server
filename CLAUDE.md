@@ -18,7 +18,7 @@ The project now includes a comprehensive collection of 83 specialized Claude Cod
 
 ### Development Notes
 - Integration tests are disabled by default (`@Disabled`) as they require valid Riot API keys
-- The application runs on Java 21 with Spring Boot 3.4.4
+- The application runs on Java 21 with Spring Boot 4.1.0
 - Lombok is used throughout for reducing boilerplate code
 - **Required Lombok Pattern**: All DTOs must include `@Data`, `@Builder`, `@NoArgsConstructor`, `@AllArgsConstructor` for proper compilation and Jackson deserialization
 - **Nested Class Requirement**: Inner static classes with `@Builder` must also have `@NoArgsConstructor` and `@AllArgsConstructor` to prevent builder method conflicts
@@ -26,7 +26,7 @@ The project now includes a comprehensive collection of 83 specialized Claude Cod
 ## Architecture Overview
 
 ### Tool-Based MCP Architecture
-The application exposes functionality to AI models through Spring AI's `@Tool` annotation pattern:
+The application exposes functionality to AI models through Spring AI's `@McpTool` annotation pattern:
 
 - **RiotAccountTool**: Account lookup by Riot ID or PUUID
 - **SummonerTool**: League of Legends summoner information
@@ -81,10 +81,11 @@ The project leverages Claude Code subagents for coordinated development and prod
 
 ### Tool Implementation Pattern
 ```java
-@Tool(name = "tool_name", description = "Clear description for AI")
-public ReturnType methodName(Parameters params) {
+@McpTool(name = "tool_name", description = "Clear description for AI")
+public ReturnType methodName(
+        @McpToolParam(description = "Parameter description", required = true) ParamType param) {
     log.info("MCP Tool - Action description");
-    return service.performAction(params);
+    return service.performAction(param);
 }
 ```
 
@@ -130,7 +131,7 @@ The project includes comprehensive documentation for all stakeholders:
 
 - **Type**: SYNC (synchronous request/response)
 - **Endpoint**: `/mcp/messages` for SSE communication
-- **Tools**: Auto-discovered via Spring AI's `@Tool` annotation scanning
+- **Tools**: Auto-discovered via Spring AI's `@McpTool` annotation scanning
 - **Integration**: Designed for Claude and other AI models supporting MCP
 
 ## CI/CD & GitHub Integration

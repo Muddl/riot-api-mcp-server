@@ -8,7 +8,8 @@ import com.wkaiser.riotapimcpserver.riot.lol.summoner.service.SummonerService;
 import com.wkaiser.riotapimcpserver.shared.enums.RiotApiPlatformUri;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.ai.tool.annotation.Tool;
+import org.springframework.ai.mcp.annotation.McpTool;
+import org.springframework.ai.mcp.annotation.McpToolParam;
 import org.springframework.stereotype.Component;
 
 /**
@@ -24,9 +25,11 @@ public class LiveGameTool {
     private final SpectatorService spectatorService;
     private final SummonerService summonerService;
 
-    @Tool(name = "get_current_game_by_summoner_name",
+    @McpTool(name = "get_current_game_by_summoner_name",
           description = "Get current live game information for a summoner by name. Returns live game details if summoner is in game, null if not in game.")
-    public CurrentGameInfo getCurrentGameBySummonerName(String platformStr, String summonerName) {
+    public CurrentGameInfo getCurrentGameBySummonerName(
+            @McpToolParam(description = "The Riot platform, e.g. NA1, EUW1", required = true) String platformStr,
+            @McpToolParam(description = "The summoner's name", required = true) String summonerName) {
         RiotApiPlatformUri platform = RiotApiPlatformUri.valueOf(platformStr);
         log.info("MCP Tool - Getting current game by summoner name: {} on platform: {}", summonerName, platform);
 
@@ -38,27 +41,32 @@ public class LiveGameTool {
         return spectatorService.getCurrentGameInfo(platform, encryptedSummonerId);
     }
 
-    @Tool(name = "get_current_game_by_summoner_id",
+    @McpTool(name = "get_current_game_by_summoner_id",
           description = "Get current live game information for a summoner by encrypted summoner ID. Returns live game details if summoner is in game, null if not in game.")
-    public CurrentGameInfo getCurrentGameBySummonerId(String platformStr, String encryptedSummonerId) {
+    public CurrentGameInfo getCurrentGameBySummonerId(
+            @McpToolParam(description = "The Riot platform, e.g. NA1, EUW1", required = true) String platformStr,
+            @McpToolParam(description = "The encrypted summoner ID", required = true) String encryptedSummonerId) {
         RiotApiPlatformUri platform = RiotApiPlatformUri.valueOf(platformStr);
         log.info("MCP Tool - Getting current game by summoner ID: {} on platform: {}", encryptedSummonerId, platform);
 
         return spectatorService.getCurrentGameInfo(platform, encryptedSummonerId);
     }
 
-    @Tool(name = "get_featured_games",
+    @McpTool(name = "get_featured_games",
           description = "Get list of current featured games on a platform. Featured games are high-profile matches selected by Riot.")
-    public FeaturedGames getFeaturedGames(String platformStr) {
+    public FeaturedGames getFeaturedGames(
+            @McpToolParam(description = "The Riot platform, e.g. NA1, EUW1", required = true) String platformStr) {
         RiotApiPlatformUri platform = RiotApiPlatformUri.valueOf(platformStr);
         log.info("MCP Tool - Getting featured games for platform: {}", platform);
 
         return spectatorService.getFeaturedGames(platform);
     }
 
-    @Tool(name = "check_if_summoner_in_game",
+    @McpTool(name = "check_if_summoner_in_game",
           description = "Check if a summoner is currently in a live game. Returns true if in game, false if not in game.")
-    public boolean isSummonerInGame(String platformStr, String summonerName) {
+    public boolean isSummonerInGame(
+            @McpToolParam(description = "The Riot platform, e.g. NA1, EUW1", required = true) String platformStr,
+            @McpToolParam(description = "The summoner's name", required = true) String summonerName) {
         RiotApiPlatformUri platform = RiotApiPlatformUri.valueOf(platformStr);
         log.info("MCP Tool - Checking if summoner is in game: {} on platform: {}", summonerName, platform);
 
