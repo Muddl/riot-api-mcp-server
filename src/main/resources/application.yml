@@ -8,6 +8,8 @@ spring:
         version: 1.0.0
         type: SYNC
         sse-message-endpoint: /mcp/messages
+        annotation-scanner:
+          enabled: true
     anthropic:
       api-key: ${ANTHROPIC_API_KEY}
       chat:

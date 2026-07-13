@@ -2,7 +2,7 @@
 
 [![Build Status](https://github.com/your-username/riot-api-mcp-server/workflows/CI/badge.svg)](https://github.com/Muddl/riot-api-mcp-server/actions)
 [![Java Version](https://img.shields.io/badge/Java-21-blue.svg)](https://openjdk.java.net/projects/jdk/21/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.4-green.svg)](https://spring.io/projects/spring-boot)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.0-green.svg)](https://spring.io/projects/spring-boot)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 > **AI-First Gaming API Platform** - A Spring Boot middleware server that bridges AI models with the Riot Games API ecosystem through the Model Context Protocol (MCP).
