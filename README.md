@@ -151,7 +151,7 @@ graph LR
 
 ### Example Usage
 ```java
-@Tool(name = "check_if_summoner_in_game")
+@McpTool(name = "check_if_summoner_in_game")
 public boolean checkIfSummonerInGame(String summonerName, String platform) {
     // Returns true/false for live game status
 }

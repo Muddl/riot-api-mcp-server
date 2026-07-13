@@ -5,7 +5,7 @@
 The **Riot API MCP Server** is a Spring Boot middleware application that bridges AI models with the Riot Games API ecosystem through the Model Context Protocol (MCP). It provides comprehensive League of Legends data access, analytics, and real-time game monitoring capabilities optimized for AI model consumption.
 
 **Current Version**: 0.0.2-SNAPSHOT
-**Technology Stack**: Spring Boot 3.4.4, Java 21, Spring AI MCP
+**Technology Stack**: Spring Boot 4.1.0, Java 21, Spring AI 2.0.0
 **Production Status**: Development Complete, Production Deployment Ready
 
 ---
@@ -74,7 +74,7 @@ The **Riot API MCP Server** is a Spring Boot middleware application that bridges
 #### MCP Integration
 - **Protocol Type**: SYNC (synchronous request/response)
 - **Endpoint**: `/mcp/messages` for Server-Sent Events communication
-- **Tool Discovery**: Automatic via Spring AI `@Tool` annotation scanning
+- **Tool Discovery**: Automatic via Spring AI `@McpTool` annotation scanning
 - **AI Model Support**: Optimized for Claude, compatible with all MCP-supporting models
 
 ### 📊 Data Processing & Analytics

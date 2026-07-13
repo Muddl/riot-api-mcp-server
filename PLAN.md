@@ -13,7 +13,7 @@ This comprehensive production deployment plan transitions the **Riot API MCP Ser
 
 ### Current Implementation
 ```
-riot-api-mcp-server/ (Spring Boot 3.4.4, Java 21)
+riot-api-mcp-server/ (Spring Boot 4.1.0, Java 21)
 ├── riot/account/        - Cross-game account management
 ├── riot/lol/summoner/   - League summoner data
 ├── riot/lol/match/      - Match history and details
