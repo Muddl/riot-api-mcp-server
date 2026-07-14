@@ -1,4 +1,4 @@
-package com.wkaiser.riotapimcpserver.riot.account.tool;
+package com.wkaiser.riotapimcpserver.account.adapter.in.mcp;
 
 import com.wkaiser.riotapimcpserver.account.domain.RiotAccount;
 import org.junit.jupiter.api.Disabled;

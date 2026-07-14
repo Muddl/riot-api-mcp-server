@@ -1,7 +1,7 @@
-package com.wkaiser.riotapimcpserver.riot.account.tool;
+package com.wkaiser.riotapimcpserver.account.adapter.in.mcp;
 
 import com.wkaiser.riotapimcpserver.account.domain.RiotAccount;
-import com.wkaiser.riotapimcpserver.riot.account.service.RiotAccountService;
+import com.wkaiser.riotapimcpserver.account.application.RiotAccountService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.mcp.annotation.McpTool;
