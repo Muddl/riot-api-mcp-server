@@ -1,10 +1,10 @@
-package com.wkaiser.riotapimcpserver.riot.lol.spectator.tool;
+package com.wkaiser.riotapimcpserver.spectator.adapter.in.mcp;
 
 import com.wkaiser.riotapimcpserver.spectator.domain.CurrentGameInfo;
 import com.wkaiser.riotapimcpserver.spectator.domain.CurrentGameParticipant;
 import com.wkaiser.riotapimcpserver.spectator.domain.FeaturedGames;
-import com.wkaiser.riotapimcpserver.riot.lol.spectator.service.SpectatorService;
-import com.wkaiser.riotapimcpserver.riot.lol.spectator.service.SpectatorServiceTest;
+import com.wkaiser.riotapimcpserver.spectator.application.SpectatorService;
+import com.wkaiser.riotapimcpserver.spectator.SpectatorTestFixtures;
 import com.wkaiser.riotapimcpserver.summoner.domain.Summoner;
 import com.wkaiser.riotapimcpserver.summoner.application.SummonerService;
 import com.wkaiser.riotapimcpserver.shared.enums.RiotApiPlatformUri;
@@ -45,7 +45,7 @@ class LiveGameToolTest {
     void getCurrentGameBySummonerName_successfulFlow_returnsCurrentGameInfo() {
         // Arrange
         Summoner mockSummoner = createSampleSummoner();
-        CurrentGameInfo expectedGameInfo = createSampleCurrentGameInfo();
+        CurrentGameInfo expectedGameInfo = SpectatorTestFixtures.createSampleCurrentGameInfo();
 
         when(mockSummonerService.getSummonerByName(TEST_PLATFORM, TEST_SUMMONER_NAME))
                 .thenReturn(mockSummoner);
@@ -110,7 +110,7 @@ class LiveGameToolTest {
     @Test
     void getCurrentGameBySummonerId_successfulFlow_returnsCurrentGameInfo() {
         // Arrange
-        CurrentGameInfo expectedGameInfo = createSampleCurrentGameInfo();
+        CurrentGameInfo expectedGameInfo = SpectatorTestFixtures.createSampleCurrentGameInfo();
 
         when(mockSpectatorService.getCurrentGameInfo(TEST_PLATFORM, TEST_SUMMONER_ID))
                 .thenReturn(expectedGameInfo);
@@ -152,7 +152,7 @@ class LiveGameToolTest {
     @Test
     void getFeaturedGames_successfulFlow_returnsFeaturedGames() {
         // Arrange
-        FeaturedGames expectedFeaturedGames = createSampleFeaturedGames();
+        FeaturedGames expectedFeaturedGames = SpectatorTestFixtures.createSampleFeaturedGames();
 
         when(mockSpectatorService.getFeaturedGames(TEST_PLATFORM))
                 .thenReturn(expectedFeaturedGames);
@@ -194,7 +194,7 @@ class LiveGameToolTest {
     void isSummonerInGame_summonerInGame_returnsTrue() {
         // Arrange
         Summoner mockSummoner = createSampleSummoner();
-        CurrentGameInfo mockGameInfo = createSampleCurrentGameInfo();
+        CurrentGameInfo mockGameInfo = SpectatorTestFixtures.createSampleCurrentGameInfo();
 
         when(mockSummonerService.getSummonerByName(TEST_PLATFORM, TEST_SUMMONER_NAME))
                 .thenReturn(mockSummoner);
@@ -267,18 +267,4 @@ class LiveGameToolTest {
                 .build();
     }
 
-    private CurrentGameInfo createSampleCurrentGameInfo() {
-        // Reuse the static helper from SpectatorServiceTest for consistency
-        return SpectatorServiceTest.createSampleCurrentGameInfo();
-    }
-
-    private CurrentGameParticipant createSampleParticipant(String summonerName, long championId, long teamId) {
-        // Reuse the static helper from SpectatorServiceTest for consistency
-        return SpectatorServiceTest.createSampleParticipant(summonerName, championId, teamId);
-    }
-
-    private FeaturedGames createSampleFeaturedGames() {
-        // Reuse the static helper from SpectatorServiceTest for consistency
-        return SpectatorServiceTest.createSampleFeaturedGames();
-    }
 }

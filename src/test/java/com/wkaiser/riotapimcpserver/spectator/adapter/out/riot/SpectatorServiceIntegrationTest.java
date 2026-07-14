@@ -1,5 +1,6 @@
-package com.wkaiser.riotapimcpserver.riot.lol.spectator.service;
+package com.wkaiser.riotapimcpserver.spectator.adapter.out.riot;
 
+import com.wkaiser.riotapimcpserver.spectator.application.SpectatorService;
 import com.wkaiser.riotapimcpserver.spectator.domain.CurrentGameInfo;
 import com.wkaiser.riotapimcpserver.spectator.domain.FeaturedGames;
 import com.wkaiser.riotapimcpserver.shared.enums.RiotApiPlatformUri;

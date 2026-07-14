@@ -1,4 +1,4 @@
-package com.wkaiser.riotapimcpserver.riot.lol.spectator.tool;
+package com.wkaiser.riotapimcpserver.spectator.adapter.in.mcp;
 
 import com.wkaiser.riotapimcpserver.spectator.domain.CurrentGameInfo;
 import com.wkaiser.riotapimcpserver.spectator.domain.FeaturedGames;
