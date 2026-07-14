@@ -7,7 +7,7 @@ import com.wkaiser.riotapimcpserver.match.domain.Match;
 import com.wkaiser.riotapimcpserver.match.domain.Participant;
 import com.wkaiser.riotapimcpserver.riot.lol.match.service.MatchService;
 import com.wkaiser.riotapimcpserver.summoner.domain.Summoner;
-import com.wkaiser.riotapimcpserver.riot.lol.summoner.service.SummonerService;
+import com.wkaiser.riotapimcpserver.summoner.application.SummonerService;
 import com.wkaiser.riotapimcpserver.shared.enums.RiotApiPlatformUri;
 import com.wkaiser.riotapimcpserver.shared.enums.RiotApiRegionUri;
 import lombok.RequiredArgsConstructor;

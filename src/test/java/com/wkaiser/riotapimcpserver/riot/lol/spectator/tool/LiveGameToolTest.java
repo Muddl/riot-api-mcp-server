@@ -6,7 +6,7 @@ import com.wkaiser.riotapimcpserver.spectator.domain.FeaturedGames;
 import com.wkaiser.riotapimcpserver.riot.lol.spectator.service.SpectatorService;
 import com.wkaiser.riotapimcpserver.riot.lol.spectator.service.SpectatorServiceTest;
 import com.wkaiser.riotapimcpserver.summoner.domain.Summoner;
-import com.wkaiser.riotapimcpserver.riot.lol.summoner.service.SummonerService;
+import com.wkaiser.riotapimcpserver.summoner.application.SummonerService;
 import com.wkaiser.riotapimcpserver.shared.enums.RiotApiPlatformUri;
 import com.wkaiser.riotapimcpserver.shared.exception.RiotApiException;
 import org.junit.jupiter.api.Test;

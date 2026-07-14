@@ -4,7 +4,7 @@ import com.wkaiser.riotapimcpserver.spectator.domain.CurrentGameInfo;
 import com.wkaiser.riotapimcpserver.spectator.domain.FeaturedGames;
 import com.wkaiser.riotapimcpserver.riot.lol.spectator.service.SpectatorService;
 import com.wkaiser.riotapimcpserver.summoner.domain.Summoner;
-import com.wkaiser.riotapimcpserver.riot.lol.summoner.service.SummonerService;
+import com.wkaiser.riotapimcpserver.summoner.application.SummonerService;
 import com.wkaiser.riotapimcpserver.shared.enums.RiotApiPlatformUri;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
