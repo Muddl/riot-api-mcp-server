@@ -1,4 +1,4 @@
-package com.wkaiser.riotapimcpserver.riot.lol.analytics.service;
+package com.wkaiser.riotapimcpserver.analytics.application;
 
 import com.wkaiser.riotapimcpserver.account.domain.RiotAccount;
 import com.wkaiser.riotapimcpserver.account.application.RiotAccountService;
@@ -17,7 +17,6 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**

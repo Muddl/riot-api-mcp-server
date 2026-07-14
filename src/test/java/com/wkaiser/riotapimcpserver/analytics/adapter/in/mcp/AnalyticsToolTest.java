@@ -1,4 +1,4 @@
-package com.wkaiser.riotapimcpserver.riot.lol.analytics.tool;
+package com.wkaiser.riotapimcpserver.analytics.adapter.in.mcp;
 
 import com.wkaiser.riotapimcpserver.analytics.domain.PlayerMatchAnalytics;
 import org.junit.jupiter.api.Disabled;

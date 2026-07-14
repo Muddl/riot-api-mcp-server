@@ -1,7 +1,7 @@
-package com.wkaiser.riotapimcpserver.riot.lol.analytics.tool;
+package com.wkaiser.riotapimcpserver.analytics.adapter.in.mcp;
 
 import com.wkaiser.riotapimcpserver.analytics.domain.PlayerMatchAnalytics;
-import com.wkaiser.riotapimcpserver.riot.lol.analytics.service.AnalyticsService;
+import com.wkaiser.riotapimcpserver.analytics.application.AnalyticsService;
 import com.wkaiser.riotapimcpserver.shared.enums.RiotApiPlatformUri;
 import com.wkaiser.riotapimcpserver.shared.enums.RiotApiRegionUri;
 import lombok.RequiredArgsConstructor;
