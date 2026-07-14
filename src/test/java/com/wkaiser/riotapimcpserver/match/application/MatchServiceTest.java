@@ -1,46 +1,46 @@
 package com.wkaiser.riotapimcpserver.match.application;
 
-import com.wkaiser.riotapimcpserver.match.application.port.MatchPort;
 import com.wkaiser.riotapimcpserver.match.domain.Match;
 import com.wkaiser.riotapimcpserver.shared.enums.RiotApiRegionUri;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
 class MatchServiceTest {
 
     private static final RiotApiRegionUri REGION = RiotApiRegionUri.AMERICAS;
 
-    @Mock
-    private MatchPort matchPort;
-
-    @InjectMocks
-    private MatchService matchService;
+    private final InMemoryMatchPort matchPort = new InMemoryMatchPort();
+    private final MatchService matchService = new MatchService(matchPort);
 
     @Test
-    void getMatchIdsByPuuid_delegatesToPort() {
-        List<String> ids = List.of("NA1_1", "NA1_2");
-        when(matchPort.getMatchIdsByPuuid(REGION, "p", 20, 0, null)).thenReturn(ids);
+    void getMatchIdsByPuuid_returnsStoredIds() {
+        matchPort.putMatchIds("p", List.of("NA1_1", "NA1_2"));
 
-        assertThat(matchService.getMatchIdsByPuuid(REGION, "p", 20, 0, null)).isEqualTo(ids);
-        verify(matchPort).getMatchIdsByPuuid(REGION, "p", 20, 0, null);
+        assertThat(matchService.getMatchIdsByPuuid(REGION, "p", 20, 0, null))
+                .containsExactly("NA1_1", "NA1_2");
     }
 
     @Test
-    void getMatchById_delegatesToPort() {
+    void getMatchIdsByPuuid_honoursCountLimit() {
+        matchPort.putMatchIds("p", List.of("NA1_1", "NA1_2", "NA1_3"));
+
+        assertThat(matchService.getMatchIdsByPuuid(REGION, "p", 2, 0, null))
+                .containsExactly("NA1_1", "NA1_2");
+    }
+
+    @Test
+    void getMatchById_returnsStoredMatch() {
         Match expected = Match.builder().build();
-        when(matchPort.getMatchById(REGION, "NA1_1")).thenReturn(expected);
+        matchPort.putMatch("NA1_1", expected);
 
         assertThat(matchService.getMatchById(REGION, "NA1_1")).isSameAs(expected);
-        verify(matchPort).getMatchById(REGION, "NA1_1");
+    }
+
+    @Test
+    void getMatchIdsByPuuid_returnsEmpty_whenUnknownPuuid() {
+        assertThat(matchService.getMatchIdsByPuuid(REGION, "unknown", 20, 0, null)).isEmpty();
     }
 }
