@@ -5,6 +5,7 @@ import com.wkaiser.riotapimcpserver.shared.exception.RiotApiException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatusCode;
@@ -17,6 +18,7 @@ import org.springframework.web.client.RestClient;
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
+@EnableConfigurationProperties(RiotApiProperties.class)
 public class RiotApiConfiguration {
 
     private final String RIOT_TOKEN_HEADER = "X-RIOT-TOKEN";
