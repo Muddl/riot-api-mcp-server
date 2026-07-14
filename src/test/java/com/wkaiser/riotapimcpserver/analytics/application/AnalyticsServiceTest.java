@@ -1,72 +1,82 @@
 package com.wkaiser.riotapimcpserver.analytics.application;
 
+import com.wkaiser.riotapimcpserver.account.application.InMemoryRiotAccountPort;
 import com.wkaiser.riotapimcpserver.account.application.RiotAccountService;
 import com.wkaiser.riotapimcpserver.account.domain.RiotAccount;
 import com.wkaiser.riotapimcpserver.analytics.domain.PlayerMatchAnalytics;
+import com.wkaiser.riotapimcpserver.match.application.InMemoryMatchPort;
 import com.wkaiser.riotapimcpserver.match.application.MatchService;
 import com.wkaiser.riotapimcpserver.match.domain.Match;
 import com.wkaiser.riotapimcpserver.match.domain.MatchInfo;
 import com.wkaiser.riotapimcpserver.match.domain.Participant;
-import com.wkaiser.riotapimcpserver.summoner.application.SummonerService;
-import com.wkaiser.riotapimcpserver.summoner.domain.Summoner;
 import com.wkaiser.riotapimcpserver.shared.enums.RiotApiPlatformUri;
 import com.wkaiser.riotapimcpserver.shared.enums.RiotApiRegionUri;
+import com.wkaiser.riotapimcpserver.summoner.application.InMemorySummonerPort;
+import com.wkaiser.riotapimcpserver.summoner.application.SummonerService;
+import com.wkaiser.riotapimcpserver.summoner.domain.Summoner;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
 class AnalyticsServiceTest {
 
     private static final RiotApiPlatformUri PLATFORM = RiotApiPlatformUri.NA1;
     private static final RiotApiRegionUri REGION = RiotApiRegionUri.AMERICAS;
     private static final String PUUID = "puuid-1";
 
-    @Mock
-    private RiotAccountService accountService;
-    @Mock
-    private SummonerService summonerService;
-    @Mock
-    private MatchService matchService;
+    private final InMemoryRiotAccountPort accountPort = new InMemoryRiotAccountPort();
+    private final InMemorySummonerPort summonerPort = new InMemorySummonerPort();
+    private final InMemoryMatchPort matchPort = new InMemoryMatchPort();
 
-    @InjectMocks
-    private AnalyticsService analyticsService;
+    private final AnalyticsService analyticsService = new AnalyticsService(
+            new RiotAccountService(accountPort),
+            new SummonerService(summonerPort),
+            new MatchService(matchPort));
+
+    private void givenPlayer() {
+        accountPort.add(RiotAccount.builder().puuid(PUUID).gameName("Player").tagLine("NA1").build());
+        summonerPort.putByPuuid(PLATFORM, PUUID,
+                Summoner.builder().name("Player").summonerLevel(100).build());
+    }
 
     @Test
-    void returns_empty_analytics_when_no_matches() {
-        when(accountService.getAccountByRiotId("Player", "NA1"))
-                .thenReturn(RiotAccount.builder().puuid(PUUID).gameName("Player").tagLine("NA1").build());
-        when(summonerService.getSummonerByPuuid(PLATFORM, PUUID))
-                .thenReturn(Summoner.builder().name("Player").summonerLevel(100).build());
-        when(matchService.getMatchIdsByPuuid(eq(REGION), eq(PUUID), anyInt(), eq(0), any()))
-                .thenReturn(List.of());
+    void returnsEmptyAnalytics_whenNoMatches() {
+        givenPlayer();
+        matchPort.putMatchIds(PUUID, List.of());
 
         PlayerMatchAnalytics result = analyticsService.getPlayerMatchAnalytics("Player#NA1", PLATFORM, REGION, 5);
 
         assertThat(result.getMatchCount()).isZero();
         assertThat(result.getSummonerName()).isEqualTo("Player");
+        assertThat(result.getSummonerLevel()).isEqualTo(100L);
+        assertThat(result.getWinRate()).isNull();
+        assertThat(result.getAvgKda()).isNull();
     }
 
     @Test
-    void computes_win_rate_and_kda_over_matches() {
-        when(accountService.getAccountByRiotId("Player", "NA1"))
-                .thenReturn(RiotAccount.builder().puuid(PUUID).gameName("Player").tagLine("NA1").build());
-        when(summonerService.getSummonerByPuuid(PLATFORM, PUUID))
-                .thenReturn(Summoner.builder().name("Player").summonerLevel(100).build());
-        when(matchService.getMatchIdsByPuuid(eq(REGION), eq(PUUID), anyInt(), eq(0), any()))
-                .thenReturn(List.of("NA1_1", "NA1_2"));
-        when(matchService.getMatchById(REGION, "NA1_1")).thenReturn(match(true, 10, 2, 5));
-        when(matchService.getMatchById(REGION, "NA1_2")).thenReturn(match(false, 4, 6, 3));
+    void computesPerfectKda_whenZeroDeaths() {
+        givenPlayer();
+        matchPort.putMatchIds(PUUID, List.of("NA1_1"));
+        matchPort.putMatch("NA1_1", match(true, 5, 0, 3));
+
+        PlayerMatchAnalytics result = analyticsService.getPlayerMatchAnalytics("Player#NA1", PLATFORM, REGION, 1);
+
+        assertThat(result.getMatchCount()).isEqualTo(1);
+        assertThat(result.getWins()).isEqualTo(1);
+        assertThat(result.getWinRate()).isEqualTo("100.00%");
+        assertThat(result.getAvgDeaths()).isEqualTo("0.00");
+        // Zero deaths => perfect KDA == kills + assists == 8.
+        assertThat(result.getAvgKda()).isEqualTo("8.00");
+    }
+
+    @Test
+    void computesWinRateAndAverages_overMultipleMatches() {
+        givenPlayer();
+        matchPort.putMatchIds(PUUID, List.of("NA1_1", "NA1_2"));
+        matchPort.putMatch("NA1_1", match(true, 10, 2, 5));
+        matchPort.putMatch("NA1_2", match(false, 4, 6, 3));
 
         PlayerMatchAnalytics result = analyticsService.getPlayerMatchAnalytics("Player#NA1", PLATFORM, REGION, 2);
 
