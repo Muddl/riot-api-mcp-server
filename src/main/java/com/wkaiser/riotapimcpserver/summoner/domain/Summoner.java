@@ -1,4 +1,4 @@
-package com.wkaiser.riotapimcpserver.riot.lol.summoner.dto;
+package com.wkaiser.riotapimcpserver.summoner.domain;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

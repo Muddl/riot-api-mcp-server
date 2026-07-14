@@ -1,7 +1,7 @@
 package com.wkaiser.riotapimcpserver;
 
-import com.wkaiser.riotapimcpserver.riot.lol.spectator.dto.*;
-import com.wkaiser.riotapimcpserver.riot.lol.summoner.dto.Summoner;
+import com.wkaiser.riotapimcpserver.spectator.domain.*;
+import com.wkaiser.riotapimcpserver.summoner.domain.Summoner;
 import com.wkaiser.riotapimcpserver.shared.enums.RiotApiPlatformUri;
 import org.junit.jupiter.api.Test;
 

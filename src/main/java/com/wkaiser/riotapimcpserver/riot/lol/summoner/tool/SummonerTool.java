@@ -1,6 +1,6 @@
 package com.wkaiser.riotapimcpserver.riot.lol.summoner.tool;
 
-import com.wkaiser.riotapimcpserver.riot.lol.summoner.dto.Summoner;
+import com.wkaiser.riotapimcpserver.summoner.domain.Summoner;
 import com.wkaiser.riotapimcpserver.riot.lol.summoner.service.SummonerService;
 import com.wkaiser.riotapimcpserver.shared.enums.RiotApiPlatformUri;
 import lombok.RequiredArgsConstructor;

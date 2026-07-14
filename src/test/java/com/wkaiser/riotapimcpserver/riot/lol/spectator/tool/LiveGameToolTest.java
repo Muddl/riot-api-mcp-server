@@ -1,11 +1,11 @@
 package com.wkaiser.riotapimcpserver.riot.lol.spectator.tool;
 
-import com.wkaiser.riotapimcpserver.riot.lol.spectator.dto.CurrentGameInfo;
-import com.wkaiser.riotapimcpserver.riot.lol.spectator.dto.CurrentGameParticipant;
-import com.wkaiser.riotapimcpserver.riot.lol.spectator.dto.FeaturedGames;
+import com.wkaiser.riotapimcpserver.spectator.domain.CurrentGameInfo;
+import com.wkaiser.riotapimcpserver.spectator.domain.CurrentGameParticipant;
+import com.wkaiser.riotapimcpserver.spectator.domain.FeaturedGames;
 import com.wkaiser.riotapimcpserver.riot.lol.spectator.service.SpectatorService;
 import com.wkaiser.riotapimcpserver.riot.lol.spectator.service.SpectatorServiceTest;
-import com.wkaiser.riotapimcpserver.riot.lol.summoner.dto.Summoner;
+import com.wkaiser.riotapimcpserver.summoner.domain.Summoner;
 import com.wkaiser.riotapimcpserver.riot.lol.summoner.service.SummonerService;
 import com.wkaiser.riotapimcpserver.shared.enums.RiotApiPlatformUri;
 import com.wkaiser.riotapimcpserver.shared.exception.RiotApiException;

@@ -1,6 +1,6 @@
 package com.wkaiser.riotapimcpserver.riot.lol.analytics.tool;
 
-import com.wkaiser.riotapimcpserver.riot.lol.analytics.dto.PlayerMatchAnalytics;
+import com.wkaiser.riotapimcpserver.analytics.domain.PlayerMatchAnalytics;
 import com.wkaiser.riotapimcpserver.riot.lol.analytics.service.AnalyticsService;
 import com.wkaiser.riotapimcpserver.shared.enums.RiotApiPlatformUri;
 import com.wkaiser.riotapimcpserver.shared.enums.RiotApiRegionUri;

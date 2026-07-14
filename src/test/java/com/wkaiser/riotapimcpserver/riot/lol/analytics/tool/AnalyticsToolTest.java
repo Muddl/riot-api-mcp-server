@@ -1,6 +1,6 @@
 package com.wkaiser.riotapimcpserver.riot.lol.analytics.tool;
 
-import com.wkaiser.riotapimcpserver.riot.lol.analytics.dto.PlayerMatchAnalytics;
+import com.wkaiser.riotapimcpserver.analytics.domain.PlayerMatchAnalytics;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

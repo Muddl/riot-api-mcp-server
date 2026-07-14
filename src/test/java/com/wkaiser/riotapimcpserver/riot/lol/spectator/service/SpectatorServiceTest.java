@@ -1,11 +1,11 @@
 package com.wkaiser.riotapimcpserver.riot.lol.spectator.service;
 
-import com.wkaiser.riotapimcpserver.riot.lol.spectator.dto.BannedChampion;
-import com.wkaiser.riotapimcpserver.riot.lol.spectator.dto.CurrentGameInfo;
-import com.wkaiser.riotapimcpserver.riot.lol.spectator.dto.CurrentGameParticipant;
-import com.wkaiser.riotapimcpserver.riot.lol.spectator.dto.FeaturedGames;
-import com.wkaiser.riotapimcpserver.riot.lol.spectator.dto.Observer;
-import com.wkaiser.riotapimcpserver.riot.lol.spectator.dto.Perks;
+import com.wkaiser.riotapimcpserver.spectator.domain.BannedChampion;
+import com.wkaiser.riotapimcpserver.spectator.domain.CurrentGameInfo;
+import com.wkaiser.riotapimcpserver.spectator.domain.CurrentGameParticipant;
+import com.wkaiser.riotapimcpserver.spectator.domain.FeaturedGames;
+import com.wkaiser.riotapimcpserver.spectator.domain.Observer;
+import com.wkaiser.riotapimcpserver.spectator.domain.Perks;
 import com.wkaiser.riotapimcpserver.shared.enums.RiotApiPlatformUri;
 import com.wkaiser.riotapimcpserver.shared.exception.RiotApiException;
 import org.junit.jupiter.api.BeforeEach;

@@ -1,6 +1,6 @@
 package com.wkaiser.riotapimcpserver.riot.lol.match.service;
 
-import com.wkaiser.riotapimcpserver.riot.lol.match.dto.Match;
+import com.wkaiser.riotapimcpserver.match.domain.Match;
 import com.wkaiser.riotapimcpserver.shared.enums.RiotApiRegionUri;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

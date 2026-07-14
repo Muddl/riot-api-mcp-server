@@ -1,6 +1,6 @@
 package com.wkaiser.riotapimcpserver.riot.account.service;
 
-import com.wkaiser.riotapimcpserver.riot.account.dto.RiotAccount;
+import com.wkaiser.riotapimcpserver.account.domain.RiotAccount;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

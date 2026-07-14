@@ -1,7 +1,7 @@
 package com.wkaiser.riotapimcpserver.riot.lol.spectator.service;
 
-import com.wkaiser.riotapimcpserver.riot.lol.spectator.dto.CurrentGameInfo;
-import com.wkaiser.riotapimcpserver.riot.lol.spectator.dto.FeaturedGames;
+import com.wkaiser.riotapimcpserver.spectator.domain.CurrentGameInfo;
+import com.wkaiser.riotapimcpserver.spectator.domain.FeaturedGames;
 import com.wkaiser.riotapimcpserver.shared.enums.RiotApiPlatformUri;
 import com.wkaiser.riotapimcpserver.shared.exception.RiotApiException;
 import lombok.RequiredArgsConstructor;

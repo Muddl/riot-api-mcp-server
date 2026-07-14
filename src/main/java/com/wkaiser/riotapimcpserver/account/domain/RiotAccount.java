@@ -1,4 +1,4 @@
-package com.wkaiser.riotapimcpserver.riot.account.dto;
+package com.wkaiser.riotapimcpserver.account.domain;
 
 import lombok.Builder;
 import lombok.Data;

@@ -1,4 +1,4 @@
-package com.wkaiser.riotapimcpserver.riot.lol.analytics.dto;
+package com.wkaiser.riotapimcpserver.analytics.domain;
 
 import lombok.Builder;
 import lombok.Data;

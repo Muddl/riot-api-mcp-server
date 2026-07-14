@@ -1,12 +1,12 @@
 package com.wkaiser.riotapimcpserver.riot.lol.analytics.service;
 
-import com.wkaiser.riotapimcpserver.riot.account.dto.RiotAccount;
+import com.wkaiser.riotapimcpserver.account.domain.RiotAccount;
 import com.wkaiser.riotapimcpserver.riot.account.service.RiotAccountService;
-import com.wkaiser.riotapimcpserver.riot.lol.analytics.dto.PlayerMatchAnalytics;
-import com.wkaiser.riotapimcpserver.riot.lol.match.dto.Match;
-import com.wkaiser.riotapimcpserver.riot.lol.match.dto.Participant;
+import com.wkaiser.riotapimcpserver.analytics.domain.PlayerMatchAnalytics;
+import com.wkaiser.riotapimcpserver.match.domain.Match;
+import com.wkaiser.riotapimcpserver.match.domain.Participant;
 import com.wkaiser.riotapimcpserver.riot.lol.match.service.MatchService;
-import com.wkaiser.riotapimcpserver.riot.lol.summoner.dto.Summoner;
+import com.wkaiser.riotapimcpserver.summoner.domain.Summoner;
 import com.wkaiser.riotapimcpserver.riot.lol.summoner.service.SummonerService;
 import com.wkaiser.riotapimcpserver.shared.enums.RiotApiPlatformUri;
 import com.wkaiser.riotapimcpserver.shared.enums.RiotApiRegionUri;

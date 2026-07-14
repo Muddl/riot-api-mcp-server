@@ -1,6 +1,6 @@
 package com.wkaiser.riotapimcpserver.riot.account.tool;
 
-import com.wkaiser.riotapimcpserver.riot.account.dto.RiotAccount;
+import com.wkaiser.riotapimcpserver.account.domain.RiotAccount;
 import com.wkaiser.riotapimcpserver.riot.account.service.RiotAccountService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

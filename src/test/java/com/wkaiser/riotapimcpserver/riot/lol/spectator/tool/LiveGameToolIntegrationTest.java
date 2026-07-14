@@ -1,7 +1,7 @@
 package com.wkaiser.riotapimcpserver.riot.lol.spectator.tool;
 
-import com.wkaiser.riotapimcpserver.riot.lol.spectator.dto.CurrentGameInfo;
-import com.wkaiser.riotapimcpserver.riot.lol.spectator.dto.FeaturedGames;
+import com.wkaiser.riotapimcpserver.spectator.domain.CurrentGameInfo;
+import com.wkaiser.riotapimcpserver.spectator.domain.FeaturedGames;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

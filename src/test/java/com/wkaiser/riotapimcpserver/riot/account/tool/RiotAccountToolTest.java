@@ -1,6 +1,6 @@
 package com.wkaiser.riotapimcpserver.riot.account.tool;
 
-import com.wkaiser.riotapimcpserver.riot.account.dto.RiotAccount;
+import com.wkaiser.riotapimcpserver.account.domain.RiotAccount;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

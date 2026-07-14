@@ -1,4 +1,4 @@
-package com.wkaiser.riotapimcpserver.riot.lol.spectator.dto;
+package com.wkaiser.riotapimcpserver.spectator.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;

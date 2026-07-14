@@ -1,4 +1,4 @@
-package com.wkaiser.riotapimcpserver.riot.lol.match.dto;
+package com.wkaiser.riotapimcpserver.match.domain;
 
 import lombok.Builder;
 import lombok.Data;
