@@ -1,0 +1,29 @@
+{
+  "gameId": 4600000999,
+  "gameType": "MATCHED_GAME",
+  "gameStartTime": 1690000000000,
+  "mapId": 11,
+  "gameLength": 620,
+  "platformId": "NA1",
+  "gameMode": "CLASSIC",
+  "gameQueueConfigId": 420,
+  "bannedChampions": [
+    { "championId": 266, "teamId": 100, "pickTurn": 1 }
+  ],
+  "observers": { "encryptionKey": "sample-encryption-key" },
+  "participants": [
+    {
+      "championId": 103,
+      "summonerName": "Bjergsen",
+      "summonerId": "encrypted-summoner-id-1",
+      "puuid": "test-puuid-abc123",
+      "teamId": 100,
+      "bot": false,
+      "spell1Id": 4,
+      "spell2Id": 7,
+      "profileIconId": 4567,
+      "summonerLevel": 350,
+      "perks": { "perkIds": [8112, 8126], "perkStyle": 8100, "perkSubStyle": 8200 }
+    }
+  ]
+}

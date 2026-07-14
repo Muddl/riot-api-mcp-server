@@ -1,0 +1,48 @@
+{
+  "metadata": {
+    "dataVersion": "2",
+    "matchId": "NA1_4600000001",
+    "participants": ["test-puuid-abc123", "other-puuid-2"]
+  },
+  "info": {
+    "gameCreation": 1690000000000,
+    "gameDuration": 1834,
+    "gameId": 4600000001,
+    "gameMode": "CLASSIC",
+    "gameType": "MATCHED_GAME",
+    "gameVersion": "14.1.1",
+    "mapId": 11,
+    "queueId": 420,
+    "platformId": "NA1",
+    "participants": [
+      {
+        "puuid": "test-puuid-abc123",
+        "summonerName": "Bjergsen",
+        "championName": "Ahri",
+        "teamId": 100,
+        "teamPosition": "MIDDLE",
+        "kills": 10,
+        "deaths": 2,
+        "assists": 8,
+        "win": true,
+        "visionScore": 25,
+        "totalMinionsKilled": 210,
+        "neutralMinionsKilled": 12
+      },
+      {
+        "puuid": "other-puuid-2",
+        "summonerName": "Opponent",
+        "championName": "Zed",
+        "teamId": 200,
+        "teamPosition": "MIDDLE",
+        "kills": 5,
+        "deaths": 6,
+        "assists": 3,
+        "win": false,
+        "visionScore": 18,
+        "totalMinionsKilled": 190,
+        "neutralMinionsKilled": 4
+      }
+    ]
+  }
+}
