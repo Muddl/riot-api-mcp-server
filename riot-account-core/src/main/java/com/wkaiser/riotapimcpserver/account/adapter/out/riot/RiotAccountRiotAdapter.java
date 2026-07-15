@@ -5,11 +5,9 @@ import com.wkaiser.riotapimcpserver.account.domain.RiotAccount;
 import com.wkaiser.riotapimcpserver.shared.config.RiotApiProperties;
 import com.wkaiser.riotapimcpserver.shared.http.RiotApiClient;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 /** Riot Account API adapter. Account endpoints are region-routed. */
-@Component
 @RequiredArgsConstructor
 public class RiotAccountRiotAdapter implements RiotAccountPort {
 

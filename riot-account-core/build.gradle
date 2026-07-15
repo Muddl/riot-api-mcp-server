@@ -1,0 +1,11 @@
+plugins {
+	id 'riot-java-conventions'
+	id 'java-test-fixtures'
+}
+
+dependencies {
+	api project(':riot-api-core')
+
+	testImplementation 'org.wiremock:wiremock-standalone:3.9.2'
+	testImplementation testFixtures(project(':riot-api-core'))
+}

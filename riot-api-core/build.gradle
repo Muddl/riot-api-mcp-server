@@ -7,6 +7,11 @@ dependencies {
 	// api: servers reference RestClient types in adapter signatures via RiotApiClient.
 	api 'org.springframework:spring-web'
 	api 'org.springframework.boot:spring-boot-starter'
+	// api: RiotApiClient's RestClient.builder() resolves its JSON message converter from the
+	// classpath. Every outbound Riot*Adapter (starting with riot-account-core's) deserializes
+	// JSON responses through it, so this module must guarantee Jackson is present rather than
+	// relying on each consumer to pull in spring-boot-starter-web/-json incidentally.
+	api 'org.springframework.boot:spring-boot-starter-json'
 	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 
 	testImplementation 'org.wiremock:wiremock-standalone:3.9.2'

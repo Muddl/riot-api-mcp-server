@@ -2,6 +2,5 @@ rootProject.name = 'riot-api-mcp-server'
 
 include 'riot-api-core'
 
-// TODO: uncomment in Task 3 after riot-account-core/build.gradle is created
-// include 'riot-account-core'
+include 'riot-account-core'
 include 'lol-mcp-server'

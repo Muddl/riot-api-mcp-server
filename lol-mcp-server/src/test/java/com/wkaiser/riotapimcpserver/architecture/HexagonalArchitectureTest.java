@@ -13,9 +13,15 @@ import com.tngtech.archunit.lang.ArchRule;
 /**
  * Enforces the bounded-context hexagon defined in Decision 1 (see ARCHITECTURE.md). Only production
  * classes are analyzed ({@link ImportOption.DoNotIncludeTests}); the architecture suite itself and all
- * other test scaffolding are excluded from analysis.
+ * other test scaffolding are excluded from analysis. {@link ImportOption.DoNotIncludeGradleTestFixtures}
+ * is also required: cross-module test doubles consumed via {@code testImplementation testFixtures(...)}
+ * (e.g. account's {@code InMemoryRiotAccountPort}) land on this module's test classpath from a
+ * dependency's {@code build/classes/java/testFixtures} output, which {@code DoNotIncludeTests} alone
+ * does not filter out.
  */
-@AnalyzeClasses(packages = "com.wkaiser.riotapimcpserver", importOptions = ImportOption.DoNotIncludeTests.class)
+@AnalyzeClasses(
+        packages = "com.wkaiser.riotapimcpserver",
+        importOptions = {ImportOption.DoNotIncludeTests.class, ImportOption.DoNotIncludeGradleTestFixtures.class})
 class HexagonalArchitectureTest {
 
     private static final String ROOT = "com.wkaiser.riotapimcpserver.";

@@ -9,7 +9,7 @@ class FixturesTest {
 
     @Test
     void read_returnsFixtureContents() {
-        String json = Fixtures.read("account.json");
+        String json = Fixtures.read("summoner.json");
 
         assertThat(json).contains("\"puuid\"").contains("test-puuid-abc123");
     }
