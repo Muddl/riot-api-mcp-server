@@ -1,140 +1,87 @@
 # Changelog
 
-All notable changes to the Riot API MCP Server project will be documented in this file.
+All notable changes to the Riot API MCP Server are documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project
+adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.1.0] - 2026-07-13
 
-### Changed
-- **Spring Boot 4.1.0 / Spring AI 2.0.0 Migration**: Upgraded from Spring Boot 3.4.4 / Spring AI 1.0.0-M6 (both past end-of-life) to current supported versions
-  - Gradle wrapper bumped 8.13 → 9.6.1 (required for the Spring Boot 4.x Gradle plugin)
-  - Spring AI dependency artifact IDs renamed to match 2.0's starter naming convention
-  - All four MCP tool classes (`RiotAccountTool`, `SummonerTool`, `AnalyticsTool`, `LiveGameTool`) migrated from `@Tool`/`@ToolParam` to `@McpTool`/`@McpToolParam` — the old annotation still compiles under Spring AI 2.0 but is silently dropped from MCP registration
-  - Resolves the majority of open Dependabot alerts via Spring Boot 4.1's managed dependency versions
-
-### Fixed
-- **Gradle Test Compilation**: Fixed `:compileTestJava` task failures across all DTO classes (2025-01-28)
-  - Standardized Lombok annotations with `@Data`, `@Builder`, `@NoArgsConstructor`, `@AllArgsConstructor` pattern
-  - Resolved nested class builder conflicts in `Perks.java` static inner classes
-  - Updated test helper methods to match actual DTO field structures
-  - Added `CompilationVerificationTest.java` to prevent future regressions
+Portfolio sanitization: a real hexagonal architecture, HTTP-mocked tests, build-time enforcement, a
+container pipeline, and honest documentation. Also releases the previously unreleased Spring Boot 4.1
+/ Spring AI 2.0 modernization.
 
 ### Added
-- **FEATURES.md**: Comprehensive features documentation and roadmap (2025-01-28)
-- **README.md**: Complete project documentation with quick start guide (2025-01-28)
-- **LICENSE**: MIT License for open source usage (2025-01-28)
+- **Bounded-context hexagonal architecture** under `com.wkaiser.riotapimcpserver` — top-level
+  `account`, `summoner`, `match`, `spectator`, `analytics`, `shared` contexts, each with
+  `domain` / `application` (+ `application.port`) / `adapter.in.mcp` / `adapter.out.riot`.
+- **`shared/http/RiotApiClient`** — a single component holding all Riot HTTP/auth/error handling,
+  exposing `regional(...)` and `platform(...)` `RestClient` factories.
+- **Typed configuration** `RiotApiProperties` (`@ConfigurationProperties(prefix = "riot")`),
+  replacing scattered `@Value("${riot.apiKey}")` usage; the key is read from `RIOT_API_KEY`.
+- **WireMock adapter tests** for every outbound adapter and **in-memory port fakes** for application
+  services — the full suite runs offline with no API key.
+- **Build-time quality gates:** ArchUnit rules (dependency direction + naming/placement), JaCoCo
+  coverage reporting, and Spotless formatting, all wired into `./gradlew build`.
+- **CI/CD:** `ci.yml` (build + test + ArchUnit + JaCoCo + Spotless, with PR annotations) and
+  `release.yml` (multi-stage `Dockerfile` → image published to GHCR on `v*` tags).
+- **Documentation:** `ARCHITECTURE.md`, `CONTRIBUTING.md`, and a committed knowledge base under
+  `docs/knowledge/` (ADRs, patterns, gotchas, glossary).
+
+### Changed
+- **Spring Boot 4.1.0 / Spring AI 2.0.0** (from Spring Boot 3.4.4 / Spring AI 1.0.0-M6, both past
+  end of life); Gradle wrapper 8.13 → 9.6.1; Spring AI starter artifact IDs updated.
+- All four MCP tool classes migrated from `@Tool`/`@ToolParam` to `@McpTool`/`@McpToolParam`.
+- Riot DTOs relocated into per-context `domain/` packages (no shape changes).
+- `README.md` and `CLAUDE.md` rewritten to describe the real project.
+
+### Removed
+- `PLAN.md` and `FEATURES.md` (fictional AWS production plan and aspirational roadmap).
+- `CompilationVerificationTest` (superseded by real adapter/service tests).
+- Copy-pasted HTTP/auth/error plumbing from the four services (now centralized in `RiotApiClient`).
+- Fictional documentation claims — "83 subagents", the AWS "$2,000–5,000/month" plan, and
+  multi-agent "success stories".
+
+### Fixed
+- Match endpoints now send the `X-RIOT-TOKEN` header (previously omitted), since all requests route
+  through `RiotApiClient`.
 
 ## [1.0.0] - 2025-01-20
 
 ### Added
-- **Live Game State Monitor Tool** - Complete Riot Spectator API v4 integration
-  - `LiveGameTool` with 4 MCP methods for real-time game monitoring
-  - Complete DTO suite: `CurrentGameInfo`, `CurrentGameParticipant`, `BannedChampion`, `Observer`, `FeaturedGames`, `Perks`, `GameCustomizationObject`
-  - `SpectatorService` with platform-specific RestClient and error handling
-  - Comprehensive test suite with unit and integration tests
-  - Support for all League of Legends platforms (NA1, EUW1, etc.)
-  - Graceful handling of "summoner not in game" scenarios
+- **Live Game (Spectator v4) tool** — `LiveGameTool` with four MCP methods for live-game and
+  featured-game data, backed by `SpectatorService`.
+- Spectator DTO suite: `CurrentGameInfo`, `CurrentGameParticipant`, `BannedChampion`, `Observer`,
+  `FeaturedGames`, `Perks`, `GameCustomizationObject`.
+- Graceful handling of the "summoner not in game" case (Spectator `404`).
 
-- **Production Deployment Planning**
-  - 745-line comprehensive production deployment roadmap in `PLAN.md`
-  - 6-phase implementation strategy with multi-agent coordination
-  - AWS infrastructure design (ECS Fargate, load balancing, auto-scaling)
-  - Enterprise security (WAF, SSL, API key management with AWS Secrets Manager)
-  - Performance optimization (Redis caching, rate limiting, monitoring)
-  - Operational excellence (CI/CD pipelines, monitoring, alerting, disaster recovery)
-  - Budget planning ($2,000-5,000/month operational budget with optimization strategies)
-
-- **Claude Code Subagents Integration**
-  - Collection of 83 specialized Claude Code subagents for domain-specific expertise
-  - Core agents retained: `agent-organizer`, `java-pro`, `mcp-developer`, `test-automator`
-  - Multi-agent orchestration patterns proven effective for complex feature development
-  - Production team assembly with specialized agents for cloud architecture, security, performance
-
-- **Enhanced Documentation**
-  - Updated `CLAUDE.md` with live game monitoring and production planning sections
-  - Multi-agent coordination examples and success patterns
-  - Updated architecture documentation and file structure
-
-### Changed
-- **Agent Collection Optimization**
-  - Removed unused subagent configurations to focus on core coordination
-  - Streamlined to essential agents for proven multi-agent development workflows
-  - Updated documentation to reflect production-ready development approach
-
-## [0.3.0] - 2024-07-XX
+## [0.3.0] - 2024-07
 
 ### Added
-- **GitHub Actions Workflows**
-  - Claude Code Review workflow for automated code review on pull requests
-  - Claude PR Assistant workflow for pull request management and assistance
-  - Build and test automation with Gradle
+- GitHub Actions: Claude Code Review and Claude PR Assistant workflows; Gradle build automation.
 
 ### Fixed
-- **Gradle Permissions**: Multiple fixes for GitHub Actions gradlew permissions
-  - Resolved execute permissions for `gradlew` script in CI/CD environment
+- `gradlew` execute-permission issues in CI.
 
-## [0.2.0] - 2024-07-XX
-
-### Added
-- **Core MCP Architecture**
-  - `RiotAccountTool`: Account lookup by Riot ID or PUUID
-  - `SummonerTool`: League of Legends summoner information
-  - `AnalyticsTool`: Advanced analytics combining multiple API endpoints
-  - Service layer structure with account, summoner, match, and analytics modules
-
-### Changed
-- **Code Quality Improvements**
-  - Cleaned up initial implementation
-  - Improved error handling and logging
-  - Enhanced service integration patterns
-
-## [0.1.0] - 2024-07-XX
+## [0.2.0] - 2024-07
 
 ### Added
-- **Initial Project Setup**
-  - Spring Boot 3.4.4 application with Java 21
-  - Basic Riot API integration configuration
-  - Model Context Protocol (MCP) server setup
-  - Regional architecture with `RiotApiRegionUri` and `RiotApiPlatformUri` enums
-  - RestClient configuration with automatic regional routing
-  - Custom `RiotApiException` for API error handling
-  - `GlobalExceptionHandler` for consistent error responses
+- Core MCP tools: `RiotAccountTool`, `SummonerTool`, `AnalyticsTool`.
+- Service layer for the account, summoner, match, and analytics features.
 
-- **Development Infrastructure**
-  - Gradle build configuration with Spring AI MCP starter
-  - Lombok integration for boilerplate reduction
-  - JUnit 5 testing framework
-  - Application configuration with `application.yml`
+## [0.1.0] - 2024-07
 
-### Documentation
-- Initial `CLAUDE.md` with project overview and development patterns
-- Basic `PLAN.md` with initial project planning
+### Added
+- Initial Spring Boot MCP server (Java 21) with Riot API integration.
+- Regional architecture via `RiotApiRegionUri` and `RiotApiPlatformUri` enums.
+- `RiotApiException` and `GlobalExceptionHandler` for consistent error handling.
+- Gradle build with the Spring AI MCP starter, Lombok, and JUnit 5.
 
 ---
 
-## Legend
+## Change types
 
-### Change Types
-- **Added** for new features
-- **Changed** for changes in existing functionality
-- **Deprecated** for soon-to-be removed features
-- **Removed** for now removed features
-- **Fixed** for any bug fixes
-- **Security** for vulnerability fixes
+**Added** new features · **Changed** existing behavior · **Deprecated** soon-to-be removed ·
+**Removed** now-removed features · **Fixed** bug fixes · **Security** vulnerability fixes.
 
-### Versioning Strategy
-- **Major version** (x.0.0): Breaking changes, major feature additions
-- **Minor version** (0.x.0): New features, backwards compatible
-- **Patch version** (0.0.x): Bug fixes, backwards compatible
-
-### Multi-Agent Development Notes
-This project demonstrates successful multi-agent coordination patterns:
-- **Complex Features**: Live Game Monitor implemented with java-pro, mcp-developer, test-automator coordination
-- **Production Planning**: 8-12 specialized agents coordinated across infrastructure, security, performance, deployment
-- **Agent Organization**: agent-organizer proven effective for team assembly and workflow optimization
-
-For detailed feature information, see [FEATURES.md](FEATURES.md).
-For production deployment details, see [PLAN.md](PLAN.md).
-For development guidance, see [CLAUDE.md](CLAUDE.md).
+For the architecture behind these changes, see [ARCHITECTURE.md](ARCHITECTURE.md).
