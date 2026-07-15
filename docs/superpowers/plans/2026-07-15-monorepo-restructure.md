@@ -1604,6 +1604,34 @@ Spec migration step 9. `gotchas.md` was already updated in Task 6.
 **Files:**
 - Create: `docs/knowledge/decisions/ADR-0006-monorepo-split.md`
 - Modify: `docs/knowledge/README.md`, `CLAUDE.md`, `ARCHITECTURE.md`, `README.md`, `CONTRIBUTING.md`, `CHANGELOG.md`
+- Modify (package-root drift, see below): `docs/knowledge/patterns/add-a-bounded-context.md`, `docs/knowledge/patterns/add-an-mcp-tool.md`, `docs/knowledge/patterns/add-an-adapter-test.md`, `docs/knowledge/gotchas.md`, `.claude/skills/scaffold-bounded-context/SKILL.md`, `.claude/agents/riot-context-architect.md`
+- Annotate only (do NOT rewrite): `docs/knowledge/decisions/ADR-0001-hexagonal.md`, `docs/knowledge/decisions/ADR-0002-shared-riot-http-client.md`
+
+**Package-root drift — added to this task's scope after Task 4.** Task 4's rename left 30 stale
+`com.wkaiser.riotapimcpserver` references across 12 tracked files. Only 4 were in this task's
+original list. Verify the full set before and after with:
+```bash
+git grep -ln "riotapimcpserver" -- . | grep -v '^docs/superpowers/'
+```
+`docs/superpowers/` (specs and plans, including this file) is **excluded deliberately** — those are
+dated historical records of what was decided when, and rewriting them would falsify the record.
+
+Two categories need different treatment:
+
+- **Patterns, gotchas, skills, and agents are live instructions** — `add-a-bounded-context.md` alone
+  has 13 stale references, and it is a copy-paste template, so a stale root there actively generates
+  wrong code. The `.claude/` skill and agent files steer future agent sessions. These get a real
+  find-and-replace onto `com.wkaiser.riot.{core,account,lol}`. `gotchas.md` also names
+  `..shared.http..` in its ArchUnit note — Task 7 moved that rule to `..core.http..`; update it to match.
+- **ADR-0001 and ADR-0002 are historical records.** `docs/knowledge/README.md`'s protocol says to
+  supersede an ADR, never edit it to reverse a decision. Their decisions still stand — only the
+  package root moved — so do **not** rewrite their bodies. Add a single line directly under each
+  one's `**Date:**`:
+  ```markdown
+  - **Amended by:** [ADR-0006](ADR-0006-monorepo-split.md) — package roots are now
+    `com.wkaiser.riot.{core,account,lol}`; this ADR's decision is unchanged.
+  ```
+  This preserves the record while stopping it from misleading a reader.
 
 - [ ] **Step 1: Write ADR-0006**
 
@@ -1739,7 +1767,26 @@ same 10 tools with the same names, guarded by `McpToolInventoryTest`.
   converts `@McpTool` exceptions itself, so it could never fire.
 ```
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 6: Clear the package-root drift and verify none remains**
+
+Apply the two treatments described in this task's Files section: find-and-replace across the
+patterns, gotchas, and `.claude/` files; a one-line `**Amended by:**` annotation on ADR-0001 and
+ADR-0002 without touching their bodies.
+
+Then prove the drift is gone:
+```bash
+git grep -ln "riotapimcpserver" -- . | grep -v '^docs/superpowers/'
+```
+Expected: **no output**. Any file still listed is either unfixed or a deliberate historical mention
+you must justify in the report.
+
+Also confirm the replacements landed on the right roots — `shared` became `core`, not a blanket
+swap:
+```bash
+git grep -n "com.wkaiser.riot.core.http\|com.wkaiser.riot.lol\|com.wkaiser.riot.account" -- docs/knowledge .claude | head -20
+```
+
+- [ ] **Step 7: Commit**
 
 ```bash
 git add -A
