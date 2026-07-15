@@ -14,6 +14,9 @@ jobs:
   publish-image:
     name: Build & publish container image
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        server: [lol-mcp-server]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -35,7 +38,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository_owner }}/riot-api-mcp-server
+          images: ghcr.io/${{ github.repository_owner }}/${{ matrix.server }}
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
@@ -46,6 +49,8 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
+          build-args: |
+            SERVER_MODULE=${{ matrix.server }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

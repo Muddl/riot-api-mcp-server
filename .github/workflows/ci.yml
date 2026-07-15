@@ -50,14 +50,14 @@ jobs:
           annotate_only: true
           require_tests: true
 
-      # Comment a JaCoCo coverage summary on the PR. The XML path is the Phase 3
-      # jacocoTestReport default. Threshold is 0 here (the build already owns the
-      # soft coverage gate); this step is signal, not a blocker.
+      # Comment a JaCoCo coverage summary on the PR. The glob picks up every module's report.
+      # Threshold is 0 here (the build already owns the soft coverage gate); this step is
+      # signal, not a blocker.
       - name: Publish coverage summary
         if: github.event_name == 'pull_request'
         uses: madrapps/jacoco-report@v1.7.1
         with:
-          paths: ${{ github.workspace }}/build/reports/jacoco/test/jacocoTestReport.xml
+          paths: ${{ github.workspace }}/**/build/reports/jacoco/test/jacocoTestReport.xml
           token: ${{ secrets.GITHUB_TOKEN }}
           title: 'JaCoCo Coverage Report'
           min-coverage-overall: 0
