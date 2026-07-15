@@ -7,7 +7,7 @@
     },
     {
       "name": "riot.region",
-      "type": "com.wkaiser.riotapimcpserver.shared.enums.RiotApiRegionUri",
+      "type": "com.wkaiser.riot.core.enums.RiotApiRegionUri",
       "description": "Region Enum to determine URI for the calls to be made against."
     }
   ]
