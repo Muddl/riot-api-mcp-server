@@ -62,7 +62,19 @@ public final class HexagonRules {
      */
     public static final ArchRule NO_MCP_TOOLS_AT_ALL = noMethods().should().beAnnotatedWith(MCP_TOOL_ANNOTATION);
 
-    /** Ports are interfaces named *Port residing in ..application.port.. */
+    /**
+     * Everything in ..application.port.. is an interface. Checks the Port invariant from the
+     * package side: it catches a concrete class dumped into the port package.
+     * <p>
+     * Deliberately kept alongside {@link #PORTS_ARE_NAMED_PORT_AND_ARE_INTERFACES}, which checks the
+     * same invariant from the naming side. Neither subsumes the other — this one misses a {@code *Port}
+     * declared outside the package, and that one misses a non-{@code *Port} class declared inside it.
+     */
+    public static final ArchRule PORTS_ARE_INTERFACES =
+            classes().that().resideInAPackage("..application.port..").should().beInterfaces();
+
+    /** Ports are interfaces named *Port residing in ..application.port.. Naming-side counterpart to
+     * {@link #PORTS_ARE_INTERFACES}. */
     public static final ArchRule PORTS_ARE_NAMED_PORT_AND_ARE_INTERFACES = classes()
             .that()
             .haveSimpleNameEndingWith("Port")

@@ -37,6 +37,9 @@ class HexagonalArchitectureTest {
     static final ArchRule mcp_tools_only_in_inbound_adapters = HexagonRules.MCP_TOOLS_ONLY_IN_INBOUND_ADAPTERS;
 
     @ArchTest
+    static final ArchRule ports_are_interfaces = HexagonRules.PORTS_ARE_INTERFACES;
+
+    @ArchTest
     static final ArchRule ports_are_named_port_and_are_interfaces =
             HexagonRules.PORTS_ARE_NAMED_PORT_AND_ARE_INTERFACES;
 

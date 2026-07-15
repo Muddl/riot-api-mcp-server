@@ -34,6 +34,9 @@ class AccountArchitectureTest {
             HexagonRules.RESTCLIENT_CONFINED_TO_OUTBOUND_ADAPTERS;
 
     @ArchTest
+    static final ArchRule ports_are_interfaces = HexagonRules.PORTS_ARE_INTERFACES;
+
+    @ArchTest
     static final ArchRule ports_are_named_port_and_are_interfaces =
             HexagonRules.PORTS_ARE_NAMED_PORT_AND_ARE_INTERFACES;
 
