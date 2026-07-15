@@ -1,13 +1,12 @@
 package com.wkaiser.riotapimcpserver.shared.config;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.wkaiser.riotapimcpserver.shared.enums.RiotApiRegionUri;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.boot.context.properties.source.MapConfigurationPropertySource;
-
-import java.util.Map;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 class RiotApiPropertiesTest {
 
@@ -17,9 +16,8 @@ class RiotApiPropertiesTest {
                 "riot.api-key", "test-key-123",
                 "riot.region", "europe"));
 
-        RiotApiProperties props = new Binder(source)
-                .bind("riot", RiotApiProperties.class)
-                .get();
+        RiotApiProperties props =
+                new Binder(source).bind("riot", RiotApiProperties.class).get();
 
         assertThat(props.getApiKey()).isEqualTo("test-key-123");
         assertThat(props.getRegion()).isEqualTo(RiotApiRegionUri.EUROPE);
@@ -30,9 +28,8 @@ class RiotApiPropertiesTest {
     void region_defaults_to_americas_when_absent() {
         var source = new MapConfigurationPropertySource(Map.of("riot.api-key", "k"));
 
-        RiotApiProperties props = new Binder(source)
-                .bind("riot", RiotApiProperties.class)
-                .get();
+        RiotApiProperties props =
+                new Binder(source).bind("riot", RiotApiProperties.class).get();
 
         assertThat(props.getRegion()).isEqualTo(RiotApiRegionUri.AMERICAS);
     }

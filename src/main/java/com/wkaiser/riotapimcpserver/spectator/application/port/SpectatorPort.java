@@ -1,8 +1,8 @@
 package com.wkaiser.riotapimcpserver.spectator.application.port;
 
+import com.wkaiser.riotapimcpserver.shared.enums.RiotApiPlatformUri;
 import com.wkaiser.riotapimcpserver.spectator.domain.CurrentGameInfo;
 import com.wkaiser.riotapimcpserver.spectator.domain.FeaturedGames;
-import com.wkaiser.riotapimcpserver.shared.enums.RiotApiPlatformUri;
 
 /** Outbound port for retrieving League of Legends live-game (spectator) data. */
 public interface SpectatorPort {

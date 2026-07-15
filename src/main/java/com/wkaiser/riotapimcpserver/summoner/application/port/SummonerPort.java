@@ -1,7 +1,7 @@
 package com.wkaiser.riotapimcpserver.summoner.application.port;
 
-import com.wkaiser.riotapimcpserver.summoner.domain.Summoner;
 import com.wkaiser.riotapimcpserver.shared.enums.RiotApiPlatformUri;
+import com.wkaiser.riotapimcpserver.summoner.domain.Summoner;
 
 /** Outbound port for retrieving League of Legends summoner data. */
 public interface SummonerPort {

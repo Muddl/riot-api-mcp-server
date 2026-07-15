@@ -1,8 +1,8 @@
 package com.wkaiser.riotapimcpserver.match.domain;
 
+import java.util.List;
 import lombok.Builder;
 import lombok.Data;
-import java.util.List;
 
 /**
  * Represents a team in a League of Legends match.

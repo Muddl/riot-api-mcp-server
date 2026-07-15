@@ -1,8 +1,8 @@
 package com.wkaiser.riotapimcpserver.summoner.application;
 
+import com.wkaiser.riotapimcpserver.shared.enums.RiotApiPlatformUri;
 import com.wkaiser.riotapimcpserver.summoner.application.port.SummonerPort;
 import com.wkaiser.riotapimcpserver.summoner.domain.Summoner;
-import com.wkaiser.riotapimcpserver.shared.enums.RiotApiPlatformUri;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

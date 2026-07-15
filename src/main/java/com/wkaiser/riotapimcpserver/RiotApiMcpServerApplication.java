@@ -11,8 +11,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class RiotApiMcpServerApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(RiotApiMcpServerApplication.class, args);
-	}
-
+    public static void main(String[] args) {
+        SpringApplication.run(RiotApiMcpServerApplication.class, args);
+    }
 }

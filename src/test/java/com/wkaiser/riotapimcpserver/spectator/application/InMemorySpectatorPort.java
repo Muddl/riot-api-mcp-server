@@ -4,7 +4,6 @@ import com.wkaiser.riotapimcpserver.shared.enums.RiotApiPlatformUri;
 import com.wkaiser.riotapimcpserver.spectator.application.port.SpectatorPort;
 import com.wkaiser.riotapimcpserver.spectator.domain.CurrentGameInfo;
 import com.wkaiser.riotapimcpserver.spectator.domain.FeaturedGames;
-
 import java.util.HashMap;
 import java.util.Map;
 

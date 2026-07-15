@@ -1,9 +1,9 @@
 package com.wkaiser.riotapimcpserver.account.application;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.wkaiser.riotapimcpserver.account.domain.RiotAccount;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 class RiotAccountServiceTest {
 
@@ -12,7 +12,8 @@ class RiotAccountServiceTest {
 
     @Test
     void getAccountByRiotId_returnsStoredAccount() {
-        RiotAccount stored = RiotAccount.builder().puuid("p").gameName("Name").tagLine("NA1").build();
+        RiotAccount stored =
+                RiotAccount.builder().puuid("p").gameName("Name").tagLine("NA1").build();
         accountPort.add(stored);
 
         assertThat(accountService.getAccountByRiotId("Name", "NA1")).isSameAs(stored);
@@ -20,7 +21,8 @@ class RiotAccountServiceTest {
 
     @Test
     void getAccountByPuuid_returnsStoredAccount() {
-        RiotAccount stored = RiotAccount.builder().puuid("p").gameName("Name").tagLine("NA1").build();
+        RiotAccount stored =
+                RiotAccount.builder().puuid("p").gameName("Name").tagLine("NA1").build();
         accountPort.add(stored);
 
         assertThat(accountService.getAccountByPuuid("p")).isSameAs(stored);

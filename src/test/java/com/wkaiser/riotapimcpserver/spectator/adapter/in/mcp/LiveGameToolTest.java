@@ -1,24 +1,23 @@
 package com.wkaiser.riotapimcpserver.spectator.adapter.in.mcp;
 
-import com.wkaiser.riotapimcpserver.spectator.domain.CurrentGameInfo;
-import com.wkaiser.riotapimcpserver.spectator.domain.CurrentGameParticipant;
-import com.wkaiser.riotapimcpserver.spectator.domain.FeaturedGames;
-import com.wkaiser.riotapimcpserver.spectator.application.SpectatorService;
-import com.wkaiser.riotapimcpserver.spectator.SpectatorTestFixtures;
-import com.wkaiser.riotapimcpserver.summoner.domain.Summoner;
-import com.wkaiser.riotapimcpserver.summoner.application.SummonerService;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.wkaiser.riotapimcpserver.shared.enums.RiotApiPlatformUri;
 import com.wkaiser.riotapimcpserver.shared.exception.RiotApiException;
+import com.wkaiser.riotapimcpserver.spectator.SpectatorTestFixtures;
+import com.wkaiser.riotapimcpserver.spectator.application.SpectatorService;
+import com.wkaiser.riotapimcpserver.spectator.domain.CurrentGameInfo;
+import com.wkaiser.riotapimcpserver.spectator.domain.FeaturedGames;
+import com.wkaiser.riotapimcpserver.summoner.application.SummonerService;
+import com.wkaiser.riotapimcpserver.summoner.domain.Summoner;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for LiveGameTool.
@@ -154,8 +153,7 @@ class LiveGameToolTest {
         // Arrange
         FeaturedGames expectedFeaturedGames = SpectatorTestFixtures.createSampleFeaturedGames();
 
-        when(mockSpectatorService.getFeaturedGames(TEST_PLATFORM))
-                .thenReturn(expectedFeaturedGames);
+        when(mockSpectatorService.getFeaturedGames(TEST_PLATFORM)).thenReturn(expectedFeaturedGames);
 
         // Act
         FeaturedGames result = liveGameTool.getFeaturedGames(TEST_PLATFORM_STRING);
@@ -266,5 +264,4 @@ class LiveGameToolTest {
                 .summonerLevel(150)
                 .build();
     }
-
 }

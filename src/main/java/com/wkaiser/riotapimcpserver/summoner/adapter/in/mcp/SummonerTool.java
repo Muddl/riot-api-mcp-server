@@ -1,8 +1,8 @@
 package com.wkaiser.riotapimcpserver.summoner.adapter.in.mcp;
 
-import com.wkaiser.riotapimcpserver.summoner.domain.Summoner;
-import com.wkaiser.riotapimcpserver.summoner.application.SummonerService;
 import com.wkaiser.riotapimcpserver.shared.enums.RiotApiPlatformUri;
+import com.wkaiser.riotapimcpserver.summoner.application.SummonerService;
+import com.wkaiser.riotapimcpserver.summoner.domain.Summoner;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.mcp.annotation.McpTool;
@@ -20,7 +20,9 @@ public class SummonerTool {
 
     private final SummonerService summonerService;
 
-    @McpTool(name = "get_lol_summoner_by_name", description = "Get League of Legends summoner information by summoner name")
+    @McpTool(
+            name = "get_lol_summoner_by_name",
+            description = "Get League of Legends summoner information by summoner name")
     public Summoner getSummonerByName(
             @McpToolParam(description = "The Riot platform, e.g. NA1, EUW1", required = true) String platformStr,
             @McpToolParam(description = "The summoner's name", required = true) String summonerName) {
@@ -32,7 +34,8 @@ public class SummonerTool {
     @McpTool(name = "get_lol_summoner_by_puuid", description = "Get League of Legends summoner information by PUUID")
     public Summoner getSummonerByPuuid(
             @McpToolParam(description = "The Riot platform, e.g. NA1, EUW1", required = true) String platformStr,
-            @McpToolParam(description = "The player's PUUID (encrypted universally unique ID)", required = true) String puuid) {
+            @McpToolParam(description = "The player's PUUID (encrypted universally unique ID)", required = true)
+                    String puuid) {
         RiotApiPlatformUri platform = RiotApiPlatformUri.valueOf(platformStr);
         log.info("MCP Tool - Getting summoner by PUUID: {} on platform: {}", puuid, platform);
         return summonerService.getSummonerByPuuid(platform, puuid);

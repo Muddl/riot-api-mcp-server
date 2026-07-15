@@ -1,21 +1,7 @@
 package com.wkaiser.riotapimcpserver.match.adapter.out.riot;
 
-import com.github.tomakehurst.wiremock.WireMockServer;
-import com.wkaiser.riotapimcpserver.match.application.port.MatchPort;
-import com.wkaiser.riotapimcpserver.match.domain.Match;
-import com.wkaiser.riotapimcpserver.shared.config.RiotApiProperties;
-import com.wkaiser.riotapimcpserver.shared.enums.RiotApiRegionUri;
-import com.wkaiser.riotapimcpserver.shared.exception.RiotApiException;
-import com.wkaiser.riotapimcpserver.shared.http.RiotApiClient;
-import com.wkaiser.riotapimcpserver.testsupport.Fixtures;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
-import static com.github.tomakehurst.wiremock.client.WireMock.absent;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.absent;
 import static com.github.tomakehurst.wiremock.client.WireMock.configureFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
@@ -27,6 +13,19 @@ import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.wkaiser.riotapimcpserver.match.application.port.MatchPort;
+import com.wkaiser.riotapimcpserver.match.domain.Match;
+import com.wkaiser.riotapimcpserver.shared.config.RiotApiProperties;
+import com.wkaiser.riotapimcpserver.shared.enums.RiotApiRegionUri;
+import com.wkaiser.riotapimcpserver.shared.exception.RiotApiException;
+import com.wkaiser.riotapimcpserver.shared.http.RiotApiClient;
+import com.wkaiser.riotapimcpserver.testsupport.Fixtures;
+import java.util.List;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 class RiotMatchAdapterTest {
 

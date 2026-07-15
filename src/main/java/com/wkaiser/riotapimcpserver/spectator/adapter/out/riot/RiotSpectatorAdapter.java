@@ -1,11 +1,11 @@
 package com.wkaiser.riotapimcpserver.spectator.adapter.out.riot;
 
-import com.wkaiser.riotapimcpserver.spectator.application.port.SpectatorPort;
-import com.wkaiser.riotapimcpserver.spectator.domain.CurrentGameInfo;
-import com.wkaiser.riotapimcpserver.spectator.domain.FeaturedGames;
 import com.wkaiser.riotapimcpserver.shared.enums.RiotApiPlatformUri;
 import com.wkaiser.riotapimcpserver.shared.exception.RiotApiException;
 import com.wkaiser.riotapimcpserver.shared.http.RiotApiClient;
+import com.wkaiser.riotapimcpserver.spectator.application.port.SpectatorPort;
+import com.wkaiser.riotapimcpserver.spectator.domain.CurrentGameInfo;
+import com.wkaiser.riotapimcpserver.spectator.domain.FeaturedGames;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -23,7 +23,9 @@ public class RiotSpectatorAdapter implements SpectatorPort {
     @Override
     public CurrentGameInfo getCurrentGameInfo(RiotApiPlatformUri platform, String encryptedSummonerId) {
         try {
-            return riotApiClient.platform(platform).get()
+            return riotApiClient
+                    .platform(platform)
+                    .get()
                     .uri("/lol/spectator/v4/active-games/by-summoner/{encryptedSummonerId}", encryptedSummonerId)
                     .retrieve()
                     .body(CurrentGameInfo.class);
@@ -38,7 +40,9 @@ public class RiotSpectatorAdapter implements SpectatorPort {
 
     @Override
     public FeaturedGames getFeaturedGames(RiotApiPlatformUri platform) {
-        return riotApiClient.platform(platform).get()
+        return riotApiClient
+                .platform(platform)
+                .get()
                 .uri("/lol/spectator/v4/featured-games")
                 .retrieve()
                 .body(FeaturedGames.class);

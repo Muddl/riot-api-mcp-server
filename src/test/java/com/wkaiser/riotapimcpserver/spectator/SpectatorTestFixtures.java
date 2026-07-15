@@ -6,14 +6,12 @@ import com.wkaiser.riotapimcpserver.spectator.domain.CurrentGameParticipant;
 import com.wkaiser.riotapimcpserver.spectator.domain.FeaturedGames;
 import com.wkaiser.riotapimcpserver.spectator.domain.Observer;
 import com.wkaiser.riotapimcpserver.spectator.domain.Perks;
-
 import java.util.List;
 
 /** Shared sample-data builders for spectator tests. */
 public final class SpectatorTestFixtures {
 
-    private SpectatorTestFixtures() {
-    }
+    private SpectatorTestFixtures() {}
 
     public static CurrentGameInfo createSampleCurrentGameInfo() {
         return CurrentGameInfo.builder()
@@ -25,9 +23,14 @@ public final class SpectatorTestFixtures {
                 .platformId("NA1")
                 .gameMode("CLASSIC")
                 .gameQueueConfigId(420L)
-                .bannedChampions(List.of(
-                        BannedChampion.builder().championId(266L).teamId(100L).pickTurn(1).build()))
-                .observers(Observer.builder().encryptionKey("sample_encryption_key").build())
+                .bannedChampions(List.of(BannedChampion.builder()
+                        .championId(266L)
+                        .teamId(100L)
+                        .pickTurn(1)
+                        .build()))
+                .observers(Observer.builder()
+                        .encryptionKey("sample_encryption_key")
+                        .build())
                 .participants(List.of(
                         createSampleParticipant("TestSummoner1", 1L, 100L),
                         createSampleParticipant("TestSummoner2", 2L, 200L)))
@@ -58,23 +61,27 @@ public final class SpectatorTestFixtures {
     public static FeaturedGames createSampleFeaturedGames() {
         return FeaturedGames.builder()
                 .clientRefreshInterval(300L)
-                .gameList(List.of(
-                        CurrentGameInfo.builder()
-                                .gameId(987654321L)
-                                .gameStartTime(1640995200000L)
-                                .platformId("NA1")
-                                .gameMode("CLASSIC")
-                                .mapId(11L)
-                                .gameType("MATCHED_GAME")
-                                .gameQueueConfigId(420L)
-                                .gameLength(600L)
-                                .participants(List.of(
-                                        createSampleParticipant("FeaturedPlayer1", 1L, 100L),
-                                        createSampleParticipant("FeaturedPlayer2", 2L, 200L)))
-                                .bannedChampions(List.of(
-                                        BannedChampion.builder().championId(266L).teamId(100L).pickTurn(1).build()))
-                                .observers(Observer.builder().encryptionKey("featured_encryption_key").build())
+                .gameList(List.of(CurrentGameInfo.builder()
+                        .gameId(987654321L)
+                        .gameStartTime(1640995200000L)
+                        .platformId("NA1")
+                        .gameMode("CLASSIC")
+                        .mapId(11L)
+                        .gameType("MATCHED_GAME")
+                        .gameQueueConfigId(420L)
+                        .gameLength(600L)
+                        .participants(List.of(
+                                createSampleParticipant("FeaturedPlayer1", 1L, 100L),
+                                createSampleParticipant("FeaturedPlayer2", 2L, 200L)))
+                        .bannedChampions(List.of(BannedChampion.builder()
+                                .championId(266L)
+                                .teamId(100L)
+                                .pickTurn(1)
                                 .build()))
+                        .observers(Observer.builder()
+                                .encryptionKey("featured_encryption_key")
+                                .build())
+                        .build()))
                 .build();
     }
 }

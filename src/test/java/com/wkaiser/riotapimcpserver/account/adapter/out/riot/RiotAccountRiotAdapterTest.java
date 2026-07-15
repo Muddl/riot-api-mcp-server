@@ -1,16 +1,5 @@
 package com.wkaiser.riotapimcpserver.account.adapter.out.riot;
 
-import com.github.tomakehurst.wiremock.WireMockServer;
-import com.wkaiser.riotapimcpserver.account.application.port.RiotAccountPort;
-import com.wkaiser.riotapimcpserver.account.domain.RiotAccount;
-import com.wkaiser.riotapimcpserver.shared.config.RiotApiProperties;
-import com.wkaiser.riotapimcpserver.shared.exception.RiotApiException;
-import com.wkaiser.riotapimcpserver.shared.http.RiotApiClient;
-import com.wkaiser.riotapimcpserver.testsupport.Fixtures;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.configureFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
@@ -22,6 +11,17 @@ import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.wkaiser.riotapimcpserver.account.application.port.RiotAccountPort;
+import com.wkaiser.riotapimcpserver.account.domain.RiotAccount;
+import com.wkaiser.riotapimcpserver.shared.config.RiotApiProperties;
+import com.wkaiser.riotapimcpserver.shared.exception.RiotApiException;
+import com.wkaiser.riotapimcpserver.shared.http.RiotApiClient;
+import com.wkaiser.riotapimcpserver.testsupport.Fixtures;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 class RiotAccountRiotAdapterTest {
 

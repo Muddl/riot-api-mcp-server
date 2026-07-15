@@ -1,9 +1,9 @@
 package com.wkaiser.riotapimcpserver.spectator.application;
 
+import com.wkaiser.riotapimcpserver.shared.enums.RiotApiPlatformUri;
 import com.wkaiser.riotapimcpserver.spectator.application.port.SpectatorPort;
 import com.wkaiser.riotapimcpserver.spectator.domain.CurrentGameInfo;
 import com.wkaiser.riotapimcpserver.spectator.domain.FeaturedGames;
-import com.wkaiser.riotapimcpserver.shared.enums.RiotApiPlatformUri;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

@@ -4,12 +4,11 @@ import com.wkaiser.riotapimcpserver.shared.config.RiotApiProperties;
 import com.wkaiser.riotapimcpserver.shared.enums.RiotApiPlatformUri;
 import com.wkaiser.riotapimcpserver.shared.enums.RiotApiRegionUri;
 import com.wkaiser.riotapimcpserver.shared.exception.RiotApiException;
+import java.nio.charset.StandardCharsets;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
-
-import java.nio.charset.StandardCharsets;
 
 /**
  * Central factory for Riot API {@link RestClient} instances. This is the single place
@@ -40,7 +39,8 @@ public class RiotApiClient {
                 .defaultHeader(RIOT_TOKEN_HEADER, properties.getApiKey())
                 .defaultStatusHandler(HttpStatusCode::isError, (request, response) -> {
                     String body = new String(response.getBody().readAllBytes(), StandardCharsets.UTF_8);
-                    throw new RiotApiException("Riot API error: " + body, response.getStatusCode().value());
+                    throw new RiotApiException(
+                            "Riot API error: " + body, response.getStatusCode().value());
                 })
                 .build();
     }
