@@ -1,12 +1,11 @@
 package com.wkaiser.riotapimcpserver.spectator.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.List;
 
 /**
  * Represents rune and mastery information for a participant in a live game.

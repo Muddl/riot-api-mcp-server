@@ -1,10 +1,10 @@
 package com.wkaiser.riotapimcpserver.summoner.application;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.wkaiser.riotapimcpserver.shared.enums.RiotApiPlatformUri;
 import com.wkaiser.riotapimcpserver.summoner.domain.Summoner;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 class SummonerServiceTest {
 

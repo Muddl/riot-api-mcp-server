@@ -1,12 +1,12 @@
 package com.wkaiser.riotapimcpserver.spectator.application;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.wkaiser.riotapimcpserver.shared.enums.RiotApiPlatformUri;
 import com.wkaiser.riotapimcpserver.spectator.SpectatorTestFixtures;
 import com.wkaiser.riotapimcpserver.spectator.domain.CurrentGameInfo;
 import com.wkaiser.riotapimcpserver.spectator.domain.FeaturedGames;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 class SpectatorServiceTest {
 
@@ -20,12 +20,14 @@ class SpectatorServiceTest {
         CurrentGameInfo game = SpectatorTestFixtures.createSampleCurrentGameInfo();
         spectatorPort.putGame("summoner-in-game", game);
 
-        assertThat(spectatorService.getCurrentGameInfo(PLATFORM, "summoner-in-game")).isSameAs(game);
+        assertThat(spectatorService.getCurrentGameInfo(PLATFORM, "summoner-in-game"))
+                .isSameAs(game);
     }
 
     @Test
     void getCurrentGameInfo_returnsNull_whenSummonerNotInGame() {
-        assertThat(spectatorService.getCurrentGameInfo(PLATFORM, "summoner-not-in-game")).isNull();
+        assertThat(spectatorService.getCurrentGameInfo(PLATFORM, "summoner-not-in-game"))
+                .isNull();
     }
 
     @Test

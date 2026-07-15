@@ -1,5 +1,7 @@
 package com.wkaiser.riotapimcpserver.analytics.application;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.wkaiser.riotapimcpserver.account.application.InMemoryRiotAccountPort;
 import com.wkaiser.riotapimcpserver.account.application.RiotAccountService;
 import com.wkaiser.riotapimcpserver.account.domain.RiotAccount;
@@ -14,11 +16,8 @@ import com.wkaiser.riotapimcpserver.shared.enums.RiotApiRegionUri;
 import com.wkaiser.riotapimcpserver.summoner.application.InMemorySummonerPort;
 import com.wkaiser.riotapimcpserver.summoner.application.SummonerService;
 import com.wkaiser.riotapimcpserver.summoner.domain.Summoner;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
 
 class AnalyticsServiceTest {
 
@@ -31,13 +30,17 @@ class AnalyticsServiceTest {
     private final InMemoryMatchPort matchPort = new InMemoryMatchPort();
 
     private final AnalyticsService analyticsService = new AnalyticsService(
-            new RiotAccountService(accountPort),
-            new SummonerService(summonerPort),
-            new MatchService(matchPort));
+            new RiotAccountService(accountPort), new SummonerService(summonerPort), new MatchService(matchPort));
 
     private void givenPlayer() {
-        accountPort.add(RiotAccount.builder().puuid(PUUID).gameName("Player").tagLine("NA1").build());
-        summonerPort.putByPuuid(PLATFORM, PUUID,
+        accountPort.add(RiotAccount.builder()
+                .puuid(PUUID)
+                .gameName("Player")
+                .tagLine("NA1")
+                .build());
+        summonerPort.putByPuuid(
+                PLATFORM,
+                PUUID,
                 Summoner.builder().name("Player").summonerLevel(100).build());
     }
 
@@ -100,10 +103,8 @@ class AnalyticsServiceTest {
                 .totalMinionsKilled(150)
                 .neutralMinionsKilled(10)
                 .build();
-        MatchInfo info = MatchInfo.builder()
-                .gameDuration(1800L)
-                .participants(List.of(p))
-                .build();
+        MatchInfo info =
+                MatchInfo.builder().gameDuration(1800L).participants(List.of(p)).build();
         return Match.builder().info(info).build();
     }
 }

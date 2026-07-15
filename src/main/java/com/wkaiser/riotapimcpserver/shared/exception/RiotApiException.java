@@ -9,12 +9,12 @@ import lombok.Getter;
 @Getter
 public class RiotApiException extends RuntimeException {
     private final int statusCode;
-    
+
     public RiotApiException(String message, int statusCode) {
         super(message);
         this.statusCode = statusCode;
     }
-    
+
     public RiotApiException(String message, Throwable cause, int statusCode) {
         super(message, cause);
         this.statusCode = statusCode;

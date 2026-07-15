@@ -17,54 +17,40 @@ import org.springframework.web.client.HttpServerErrorException;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-    
+
     @ExceptionHandler(RiotApiException.class)
     public ProblemDetail handleRiotApiException(RiotApiException e) {
         log.error("Riot API error: {}", e.getMessage(), e);
-        
-        return ProblemDetail.forStatusAndDetail(
-                HttpStatus.valueOf(e.getStatusCode()),
-                e.getMessage()
-        );
+
+        return ProblemDetail.forStatusAndDetail(HttpStatus.valueOf(e.getStatusCode()), e.getMessage());
     }
-    
+
     @ExceptionHandler(HttpClientErrorException.class)
     public ProblemDetail handleHttpClientErrorException(HttpClientErrorException e) {
         log.error("HTTP client error: {}", e.getMessage(), e);
-        
-        return ProblemDetail.forStatusAndDetail(
-                e.getStatusCode(),
-                e.getMessage()
-        );
+
+        return ProblemDetail.forStatusAndDetail(e.getStatusCode(), e.getMessage());
     }
-    
+
     @ExceptionHandler(HttpServerErrorException.class)
     public ProblemDetail handleHttpServerErrorException(HttpServerErrorException e) {
         log.error("HTTP server error: {}", e.getMessage(), e);
-        
-        return ProblemDetail.forStatusAndDetail(
-                e.getStatusCode(),
-                e.getMessage()
-        );
+
+        return ProblemDetail.forStatusAndDetail(e.getStatusCode(), e.getMessage());
     }
-    
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ProblemDetail handleIllegalArgumentException(IllegalArgumentException e) {
         log.error("Invalid argument: {}", e.getMessage(), e);
-        
-        return ProblemDetail.forStatusAndDetail(
-                HttpStatus.BAD_REQUEST,
-                e.getMessage()
-        );
+
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
     }
-    
+
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleGenericException(Exception e) {
         log.error("Unexpected error: {}", e.getMessage(), e);
-        
+
         return ProblemDetail.forStatusAndDetail(
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                "An unexpected error occurred: " + e.getMessage()
-        );
+                HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred: " + e.getMessage());
     }
 }

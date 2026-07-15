@@ -9,5 +9,4 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 @EnableConfigurationProperties(RiotApiProperties.class)
-public class RiotApiConfiguration {
-}
+public class RiotApiConfiguration {}

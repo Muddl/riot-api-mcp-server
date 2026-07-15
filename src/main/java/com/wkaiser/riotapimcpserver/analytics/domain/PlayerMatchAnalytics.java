@@ -1,9 +1,8 @@
 package com.wkaiser.riotapimcpserver.analytics.domain;
 
+import java.util.List;
 import lombok.Builder;
 import lombok.Data;
-
-import java.util.List;
 
 /**
  * Contains comprehensive analytics about a player's recent League of Legends matches.

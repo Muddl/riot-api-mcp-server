@@ -2,7 +2,6 @@ package com.wkaiser.riotapimcpserver.account.application;
 
 import com.wkaiser.riotapimcpserver.account.application.port.RiotAccountPort;
 import com.wkaiser.riotapimcpserver.account.domain.RiotAccount;
-
 import java.util.HashMap;
 import java.util.Map;
 

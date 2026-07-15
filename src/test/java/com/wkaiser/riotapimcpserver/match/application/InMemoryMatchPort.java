@@ -3,7 +3,6 @@ package com.wkaiser.riotapimcpserver.match.application;
 import com.wkaiser.riotapimcpserver.match.application.port.MatchPort;
 import com.wkaiser.riotapimcpserver.match.domain.Match;
 import com.wkaiser.riotapimcpserver.shared.enums.RiotApiRegionUri;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +24,8 @@ public class InMemoryMatchPort implements MatchPort {
     }
 
     @Override
-    public List<String> getMatchIdsByPuuid(RiotApiRegionUri region, String puuid, Integer count, Integer start, Integer queue) {
+    public List<String> getMatchIdsByPuuid(
+            RiotApiRegionUri region, String puuid, Integer count, Integer start, Integer queue) {
         List<String> all = idsByPuuid.getOrDefault(puuid, List.of());
         return all.stream()
                 .skip(start == null ? 0 : start)

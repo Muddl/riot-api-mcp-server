@@ -31,10 +31,9 @@ import org.springframework.boot.test.context.SpringBootTest;
  * No outbound HTTP call happens during context startup; the dummy Anthropic key only
  * needs to pass client-construction validation, not authenticate an actual request.
  */
-@SpringBootTest(properties = {
-        "riot.api-key=dummy-test-riot-api-key",
-        "spring.ai.anthropic.api-key=dummy-test-anthropic-api-key"
-})
+@SpringBootTest(
+        properties = {"riot.api-key=dummy-test-riot-api-key", "spring.ai.anthropic.api-key=dummy-test-anthropic-api-key"
+        })
 class ApplicationContextLoadsTest {
 
     @Test

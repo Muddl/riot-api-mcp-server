@@ -1,12 +1,11 @@
 package com.wkaiser.riotapimcpserver.match.application;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.wkaiser.riotapimcpserver.match.domain.Match;
 import com.wkaiser.riotapimcpserver.shared.enums.RiotApiRegionUri;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
 
 class MatchServiceTest {
 
@@ -19,16 +18,14 @@ class MatchServiceTest {
     void getMatchIdsByPuuid_returnsStoredIds() {
         matchPort.putMatchIds("p", List.of("NA1_1", "NA1_2"));
 
-        assertThat(matchService.getMatchIdsByPuuid(REGION, "p", 20, 0, null))
-                .containsExactly("NA1_1", "NA1_2");
+        assertThat(matchService.getMatchIdsByPuuid(REGION, "p", 20, 0, null)).containsExactly("NA1_1", "NA1_2");
     }
 
     @Test
     void getMatchIdsByPuuid_honoursCountLimit() {
         matchPort.putMatchIds("p", List.of("NA1_1", "NA1_2", "NA1_3"));
 
-        assertThat(matchService.getMatchIdsByPuuid(REGION, "p", 2, 0, null))
-                .containsExactly("NA1_1", "NA1_2");
+        assertThat(matchService.getMatchIdsByPuuid(REGION, "p", 2, 0, null)).containsExactly("NA1_1", "NA1_2");
     }
 
     @Test
@@ -41,6 +38,7 @@ class MatchServiceTest {
 
     @Test
     void getMatchIdsByPuuid_returnsEmpty_whenUnknownPuuid() {
-        assertThat(matchService.getMatchIdsByPuuid(REGION, "unknown", 20, 0, null)).isEmpty();
+        assertThat(matchService.getMatchIdsByPuuid(REGION, "unknown", 20, 0, null))
+                .isEmpty();
     }
 }

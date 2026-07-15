@@ -3,7 +3,6 @@ package com.wkaiser.riotapimcpserver.summoner.application;
 import com.wkaiser.riotapimcpserver.shared.enums.RiotApiPlatformUri;
 import com.wkaiser.riotapimcpserver.summoner.application.port.SummonerPort;
 import com.wkaiser.riotapimcpserver.summoner.domain.Summoner;
-
 import java.util.HashMap;
 import java.util.Map;
 

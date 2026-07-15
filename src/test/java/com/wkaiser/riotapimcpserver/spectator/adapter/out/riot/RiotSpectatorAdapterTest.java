@@ -1,5 +1,17 @@
 package com.wkaiser.riotapimcpserver.spectator.adapter.out.riot;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.configureFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.verify;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.wkaiser.riotapimcpserver.shared.config.RiotApiProperties;
 import com.wkaiser.riotapimcpserver.shared.enums.RiotApiPlatformUri;
@@ -13,24 +25,11 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.configureFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
-import static com.github.tomakehurst.wiremock.client.WireMock.get;
-import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
-import static com.github.tomakehurst.wiremock.client.WireMock.verify;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
 class RiotSpectatorAdapterTest {
 
     private static final RiotApiPlatformUri PLATFORM = RiotApiPlatformUri.NA1;
     private static final String SUMMONER_ID = "encrypted-summoner-id-1";
-    private static final String ACTIVE_GAME_URL =
-            "/lol/spectator/v4/active-games/by-summoner/" + SUMMONER_ID;
+    private static final String ACTIVE_GAME_URL = "/lol/spectator/v4/active-games/by-summoner/" + SUMMONER_ID;
 
     private WireMockServer wireMock;
     private SpectatorPort adapter;
@@ -68,8 +67,7 @@ class RiotSpectatorAdapterTest {
         assertThat(game.getGameMode()).isEqualTo("CLASSIC");
         assertThat(game.getParticipants()).hasSize(1);
         assertThat(game.getParticipants().get(0).getSummonerName()).isEqualTo("Bjergsen");
-        verify(getRequestedFor(urlEqualTo(ACTIVE_GAME_URL))
-                .withHeader("X-RIOT-TOKEN", equalTo("test-key-123")));
+        verify(getRequestedFor(urlEqualTo(ACTIVE_GAME_URL)).withHeader("X-RIOT-TOKEN", equalTo("test-key-123")));
     }
 
     @Test

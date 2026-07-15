@@ -11,8 +11,7 @@ import java.nio.charset.StandardCharsets;
  */
 public final class Fixtures {
 
-    private Fixtures() {
-    }
+    private Fixtures() {}
 
     /** Returns the UTF-8 contents of {@code /fixtures/<name>}; fails fast if absent. */
     public static String read(String name) {

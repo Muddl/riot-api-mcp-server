@@ -1,9 +1,9 @@
 package com.wkaiser.riotapimcpserver.summoner.adapter.out.riot;
 
-import com.wkaiser.riotapimcpserver.summoner.application.port.SummonerPort;
-import com.wkaiser.riotapimcpserver.summoner.domain.Summoner;
 import com.wkaiser.riotapimcpserver.shared.enums.RiotApiPlatformUri;
 import com.wkaiser.riotapimcpserver.shared.http.RiotApiClient;
+import com.wkaiser.riotapimcpserver.summoner.application.port.SummonerPort;
+import com.wkaiser.riotapimcpserver.summoner.domain.Summoner;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -16,7 +16,9 @@ public class RiotSummonerAdapter implements SummonerPort {
 
     @Override
     public Summoner getSummonerByName(RiotApiPlatformUri platform, String summonerName) {
-        return riotApiClient.platform(platform).get()
+        return riotApiClient
+                .platform(platform)
+                .get()
                 .uri("/lol/summoner/v4/summoners/by-name/{summonerName}", summonerName)
                 .retrieve()
                 .body(Summoner.class);
@@ -24,7 +26,9 @@ public class RiotSummonerAdapter implements SummonerPort {
 
     @Override
     public Summoner getSummonerByPuuid(RiotApiPlatformUri platform, String puuid) {
-        return riotApiClient.platform(platform).get()
+        return riotApiClient
+                .platform(platform)
+                .get()
                 .uri("/lol/summoner/v4/summoners/by-puuid/{puuid}", puuid)
                 .retrieve()
                 .body(Summoner.class);
@@ -32,7 +36,9 @@ public class RiotSummonerAdapter implements SummonerPort {
 
     @Override
     public Summoner getSummonerById(RiotApiPlatformUri platform, String summonerId) {
-        return riotApiClient.platform(platform).get()
+        return riotApiClient
+                .platform(platform)
+                .get()
                 .uri("/lol/summoner/v4/summoners/{summonerId}", summonerId)
                 .retrieve()
                 .body(Summoner.class);
