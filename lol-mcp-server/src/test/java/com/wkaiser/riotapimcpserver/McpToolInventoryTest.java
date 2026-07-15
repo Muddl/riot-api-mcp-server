@@ -34,7 +34,8 @@ class McpToolInventoryTest {
 
     @Test
     void tool_inventory_is_unchanged() {
-        Set<String> actual = Stream.of(RiotAccountTool.class, AnalyticsTool.class, LiveGameTool.class, SummonerTool.class)
+        Set<String> actual = Stream.of(
+                        RiotAccountTool.class, AnalyticsTool.class, LiveGameTool.class, SummonerTool.class)
                 .flatMap(c -> Arrays.stream(c.getDeclaredMethods()))
                 .filter(m -> m.isAnnotationPresent(McpTool.class))
                 .map(m -> m.getAnnotation(McpTool.class).name())
