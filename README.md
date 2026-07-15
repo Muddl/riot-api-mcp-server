@@ -1,274 +1,156 @@
 # Riot API MCP Server
 
-[![Build Status](https://github.com/your-username/riot-api-mcp-server/workflows/CI/badge.svg)](https://github.com/Muddl/riot-api-mcp-server/actions)
-[![Java Version](https://img.shields.io/badge/Java-21-blue.svg)](https://openjdk.java.net/projects/jdk/21/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.0-green.svg)](https://spring.io/projects/spring-boot)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![CI](https://github.com/Muddl/riot-api-mcp-server/actions/workflows/ci.yml/badge.svg)](https://github.com/Muddl/riot-api-mcp-server/actions/workflows/ci.yml)
+[![Coverage](https://img.shields.io/badge/coverage-JaCoCo-brightgreen.svg)](ARCHITECTURE.md#testing-strategy)
+[![Java 21](https://img.shields.io/badge/Java-21-blue.svg)](https://openjdk.org/projects/jdk/21/)
+[![Spring Boot 4.1.0](https://img.shields.io/badge/Spring%20Boot-4.1.0-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-> **AI-First Gaming API Platform** - A Spring Boot middleware server that bridges AI models with the Riot Games API ecosystem through the Model Context Protocol (MCP).
+A [Model Context Protocol](https://modelcontextprotocol.io) (MCP) server that exposes the
+[Riot Games API](https://developer.riotgames.com/) to AI models as a small set of typed tools.
+It is a Spring Boot 4.1 / Spring AI 2.0 application (Java 21) built as a **portfolio piece**:
+the point is the engineering — a clean bounded-context hexagonal architecture, a single shared
+HTTP client, HTTP-mocked tests that run in CI with no API key, and architecture rules enforced at
+build time. An MCP client (e.g. Claude Desktop) connects over SSE and can look up Riot accounts and
+League of Legends summoners, inspect live games, and pull aggregated match analytics.
 
-## 🚀 Quick Start
+## Architecture at a glance
 
-### Prerequisites
-- **Java 21** (OpenJDK or Oracle JDK)
-- **Riot API Key** - [Get yours here](https://developer.riotgames.com/)
-- **Anthropic API Key** (for AI integration)
+Each Riot context is a self-contained hexagon: an inbound MCP adapter calls an application service,
+which depends on an outbound **port**; a Riot adapter implements that port. All HTTP, auth, and
+error handling live in one place — `shared/http/RiotApiClient`. `analytics` is a composing context
+that calls the `account`, `summoner`, and `match` application services and has no Riot adapter of
+its own.
 
-### Installation & Setup
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/muddl/riot-api-mcp-server.git
-   cd riot-api-mcp-server
-   ```
-
-2. **Configure API Keys**
-
-   `application.yml` reads both keys from environment variables — set these before running:
-   ```bash
-   export RIOT_API_KEY="YOUR_RIOT_API_KEY"
-   export ANTHROPIC_API_KEY="YOUR_ANTHROPIC_API_KEY"
-   ```
-   (On Windows PowerShell: `$env:RIOT_API_KEY = "..."`)
-
-   Never commit real keys into `application.yml` — it's tracked in git.
-
-3. **Build and Run**
-   ```bash
-   ./gradlew build
-   ./gradlew bootRun
-   ```
-
-4. **Verify Installation**
-   ```bash
-   curl http://localhost:8080/actuator/health
-   ```
-
-## 🎯 What is this?
-
-The **Riot API MCP Server** transforms League of Legends data into AI-consumable insights through standardized tools. It serves as intelligent middleware that allows AI models to:
-
-- 🔍 **Query player profiles** and match histories
-- 📊 **Generate analytics** and performance insights
-- 🎮 **Monitor live games** in real-time
-- 🧠 **Process complex gaming data** through natural language
-
-### Real-World Use Cases
-
-```
-🤖 AI Model: "Analyze the last 10 ranked games for Faker on Korean server"
-📡 MCP Server: Fetches data from Riot API → Processes analytics → Returns insights
-🎯 Result: "Faker has 8-2 W/L, 3.2 KDA, prefers Azir mid (60% pick rate)"
-```
-
-## 🛠️ Core Features
-
-### 🔧 MCP Tools Portfolio
-| Tool | Purpose | AI Model Usage |
-|------|---------|----------------|
-| **RiotAccountTool** | Cross-game account lookup | `"Find account for Player#TAG"` |
-| **SummonerTool** | LoL summoner profiles | `"Get summoner rank and level"` |
-| **AnalyticsTool** | Advanced match analytics | `"Analyze champion performance"` |
-| **LiveGameTool** | Real-time spectator data | `"Check if player is in game"` |
-
-### 🏗️ Architecture Highlights
-
-- **🌍 Regional Architecture**: Automatic routing across Riot's global infrastructure
-- **⚡ Advanced Analytics**: Multi-API data aggregation and statistical analysis
-- **🔄 Real-time Monitoring**: Live game spectating with the Spectator API v4
-- **🛡️ Production Ready**: Enterprise security, monitoring, and deployment planning
-
-## 📚 Documentation
-
-| Document | Purpose | Audience |
-|----------|---------|----------|
-| **[CLAUDE.md](CLAUDE.md)** | Development guidance & patterns | Developers |
-| **[FEATURES.md](FEATURES.md)** | Current features & roadmap | Product & Tech |
-| **[PLAN.md](PLAN.md)** | Production deployment strategy | DevOps & Leadership |
-| **[CHANGELOG.md](CHANGELOG.md)** | Version history & changes | All stakeholders |
-
-## 🚀 Development
-
-### Build Commands
-```bash
-# Build project and run tests
-./gradlew build
-
-# Run tests only
-./gradlew test
-
-# Start development server
-./gradlew bootRun
-
-# Clean build artifacts
-./gradlew clean
-```
-
-### Testing Strategy
-- **Unit Tests**: Service and tool method validation
-- **Integration Tests**: Disabled by default (require live API keys)
-- **Compilation Tests**: DTO validation and Lombok verification
-
-### Development Guidelines
-- **Lombok Pattern**: All DTOs require `@Data`, `@Builder`, `@NoArgsConstructor`, `@AllArgsConstructor`
-- **Error Handling**: Use `RiotApiException` and `GlobalExceptionHandler`
-- **Testing**: Mock Riot API responses for reliable unit testing
-
-## 🏛️ Architecture
-
-### Service Layer Structure
-```
-├── riot/
-│   ├── account/        # Cross-game account management
-│   ├── lol/
-│   │   ├── summoner/   # LoL summoner data
-│   │   ├── match/      # Match history & details
-│   │   ├── analytics/  # Advanced analytics engine
-│   │   └── spectator/  # Live game monitoring
-└── shared/             # Configuration & utilities
-```
-
-### MCP Integration Flow
 ```mermaid
-graph LR
-    A[AI Model] --> B[MCP Protocol]
-    B --> C[Spring Boot Server]
-    C --> D[Service Layer]
-    D --> E[Riot API]
-    E --> D
-    D --> C
-    C --> B
-    B --> A
+flowchart LR
+    AI["AI model / MCP client"]
+
+    subgraph in["Inbound adapters · adapter.in.mcp"]
+        AT["RiotAccountTool"]
+        ST["SummonerTool"]
+        LT["LiveGameTool"]
+        NT["AnalyticsTool"]
+    end
+
+    subgraph app["Application services · application"]
+        AS["RiotAccountService"]
+        SS["SummonerService"]
+        MS["MatchService"]
+        PS["SpectatorService"]
+        NS["AnalyticsService"]
+    end
+
+    subgraph port["Outbound ports · application.port"]
+        AP["RiotAccountPort"]
+        SP["SummonerPort"]
+        MP["MatchPort"]
+        SPP["SpectatorPort"]
+    end
+
+    subgraph out["Outbound adapters · adapter.out.riot"]
+        AA["RiotAccountRiotAdapter"]
+        SA["RiotSummonerAdapter"]
+        MA["RiotMatchAdapter"]
+        SPA["RiotSpectatorAdapter"]
+    end
+
+    RC["shared/http · RiotApiClient"]
+    RIOT[("Riot Games API")]
+
+    AI --> AT & ST & LT & NT
+    AT --> AS
+    ST --> SS
+    LT --> PS
+    NT --> NS
+    NS --> AS & SS & MS
+    AS --> AP
+    SS --> SP
+    MS --> MP
+    PS --> SPP
+    AP -. implemented by .-> AA
+    SP -. implemented by .-> SA
+    MP -. implemented by .-> MA
+    SPP -. implemented by .-> SPA
+    AA & SA & MA & SPA --> RC
+    RC --> RIOT
 ```
 
-## 🔮 Live Game Monitoring
+See **[ARCHITECTURE.md](ARCHITECTURE.md)** for the full rationale, the dependency rule, and how it
+is enforced.
 
-### Real-Time Capabilities
-- **Current Game Data**: Players, champions, bans, game mode
-- **Platform Support**: All LoL regions (NA1, EUW1, KR, etc.)
-- **Error Handling**: Graceful "not in game" responses
-- **AI Optimization**: Structured data for model consumption
+## Quick start
 
-### Example Usage
-```java
-@McpTool(name = "check_if_summoner_in_game")
-public boolean checkIfSummonerInGame(String summonerName, String platform) {
-    // Returns true/false for live game status
-}
+Prerequisites: **Java 21** and a **Riot API key** (get a development key at
+<https://developer.riotgames.com/>).
+
+```bash
+# 1. Provide your Riot API key (read from the environment by application.yml)
+export RIOT_API_KEY="RGAPI-your-key-here"
+
+# 2. Run the server
+./gradlew bootRun
 ```
 
-## 🎯 Analytics Engine
+The server starts on `http://localhost:8080`; the MCP SSE message endpoint is `/mcp/messages`.
+Point your MCP client at it, or check liveness with `curl http://localhost:8080/actuator/health`.
 
-### Comprehensive Statistics
-- **Performance Metrics**: KDA, win rate, champion mastery
-- **Match Analysis**: Recent game trends and patterns
-- **Champion Insights**: Pick rates, success rates, role preferences
-- **Edge Case Handling**: Zero games, perfect KDA scenarios
+> **Note:** the Spring AI Anthropic starter is on the classpath, so `bootRun` also expects
+> `ANTHROPIC_API_KEY` to be set. It is **not** needed to build or to run the test suite — only to
+> start the application. `export ANTHROPIC_API_KEY="sk-ant-..."` before `bootRun` if you hit a
+> startup placeholder error.
 
-### Multi-API Orchestration
-1. **Account Lookup** → Cross-game identifier resolution
-2. **Platform Routing** → Region-specific data retrieval
-3. **Data Aggregation** → Multi-endpoint result combination
-4. **Statistical Processing** → Analytics and insights generation
+## MCP tools
 
-## 🌐 Production Deployment
+Four inbound adapters expose the Riot API to MCP clients:
 
-### AWS Infrastructure Ready
-- **Container Orchestration**: ECS Fargate with auto-scaling
-- **Load Balancing**: Application Load Balancer with SSL
-- **Caching Layer**: Redis ElastiCache with intelligent TTL
-- **Security**: WAF, IAM roles, encrypted API key management
-- **Monitoring**: Prometheus, Grafana, comprehensive alerting
+| Tool (`adapter.in.mcp`) | MCP tool names | Purpose |
+|-------------------------|----------------|---------|
+| **RiotAccountTool** | `get_riot_account_by_riot_id`, `get_riot_account_by_puuid` | Cross-game Riot account lookup (Riot ID ↔ PUUID) |
+| **SummonerTool** | `get_lol_summoner_by_name`, `get_lol_summoner_by_puuid`, `get_lol_summoner_by_id` | League of Legends summoner profiles |
+| **LiveGameTool** | `get_current_game_by_summoner_name`, `get_current_game_by_summoner_id`, `get_featured_games`, `check_if_summoner_in_game` | Live-game (Spectator v4) data; returns `null`/`false` when not in a game |
+| **AnalyticsTool** | `get_lol_player_match_analytics` | Aggregated recent-match analytics, composing the account, summoner, and match services |
 
-### Deployment Timeline
-- **Phase 1-2** (Weeks 1-4): Infrastructure & core services
-- **Phase 3-4** (Weeks 5-8): Security, monitoring, optimization
-- **Phase 5-6** (Weeks 9-12): Production hardening & launch
+## Testing
 
-**Estimated Monthly Cost**: $2,000-5,000 (scalable based on usage)
+Tests run **offline with no Riot API key** — CI proves it. Outbound adapters are exercised against a
+local [WireMock](https://wiremock.org/) server (asserting request URLs, the `X-RIOT-TOKEN` header,
+JSON→DTO parsing, and error mapping including the spectator `404 → null` rule); application services
+are tested against in-memory port fakes. Architecture, coverage, and formatting are checked in the
+same run.
 
-## 🤖 Multi-Agent Development
-
-### Proven Coordination Patterns
-This project demonstrates successful **multi-agent development** using Claude Code subagents:
-
-#### Live Game Monitor Implementation Team
-- **java-pro**: DTOs, service layer, Spring Boot integration
-- **mcp-developer**: MCP tool implementation and optimization
-- **test-automator**: Comprehensive test suite creation
-- **agent-organizer**: Team coordination and workflow optimization
-
-#### Production Deployment Planning Team
-- **cloud-architect**: AWS infrastructure design
-- **security-auditor**: Security frameworks and compliance
-- **performance-engineer**: Caching and optimization strategies
-- **deployment-engineer**: CI/CD pipelines and automation
-
-### Team Assembly Patterns
-```
-Feature Request → agent-organizer → specialized team → coordinated execution
+```bash
+./gradlew build          # compile + all tests + ArchUnit + JaCoCo + Spotless check
+./gradlew test           # tests only
+./gradlew spotlessApply  # auto-format sources
 ```
 
-## 🔧 API Coverage
+## Docker
 
-### Current Riot API Integration
-| API Endpoint | Status | Capabilities |
-|--------------|--------|--------------|
-| **Account-v1** | ✅ Complete | Cross-game account lookup |
-| **Summoner-v4** | ✅ Complete | LoL player profiles |
-| **Match-v5** | ✅ Complete | Match history & details |
-| **Spectator-v4** | ✅ Complete | Live game monitoring |
-| **Champion Mastery-v4** | 🔄 Planned | Champion expertise data |
-| **League-v4** | 🔄 Planned | Ranked ladder information |
+A multi-stage `Dockerfile` builds the app and runs it on a slim JRE 21. The container reads
+`RIOT_API_KEY` from the environment.
 
-### Regional Support
-- **AMERICAS**: NA1, BR1, LA1, LA2, OC1
-- **EUROPE**: EUW1, EUNE1, TR1, RU1
-- **ASIA**: KR, JP1
-- **SEA**: PH2, SG2, TH2, TW2, VN2
+```bash
+docker build -t riot-api-mcp-server .
+docker run --rm -p 8080:8080 \
+  -e RIOT_API_KEY="RGAPI-your-key-here" \
+  -e ANTHROPIC_API_KEY="sk-ant-..." \
+  riot-api-mcp-server
+```
 
-## 🤝 Contributing
+Tagging a release (`v*`) publishes an image to GHCR at
+`ghcr.io/muddl/riot-api-mcp-server` via the `release.yml` workflow.
 
-### Development Workflow
-1. **Fork** the repository
-2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
-3. **Commit** changes (`git commit -m 'Add amazing feature'`)
-4. **Push** to branch (`git push origin feature/amazing-feature`)
-5. **Open** a Pull Request
+## Documentation
 
-### Code Standards
-- Follow existing **Lombok patterns** for DTOs
-- Include **comprehensive tests** for new features
-- Update **documentation** for API changes
-- Use **multi-agent coordination** for complex features
+| Document | Purpose |
+|----------|---------|
+| **[ARCHITECTURE.md](ARCHITECTURE.md)** | Hexagonal design, bounded contexts, dependency rule, testing strategy |
+| **[CONTRIBUTING.md](CONTRIBUTING.md)** | Build/test/format commands, conventions, how to add a context or tool |
+| **[CLAUDE.md](CLAUDE.md)** | Guidance for AI coding agents working in this repo |
+| **[CHANGELOG.md](CHANGELOG.md)** | Version history (Keep a Changelog) |
+| **[docs/knowledge/](docs/knowledge/)** | Committed knowledge base — ADRs, patterns, gotchas, glossary |
 
-## 📊 Project Status
+## License
 
-### Current Version: 1.0.0
-- ✅ **Core MCP Tools**: Account, Summoner, Analytics, Live Game
-- ✅ **Production Planning**: Complete AWS deployment roadmap
-- ✅ **Multi-Agent Success**: Proven coordination patterns
-- ✅ **Enterprise Ready**: Security, monitoring, scalability
-
-### Next Release (1.1.0) - Q2 2025
-- 🔄 **Champion Mastery API**: Player expertise analytics
-- 🔄 **Ranked Ladder Tools**: League positioning data
-- 🔄 **Enhanced Analytics**: AI-powered insights engine
-- 🔄 **Performance Optimization**: Sub-100ms response times
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- **Riot Games** for providing comprehensive API access
-- **Spring AI Team** for MCP protocol implementation
-- **Claude Code Community** for multi-agent development patterns
-- **Contributors** who helped build this AI-first gaming platform
-
----
-
-**Made with ❤️ for the intersection of AI and Gaming**
-
-> Transform gaming data into AI insights • [Documentation](CLAUDE.md) • [Features](FEATURES.md) • [Deployment](PLAN.md)
+Released under the MIT License — see [LICENSE](LICENSE).
