@@ -1,6 +1,8 @@
 spring:
   application:
     name: riot-api-mcp-server
+  profiles:
+    default: stdio
   ai:
     mcp:
       server:

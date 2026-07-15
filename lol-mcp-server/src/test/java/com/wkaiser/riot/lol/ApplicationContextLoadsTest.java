@@ -2,6 +2,7 @@ package com.wkaiser.riot.lol;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
 /**
  * Always-on smoke test that boots the full Spring application context — no real secrets,
@@ -19,6 +20,7 @@ import org.springframework.boot.test.context.SpringBootTest;
  * placeholder resolution at startup. No outbound HTTP call happens during context startup.
  */
 @SpringBootTest(properties = {"riot.api-key=dummy-test-riot-api-key"})
+@ActiveProfiles("sse")
 class ApplicationContextLoadsTest {
 
     @Test

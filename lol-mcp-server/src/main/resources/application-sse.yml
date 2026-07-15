@@ -1,0 +1,12 @@
+# SSE transport: the pre-monorepo default. HTTP on 8080, messages at /mcp/messages.
+# Logging to stdout is safe here — the protocol runs over HTTP, not the console.
+spring:
+  main:
+    web-application-type: servlet
+  ai:
+    mcp:
+      server:
+        stdio: false
+
+server:
+  port: ${SERVER_PORT:8080}

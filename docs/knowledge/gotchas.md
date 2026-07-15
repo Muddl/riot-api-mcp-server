@@ -55,3 +55,21 @@ registry. For a tool to appear:
   [ADR-0004](decisions/ADR-0004-archunit-enforcement.md)).
 
 If a new tool does not show up, check the bean annotation and the package first.
+
+## STDIO transport: any stdout write corrupts the JSON-RPC stream
+
+When the `stdio` profile is active, the MCP protocol stream **is** stdout. Spring Boot logs to
+stdout by default and every class here is `@Slf4j` — `SummonerTool` and `LiveGameTool` log on
+each tool call. One log line interleaves with protocol frames, the client sees malformed JSON,
+and the connection dies with an error that points nowhere near the cause.
+
+`application-stdio.yml` prevents this with three settings, all load-bearing:
+
+- `spring.main.banner-mode: off` — the banner alone breaks the handshake
+- `logging.pattern.console: ""` — an empty pattern disables the console appender
+- `logging.file.name` — logs still need to go somewhere; default `./riot-mcp-server.log`
+
+No unit test catches this. Verify by piping a JSON-RPC `initialize` + `tools/list` into the jar
+and asserting every stdout line parses as JSON (see the sub-project 0 plan, Task 10).
+
+The `sse` profile is unaffected — the protocol runs over HTTP, so console logging is safe.
