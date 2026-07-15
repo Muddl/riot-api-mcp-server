@@ -1,323 +1,81 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for AI coding agents (Claude Code and similar) working in this repository. Humans should
+start with [README.md](README.md); the authoritative design reference is
+[ARCHITECTURE.md](ARCHITECTURE.md).
 
-## Project Overview
+## What this is
 
-This is a **Riot API MCP Server** - a Spring Boot application that serves as middleware between AI models and the Riot Games API. It exposes tools for retrieving and analyzing League of Legends game data through the Model Context Protocol (MCP), allowing AI models to access Riot API functionality via standardized tool calls.
+A Spring Boot 4.1 / Spring AI 2.0 (Java 21) **MCP server** that exposes the Riot Games API to AI
+models as four MCP tools. It is a portfolio piece — the value is the clean bounded-context hexagonal
+architecture and the disciplined tests, not feature breadth.
 
-The project now includes a comprehensive collection of 83 specialized Claude Code subagents that provide domain-specific expertise across software development, infrastructure, and business operations.
+## Knowledge base — hydrate / persist protocol
 
-## Common Development Commands
+This repo carries a committed knowledge base at [`docs/knowledge/`](docs/knowledge/). Use it every
+session:
 
-### Build and Test
-- `./gradlew build` - Build the project and run all tests
-- `./gradlew test` - Run JUnit 5 tests only
-- `./gradlew clean` - Clean build artifacts
-- `./gradlew bootRun` - Run the Spring Boot application locally
+- **Hydrate (before acting):** read [`docs/knowledge/README.md`](docs/knowledge/README.md) (the
+  index + protocol), then the relevant `decisions/` (ADRs), `patterns/` (how-to guides), and
+  [`docs/knowledge/gotchas.md`](docs/knowledge/gotchas.md) for the task at hand.
+- **Persist (before finishing):** write findings back — a new architectural decision becomes a new
+  ADR under `decisions/`; a new repeatable procedure becomes a new `patterns/` guide; a newly
+  discovered pitfall is appended to `gotchas.md`. Keep entries small and single-purpose.
 
-### Development Notes
-- Integration tests are disabled by default (`@Disabled`) as they require valid Riot API keys
-- The application runs on Java 21 with Spring Boot 4.1.0
-- Lombok is used throughout for reducing boilerplate code
-- **Required Lombok Pattern**: All DTOs must include `@Data`, `@Builder`, `@NoArgsConstructor`, `@AllArgsConstructor` for proper compilation and Jackson deserialization
-- **Nested Class Requirement**: Inner static classes with `@Builder` must also have `@NoArgsConstructor` and `@AllArgsConstructor` to prevent builder method conflicts
+## Build and test commands
 
-## Architecture Overview
-
-### Tool-Based MCP Architecture
-The application exposes functionality to AI models through Spring AI's `@McpTool` annotation pattern:
-
-- **RiotAccountTool**: Account lookup by Riot ID or PUUID
-- **SummonerTool**: League of Legends summoner information
-- **AnalyticsTool**: Advanced analytics combining multiple API endpoints
-- **LiveGameTool**: Real-time live game monitoring and spectator data
-
-### Service Layer Structure
-```
-├── riot/
-│   ├── account/ - Riot account management (cross-game)
-│   ├── lol/
-│   │   ├── summoner/ - LoL summoner data
-│   │   ├── match/ - Match history and details
-│   │   ├── analytics/ - Advanced analytics engine
-│   │   └── spectator/ - Live game monitoring (NEW)
-└── shared/ - Configuration, exceptions, enums
+```bash
+./gradlew build          # compile + all tests + ArchUnit + JaCoCo + Spotless check (the CI gate)
+./gradlew test           # tests only
+./gradlew spotlessApply  # auto-format sources
+./gradlew bootRun        # run locally; needs RIOT_API_KEY (and ANTHROPIC_API_KEY on the classpath)
+./gradlew clean          # remove build artifacts
 ```
 
-### Regional Architecture
-- **Region Enums**: `RiotApiRegionUri` (AMERICAS, EUROPE, ASIA, SEA) for match/account data
-- **Platform Enums**: `RiotApiPlatformUri` (NA1, EUW1, etc.) for summoner-specific data
-- **RestClient Configuration**: Automatic regional routing with API key headers
+The full test suite runs **offline with no Riot API key**. Do not introduce tests that require live
+keys or network access; use WireMock (adapters) or port fakes (services) instead.
 
-### Analytics Engine
-The `AnalyticsService` demonstrates the application's core value proposition:
-1. Combines data from Account, Summoner, and Match APIs
-2. Calculates comprehensive statistics (KDA, win rate, champion preferences)
-3. Provides formatted, AI-friendly analytics responses
-4. Handles edge cases (zero games, zero deaths for KDA)
+## Architecture summary
 
-### Claude Code Subagents Integration
-The project leverages Claude Code subagents for coordinated development and production planning:
-- **Core Agent Collection** with key agents like agent-organizer, java-pro, mcp-developer retained
-- **Multi-Agent Orchestration** proven effective for complex feature development
-- **Production Team Assembly** with specialized agents for cloud architecture, security, performance
-- **Coordinated Workflows** demonstrating successful agent collaboration patterns
+Bounded-context hexagons under `com.wkaiser.riotapimcpserver`: top-level contexts `account`,
+`summoner`, `match`, `spectator`, `analytics`, and `shared`. Per context: `domain/` (Lombok DTOs),
+`application/` (`<Context>Service` + `application/port/<Context>Port`), `adapter/in/mcp/`
+(`<Context>Tool`, `@McpTool`), `adapter/out/riot/` (`Riot<Context>Adapter`, implements the port).
+`analytics` composes the account/summoner/match services and has no Riot adapter; `match` has a port
+and adapter but no tool. All HTTP/auth/error handling lives in `shared/http/RiotApiClient`.
 
-## Configuration
+**Dependency rule (ArchUnit-enforced):** `adapter → application → domain`, inward only. Only
+`adapter.out.riot` uses `RestClient`; only `adapter.in.mcp` uses `@McpTool`; `application` never
+depends on `adapter`; contexts do not touch each other's internals except `analytics`. Full detail
+and diagrams: [ARCHITECTURE.md](ARCHITECTURE.md).
 
-### Required Environment Setup
-- **Riot API Key**: Set in `application.yml` under `riot.apiKey`
-- **Region**: Configure default region in `riot.region`
-- **Anthropic API Key**: Required for AI integration (already configured)
+## Conventions
 
-### Key Configuration Files
-- `application.yml`: Main configuration including API keys and MCP server settings
-- `build.gradle`: Dependencies including Spring AI MCP starter
-- `RiotApiConfiguration.java`: RestClient setup with error handling
-- `.claude/agents/`: Core subagent configurations for multi-agent coordination
+- **DTOs:** `@Data @Builder @NoArgsConstructor @AllArgsConstructor` + `@JsonIgnoreProperties(ignoreUnknown = true)`.
+  Nested `@Builder` static classes also need `@NoArgsConstructor @AllArgsConstructor` (see
+  `gotchas.md`).
+- **Ports:** interfaces in `<context>.application.port`, named `<Context>Port`. Services depend on
+  the port, never on a `RestClient`.
+- **Tools:** `@McpTool` methods in `<context>.adapter.in.mcp` with stable snake_case names; delegate
+  to the application service. Do not change existing tool names or `@McpToolParam` descriptions
+  without reason — they are the public MCP contract.
+- **Config:** the Riot API key is read from `RIOT_API_KEY` via `RiotApiProperties`
+  (`@ConfigurationProperties(prefix = "riot")`). Never hard-code or log it.
 
-## Development Patterns
+## Testing pattern
 
-### Tool Implementation Pattern
-```java
-@McpTool(name = "tool_name", description = "Clear description for AI")
-public ReturnType methodName(
-        @McpToolParam(description = "Parameter description", required = true) ParamType param) {
-    log.info("MCP Tool - Action description");
-    return service.performAction(param);
-}
-```
+- Outbound adapters → WireMock tests (assert URL, `X-RIOT-TOKEN`, JSON→DTO parsing, error mapping;
+  spectator `404 → null`).
+- Application services → in-memory port fakes; `AnalyticsService` covers zero-games and zero-death
+  KDA edge cases.
+- TDD: write the failing test first, keep the build green at every commit.
 
-### Service Integration Pattern
-Services orchestrate multiple API calls:
-1. Account lookup (cross-game identifier)
-2. Platform-specific data retrieval
-3. Data aggregation and analysis
-4. Formatted response generation
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the step-by-step recipes and
+[`docs/knowledge/patterns/`](docs/knowledge/patterns/) for the detailed how-to guides.
 
-### Error Handling
-- Custom `RiotApiException` for API errors
-- `GlobalExceptionHandler` for consistent error responses
-- HTTP status code preservation from Riot API
+## MCP server details
 
-## Testing Strategy
-
-- **Unit Tests**: Test individual service and tool methods
-- **Integration Tests**: Disabled by default, require live API keys
-- **Test Data**: Use placeholder Riot IDs in format "GameName#TAG"
-- **Mocking**: Mock Riot API responses for reliable unit testing
-
-## Documentation Suite
-
-The project includes comprehensive documentation for all stakeholders:
-
-| Document | Purpose | Audience |
-|----------|---------|----------|
-| **[README.md](README.md)** | Main project documentation with quick start guide | All users & developers |
-| **[CLAUDE.md](CLAUDE.md)** | Development guidance & patterns (this file) | Developers & AI assistants |
-| **[FEATURES.md](FEATURES.md)** | Current features & strategic roadmap | Product & Technical teams |
-| **[PLAN.md](PLAN.md)** | Production deployment strategy | DevOps & Leadership |
-| **[CHANGELOG.md](CHANGELOG.md)** | Version history & changes | All stakeholders |
-| **[LICENSE](LICENSE)** | MIT License for open source usage | Legal & Compliance |
-
-### Professional Features
-- **Badge Integration**: Build status, Java version, Spring Boot version indicators
-- **Mermaid Diagrams**: Visual architecture and flow documentation
-- **Structured Navigation**: Cross-referenced documentation with clear purpose definitions
-- **Version Tracking**: Semantic versioning with detailed change documentation
-
-## MCP Server Details
-
-- **Type**: SYNC (synchronous request/response)
-- **Endpoint**: `/mcp/messages` for SSE communication
-- **Tools**: Auto-discovered via Spring AI's `@McpTool` annotation scanning
-- **Integration**: Designed for Claude and other AI models supporting MCP
-
-## CI/CD & GitHub Integration
-
-The project includes automated GitHub workflows:
-- **Claude Code Review**: Automated code review workflow for pull requests
-- **Claude PR Assistant**: Pull request management and assistance
-- **Build & Test**: Automated testing with Gradle
-
-## Multi-Agent Development Success
-
-### Proven Agent Coordination
-The project demonstrates successful multi-agent coordination for complex development tasks:
-
-**Live Game Monitor Implementation Team:**
-- **java-pro**: Lead development of DTOs, service layer, and Spring Boot integration
-- **mcp-developer**: MCP tool implementation and AI model optimization
-- **test-automator**: Comprehensive test suite creation and validation
-- **agent-organizer**: Team coordination and workflow optimization
-
-**Production Deployment Planning Team:**
-- **cloud-architect**: AWS infrastructure design and scaling strategies
-- **security-auditor**: Security implementation and compliance frameworks
-- **performance-engineer**: Caching, optimization, and performance monitoring
-- **deployment-engineer**: CI/CD pipelines and deployment automation
-
-### Coordination Patterns
-```
-# Feature Development Workflow
-Feature Request → agent-organizer → specialized team assembly → coordinated execution
-
-# Complex Implementation Example
-Live Game Monitoring:
-Phase 1: java-pro (DTOs) → Phase 2: java-pro (Service) →
-Phase 3: mcp-developer (Tools) → Phase 4: test-automator (Testing)
-
-# Production Planning Example
-Production Deployment:
-6 Phases × 8-12 Agents → Infrastructure + Security + Performance + Monitoring
-```
-
-## Live Game State Monitor Tool
-
-### New Feature: Riot Spectator API Integration
-The project now includes a complete **Live Game State Monitor Tool** that provides real-time access to ongoing League of Legends matches through the Riot Spectator API v4.
-
-#### Architecture
-```
-riot/lol/spectator/
-├── dto/                     - Data Transfer Objects for live game data
-│   ├── CurrentGameInfo.java        - Main live game information
-│   ├── CurrentGameParticipant.java - Player data in live games
-│   ├── BannedChampion.java         - Champion ban information
-│   ├── Observer.java               - Spectator/observer data
-│   ├── FeaturedGames.java          - Featured games list
-│   ├── Perks.java                  - Rune/mastery information
-│   └── GameCustomizationObject.java - Game customization data
-├── service/
-│   └── SpectatorService.java       - Service layer for Spectator API calls
-└── tool/
-    └── LiveGameTool.java           - MCP tools for AI model integration
-```
-
-#### MCP Tools Available
-- `get_current_game_by_summoner_name` - Get live game by summoner name
-- `get_current_game_by_summoner_id` - Get live game by encrypted summoner ID
-- `get_featured_games` - Retrieve featured games for a platform
-- `check_if_summoner_in_game` - Boolean check for game status
-
-#### Key Features
-- **Real-time Data**: Access live game information including participants, bans, and game metadata
-- **Platform Support**: Works across all League of Legends platforms (NA1, EUW1, etc.)
-- **Error Handling**: Graceful handling of "summoner not in game" scenarios (404 responses)
-- **AI Integration**: Optimized for AI model consumption through standardized MCP tools
-
-#### Data Limitations
-The Spectator API provides game metadata and participant information but **does not include**:
-- Real-time CS (Creep Score), KDA, or item builds
-- Current gold amounts or live statistics
-- Real-time positioning or objective states
-
-## Production Deployment Planning
-
-### New Addition: Comprehensive Production Deployment Plan
-The project now includes a detailed **745-line production deployment plan** that provides a complete roadmap for taking the development-ready Riot API MCP Server to production-grade infrastructure.
-
-#### Production Plan Highlights
-- **6-Phase Implementation**: 12-16 week timeline with coordinated multi-agent execution
-- **AWS Infrastructure**: ECS Fargate, load balancing, auto-scaling, and security layers
-- **Enterprise Security**: WAF, SSL, API key management with AWS Secrets Manager
-- **Performance Optimization**: Redis caching, rate limiting, and performance monitoring
-- **Operational Excellence**: CI/CD pipelines, monitoring, alerting, and disaster recovery
-- **Cost Management**: $2,000-5,000/month operational budget with optimization strategies
-
-#### Production Architecture Components
-```yaml
-Target Infrastructure:
-  - Container Orchestration: AWS ECS Fargate (2-20 instances)
-  - Load Balancing: Application Load Balancer with SSL termination
-  - Caching: Redis ElastiCache with intelligent TTL strategies
-  - Security: WAF, IAM roles, encrypted API keys
-  - Monitoring: Prometheus, Grafana, comprehensive alerting
-  - CI/CD: GitHub Actions with blue-green deployments
-```
-
-## Recent Updates (Updated: 2025-01-28)
-
-### Major Feature Addition: Live Game State Monitor Tool
-- **Complete Spectator API Integration**: Added full Riot Spectator API v4 support with DTOs, service layer, and MCP tools
-- **Multi-Agent Development**: Successfully implemented using coordinated team of specialized agents (java-pro, mcp-developer, test-automator)
-- **Comprehensive Testing**: Full test suite including unit tests and integration test framework
-- **Production Ready**: Includes proper error handling, authentication, and logging
-
-### Production Deployment Planning Complete
-- **Comprehensive Production Plan**: 745-line detailed deployment roadmap in PLAN.md
-- **Multi-Agent Coordination**: 8-12 specialized agents coordinated across 6 phases
-- **Enterprise Architecture**: AWS-based infrastructure with auto-scaling and security
-- **Operational Excellence**: Complete monitoring, CI/CD, and disaster recovery procedures
-- **Budget Planning**: Detailed cost analysis and optimization strategies
-
-### Agent Collection Updates
-- **Core Agents Retained**: Key agents like agent-organizer, java-pro, mcp-developer maintained
-- **Agent Coordination Success**: Demonstrated effective multi-agent orchestration for complex projects
-- **Production Team Identified**: Specific agents assigned for cloud architecture, security, performance, and deployment
-
-### File Structure Changes
-- **New Spectator Module**: Added complete `riot/lol/spectator/` package with DTOs, service, and tools
-- **Test Coverage**: Added comprehensive test suite for all spectator components
-- **Production Plan**: Completely updated PLAN.md with production deployment roadmap
-- Enhanced CLAUDE.md with production planning and live game monitoring capabilities
-
-### Development Workflow Enhancements
-- **Live Game Monitoring**: AI models can now access real-time League of Legends match data
-- **Production-Ready Development**: Clear path from development to production deployment
-- **Multi-Agent Coordination**: Proven coordination strategies for complex feature development
-- **Enhanced MCP Integration**: Additional tools for live game analysis and monitoring
-- **Enterprise Deployment**: Complete infrastructure and operational procedures defined
-
-### Critical Bug Fix: Gradle Test Compilation (2025-01-28)
-- **Lombok Annotation Standardization**: Fixed `:compileTestJava` Gradle task failures across all DTO classes
-- **Nested Class Builder Conflicts**: Resolved complex Lombok builder conflicts in `Perks.java` nested static classes
-- **Test Builder Alignment**: Updated test helper methods to match actual DTO field structures
-- **Complete DTO Pattern**: Applied consistent `@Data`, `@Builder`, `@NoArgsConstructor`, `@AllArgsConstructor` pattern
-- **Jackson Integration**: Ensured proper `@JsonIgnoreProperties(ignoreUnknown = true)` for API response handling
-- **Compilation Verification**: Added comprehensive `CompilationVerificationTest.java` to prevent future regressions
-
-### Complete Documentation Suite (2025-01-28)
-- **README.md**: Comprehensive project documentation with quick start guide, architecture overview, and production deployment details
-- **FEATURES.md**: Detailed feature documentation and strategic roadmap with three-phase implementation plan
-- **CHANGELOG.md**: Complete version history following Keep a Changelog format with semantic versioning
-- **LICENSE**: MIT License for open source usage and distribution
-- **Professional Project Presentation**: Badge integration, Mermaid diagrams, and structured navigation across all documentation
-
-## File Structure
-
-```
-├── .claude/
-│   ├── agents/          - Claude Code subagents (core agents retained)
-│   └── settings.local.json (local configuration)
-├── .github/
-│   └── workflows/       - GitHub automation workflows
-├── src/
-│   ├── main/java/
-│   │   └── com/wkaiser/riotapimcpserver/
-│   │       ├── riot/
-│   │       │   ├── account/     - Riot account management (cross-game)
-│   │       │   └── lol/
-│   │       │       ├── summoner/    - LoL summoner data
-│   │       │       ├── match/       - Match history and details
-│   │       │       ├── analytics/   - Advanced analytics engine
-│   │       │       └── spectator/   - **NEW: Live game monitoring**
-│   │       │           ├── dto/     - Live game data structures (7 DTOs)
-│   │       │           ├── service/ - SpectatorService API integration
-│   │       │           └── tool/    - LiveGameTool MCP tools
-│   │       └── shared/      - Configuration, exceptions, enums
-│   └── test/java/
-│       └── com/wkaiser/riotapimcpserver/
-│           ├── CompilationVerificationTest.java - **NEW: DTO compilation verification**
-│           └── riot/lol/spectator/  - **NEW: Comprehensive test suite**
-│               ├── service/     - SpectatorService unit & integration tests
-│               └── tool/        - LiveGameTool unit & integration tests
-├── CHANGELOG.md        - **NEW: Complete version history and change tracking**
-├── CLAUDE.md           - Project documentation (this file)
-├── FEATURES.md         - **NEW: Comprehensive features documentation and roadmap**
-├── LICENSE             - **NEW: MIT License for open source usage**
-├── PLAN.md             - **UPDATED: Production deployment roadmap**
-├── README.md           - **NEW: Main project documentation and quick start guide**
-└── build.gradle        - Build configuration
-```
+- Type: SYNC. SSE message endpoint: `/mcp/messages`. Server port: `8080`.
+- Tools are auto-discovered via Spring AI's `@McpTool` annotation scanning.
+- Four tool classes: `RiotAccountTool`, `SummonerTool`, `LiveGameTool`, `AnalyticsTool` (see the
+  table in [README.md](README.md)).
