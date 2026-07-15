@@ -1,5 +1,6 @@
 plugins {
 	id 'java'
+	id 'jacoco'
 	id 'org.springframework.boot' version '4.1.0'
 	id 'io.spring.dependency-management' version '1.1.7'
 	id 'com.diffplug.spotless' version '7.0.2'
@@ -57,6 +58,53 @@ spotless {
 	}
 }
 
+jacoco {
+	toolVersion = '0.8.12'
+}
+
+// Generated accessors and the bootstrap class are excluded so they do not distort the ratio.
+def coverageExclusions = [
+	'**/domain/**',
+	'**/RiotApiMcpServerApplication.class'
+]
+
+jacocoTestReport {
+	dependsOn tasks.named('test')
+	reports {
+		xml.required = true
+		html.required = true
+	}
+	afterEvaluate {
+		classDirectories.setFrom(files(classDirectories.files.collect {
+			fileTree(dir: it, exclude: coverageExclusions)
+		}))
+	}
+}
+
+jacocoTestCoverageVerification {
+	dependsOn tasks.named('jacocoTestReport')
+	violationRules {
+		rule {
+			limit {
+				counter = 'LINE'
+				value = 'COVEREDRATIO'
+				// Soft floor: presence-of-coverage signal, not an arbitrary gate.
+				minimum = 0.30
+			}
+		}
+	}
+	afterEvaluate {
+		classDirectories.setFrom(files(classDirectories.files.collect {
+			fileTree(dir: it, exclude: coverageExclusions)
+		}))
+	}
+}
+
+tasks.named('check') {
+	dependsOn tasks.named('jacocoTestCoverageVerification')
+}
+
 tasks.named('test') {
 	useJUnitPlatform()
+	finalizedBy tasks.named('jacocoTestReport')
 }
