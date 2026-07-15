@@ -8,7 +8,8 @@ application service directly (there is no inbound-port interface).
 ## 1. Location and class
 
 A tool is a `@Component` named `<Name>Tool` in
-`com.wkaiser.riotapimcpserver.<context>.adapter.in.mcp`. It depends on the application
+`com.wkaiser.riot.<game>.<context>.adapter.in.mcp` (e.g. `com.wkaiser.riot.lol.summoner.adapter.in.mcp`
+for the LoL server). It depends on the application
 `<Name>Service`, never on a port or `RestClient`. Existing tools to copy from:
 `SummonerTool`, `LiveGameTool`, `RiotAccountTool`, `AnalyticsTool`.
 
@@ -20,11 +21,11 @@ A tool is a `@Component` named `<Name>Tool` in
 platform/region are passed as `String` and parsed to the enum inside the method.
 
 ```java
-package com.wkaiser.riotapimcpserver.<context>.adapter.in.mcp;
+package com.wkaiser.riot.lol.<context>.adapter.in.mcp;
 
-import com.wkaiser.riotapimcpserver.<context>.application.<Name>Service;
-import com.wkaiser.riotapimcpserver.<context>.domain.<Name>;
-import com.wkaiser.riotapimcpserver.shared.enums.RiotApiPlatformUri;
+import com.wkaiser.riot.lol.<context>.application.<Name>Service;
+import com.wkaiser.riot.lol.<context>.domain.<Name>;
+import com.wkaiser.riot.core.enums.RiotApiPlatformUri;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.mcp.annotation.McpTool;
@@ -54,7 +55,7 @@ public class <Name>Tool {
 
 Tools are auto-discovered by Spring AI's `@McpTool` annotation scanner — no manual
 registration. The `@Component` must be in a package scanned by the application (any
-subpackage of `com.wkaiser.riotapimcpserver`). See
+subpackage of the server's own root, e.g. `com.wkaiser.riot.lol`). See
 [gotchas](../gotchas.md) for the discovery pitfalls (missing `@Component`, tool
 outside `adapter.in.mcp`, duplicate `name`).
 
