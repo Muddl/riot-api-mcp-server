@@ -1294,7 +1294,6 @@ Replaces `HexagonalArchitectureTest`'s eleven-rule hand-maintained matrix with o
 ```java
 package com.wkaiser.riot.lol.architecture;
 
-import static com.tngtech.archunit.base.DescribedPredicate.alwaysTrue;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAPackage;
 import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 
@@ -1351,14 +1350,16 @@ class HexagonalArchitectureTest {
             .notDependOnEachOther()
             .ignoreDependency(resideInAPackage("..lol.spectator.."), resideInAPackage("..lol.summoner.."))
             .ignoreDependency(resideInAPackage("..lol.analytics.."), resideInAPackage("..lol.summoner.."))
-            .ignoreDependency(resideInAPackage("..lol.analytics.."), resideInAPackage("..lol.match.."))
-            .ignoreDependency(alwaysTrue(), resideInAPackage("..lol.shared.."));
+            .ignoreDependency(resideInAPackage("..lol.analytics.."), resideInAPackage("..lol.match.."));
 }
 ```
 
-The final `ignoreDependency(alwaysTrue(), ..lol.shared..)` exists only if a `lol.shared` package still holds anything after Task 5 deleted `GlobalExceptionHandler`. **Check first:**
+**Resolved:** an earlier draft carried a conditional fourth `ignoreDependency(alwaysTrue(), ..lol.shared..)`
+in case a `lol.shared` package survived. It did not — Task 5 deleted `GlobalExceptionHandler`, its only
+member, and the directory tree with it. There is no `..lol.shared..` package, so that exception is gone
+and `alwaysTrue` is not imported. Confirm with:
 ```bash
-ls lol-mcp-server/src/main/java/com/wkaiser/riot/lol/shared 2>/dev/null || echo "EMPTY - drop the last ignoreDependency line and the alwaysTrue import"
+ls lol-mcp-server/src/main/java/com/wkaiser/riot/lol/shared 2>/dev/null && echo "UNEXPECTED — package came back; re-add the exception" || echo "absent, as expected"
 ```
 
 - [ ] **Step 4: Write the account library's architecture test**
