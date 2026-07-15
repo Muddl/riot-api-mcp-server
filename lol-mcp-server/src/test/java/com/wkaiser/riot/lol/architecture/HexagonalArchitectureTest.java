@@ -1,6 +1,7 @@
 package com.wkaiser.riot.lol.architecture;
 
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAPackage;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 
 import com.tngtech.archunit.core.importer.ImportOption;
@@ -53,12 +54,13 @@ class HexagonalArchitectureTest {
     static final ArchRule adapters_live_in_outbound_riot = HexagonRules.ADAPTERS_LIVE_IN_OUTBOUND_RIOT;
 
     /**
-     * Contexts are independent except for two deliberate composition edges. This replaces the
+     * Contexts are independent except for three deliberate composition edges. This replaces the
      * hand-maintained N-by-N matrix that preceded it: one rule that stays correct as contexts are
      * added, rather than one rule per context each enumerating every other.
      * <p>
-     * analytics -> account needs no exception: RiotAccountService lives in com.wkaiser.riot.account
-     * (riot-account-core), outside this matcher.
+     * analytics -> account needs no exception here: RiotAccountService lives in
+     * com.wkaiser.riot.account (riot-account-core), outside this matcher. That same fact is why
+     * {@link #only_analytics_and_the_account_tool_use_the_account_library} exists — see below.
      */
     @ArchTest
     static final ArchRule contexts_do_not_depend_on_each_other = slices().matching("com.wkaiser.riot.lol.(*)..")
@@ -67,4 +69,26 @@ class HexagonalArchitectureTest {
             .ignoreDependency(resideInAPackage("..lol.spectator.."), resideInAPackage("..lol.summoner.."))
             .ignoreDependency(resideInAPackage("..lol.analytics.."), resideInAPackage("..lol.summoner.."))
             .ignoreDependency(resideInAPackage("..lol.analytics.."), resideInAPackage("..lol.match.."));
+
+    /**
+     * Only analytics (which composes it) and this server's thin account tool may reach into the
+     * shared account library.
+     * <p>
+     * Before the monorepo split, the account context lived under this server's package root, so the
+     * cross-context matrix forbade summoner/match/spectator from touching it. Extracting it to
+     * com.wkaiser.riot.account moved it outside {@link #contexts_do_not_depend_on_each_other}'s
+     * matcher, which silently retired those three prohibitions — nothing violated them, so nothing
+     * failed. This restores the guarantee.
+     * <p>
+     * riot-account-core is a domain context, not infrastructure (that distinction is why it is its
+     * own module rather than part of riot-api-core), so "any module may consume it" is not the
+     * intent. Stated as deny-by-default: a context added later is forbidden until listed here.
+     */
+    @ArchTest
+    static final ArchRule only_analytics_and_the_account_tool_use_the_account_library = noClasses()
+            .that()
+            .resideOutsideOfPackages("..lol.analytics..", "..lol.account..")
+            .should()
+            .dependOnClassesThat()
+            .resideInAPackage("com.wkaiser.riot.account..");
 }
