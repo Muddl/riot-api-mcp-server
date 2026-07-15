@@ -1,7 +1,9 @@
 package com.wkaiser.riotapimcpserver.match.domain;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * Represents a participant in a League of Legends match.
@@ -9,6 +11,8 @@ import lombok.Data;
  */
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Participant {
     private int assists;
     private int baronKills;
