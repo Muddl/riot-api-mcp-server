@@ -30,6 +30,13 @@ Recorded here so a reviewer does not flag them as plan errors:
 3. **Spec implies `SpectatorTestFixtures` moves to core test fixtures.** It is spectator-specific and stays in `lol-mcp-server`.
 4. **`ci.yml:47`'s JUnit `report_paths` is already a glob** and needs no change. Only the JaCoCo path (`ci.yml:61`) breaks.
 
+### Pre-flight amendments (2026-07-15, before execution)
+
+Two defects found scanning this plan against the review rubric, both resolved by the human before Task 1 was dispatched:
+
+5. **A vacuous test was removed from Task 1.** `McpToolInventoryTest` originally carried a second test, `every_tool_method_has_a_non_blank_name`, which mapped `Method::getName` — the *Java method* name, not the `@McpTool` name — and asserted it non-blank. It tested the wrong thing and could never fail. `tool_inventory_is_unchanged` already asserts the exact 10 tool names, which is the real guard. Deleted.
+6. **Test-fixtures setup moved from Task 7 to Task 2, eliminating a mandated duplicate.** Task 3 originally `cp`-ed `Fixtures.java` into `riot-account-core` as a temporary copy for Task 7 to clean up. `Fixtures` belongs to core and Task 2 is the core-extraction task, so the `java-test-fixtures` plugin and the `Fixtures` move now happen there. Task 3 consumes it via `testFixtures(project(':riot-api-core'))`; no duplicate ever exists. Task 7 now does only what it is actually about — `HexagonRules` and the slices rewrite.
+
 ## File Structure
 
 **Created:**
@@ -84,7 +91,6 @@ import com.wkaiser.riotapimcpserver.account.adapter.in.mcp.RiotAccountTool;
 import com.wkaiser.riotapimcpserver.analytics.adapter.in.mcp.AnalyticsTool;
 import com.wkaiser.riotapimcpserver.spectator.adapter.in.mcp.LiveGameTool;
 import com.wkaiser.riotapimcpserver.summoner.adapter.in.mcp.SummonerTool;
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -120,15 +126,6 @@ class McpToolInventoryTest {
                 .collect(Collectors.toSet());
 
         assertThat(actual).containsExactlyInAnyOrderElementsOf(EXPECTED_TOOL_NAMES);
-    }
-
-    @Test
-    void every_tool_method_has_a_non_blank_name() {
-        Stream.of(RiotAccountTool.class, AnalyticsTool.class, LiveGameTool.class, SummonerTool.class)
-                .flatMap(c -> Arrays.stream(c.getDeclaredMethods()))
-                .filter(m -> m.isAnnotationPresent(McpTool.class))
-                .map(Method::getName)
-                .forEach(name -> assertThat(name).isNotBlank());
     }
 }
 ```
@@ -344,6 +341,7 @@ Spec migration step 3. Moves `shared/*` into a library and converts it from comp
 - Create: `riot-api-core/build.gradle`
 - Move: `lol-mcp-server/src/main/java/com/wkaiser/riotapimcpserver/shared/{http,config,enums,exception}/**` → `riot-api-core/src/main/java/com/wkaiser/riotapimcpserver/shared/**` (package names unchanged until Task 4)
 - Move: `RiotApiClientTest.java`, `RiotApiPropertiesTest.java` → `riot-api-core/src/test/...`
+- Move: `testsupport/Fixtures.java` → `riot-api-core/src/testFixtures/java/...` (test fixtures set up here, not in Task 7 — `Fixtures` belongs to core, and Task 3's account tests need it)
 - Create: `riot-api-core/src/main/java/com/wkaiser/riotapimcpserver/shared/config/RiotApiAutoConfiguration.java`
 - Create: `riot-api-core/src/main/resources/META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`
 - Create: `riot-api-core/src/test/java/com/wkaiser/riotapimcpserver/shared/config/RiotApiAutoConfigurationTest.java`
@@ -357,10 +355,11 @@ Spec migration step 3. Moves `shared/*` into a library and converts it from comp
 
 - [ ] **Step 1: Create the core module build file**
 
-`riot-api-core/build.gradle`:
+`riot-api-core/build.gradle`. Test fixtures are enabled here rather than in Task 7: `Fixtures` is core's, and Task 3's account adapter test consumes it — setting it up later would force a temporary duplicate.
 ```groovy
 plugins {
 	id 'riot-java-conventions'
+	id 'java-test-fixtures'
 }
 
 dependencies {
@@ -370,6 +369,8 @@ dependencies {
 	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 
 	testImplementation 'org.wiremock:wiremock-standalone:3.9.2'
+	// No testFixtures(project(':riot-api-core')) here: the java-test-fixtures plugin already
+	// puts this project's own testFixtures source set on its test classpath.
 }
 ```
 
@@ -390,6 +391,18 @@ git mv lol-mcp-server/src/test/java/com/wkaiser/riotapimcpserver/shared \
 mkdir -p lol-mcp-server/src/main/java/com/wkaiser/riotapimcpserver/shared/exception
 git mv riot-api-core/src/main/java/com/wkaiser/riotapimcpserver/shared/exception/GlobalExceptionHandler.java \
        lol-mcp-server/src/main/java/com/wkaiser/riotapimcpserver/shared/exception/GlobalExceptionHandler.java
+```
+
+Move `Fixtures` into core's **test fixtures** so both `riot-account-core` (Task 3) and `lol-mcp-server` can consume one copy. `SpectatorTestFixtures` is spectator-specific and stays in `lol-mcp-server` — do not move it (deviation 3 in this plan's header). `FixturesTest` also stays in `lol-mcp-server`: it needs a fixture JSON on the classpath, and that module keeps five of them.
+```bash
+mkdir -p riot-api-core/src/testFixtures/java/com/wkaiser/riotapimcpserver/testsupport
+git mv lol-mcp-server/src/test/java/com/wkaiser/riotapimcpserver/testsupport/Fixtures.java \
+       riot-api-core/src/testFixtures/java/com/wkaiser/riotapimcpserver/testsupport/Fixtures.java
+```
+
+`lol-mcp-server` must now consume them. Add to `lol-mcp-server/build.gradle` dependencies:
+```groovy
+	testImplementation testFixtures(project(':riot-api-core'))
 ```
 
 - [ ] **Step 3: Drop the stereotype from RiotApiClient and delete RiotApiConfiguration**
@@ -569,7 +582,7 @@ dependencies {
 }
 ```
 
-Note: `testFixtures(...)` is declared now but only becomes non-empty in Task 7. Gradle tolerates an empty test-fixtures source set. The `Fixtures` class that `RiotAccountRiotAdapterTest` needs still lives in `lol-mcp-server` at this point — Step 2 handles that.
+`testFixtures(project(':riot-api-core'))` supplies the `Fixtures` class that `RiotAccountRiotAdapterTest` needs. Task 2 moved it there precisely so this module can consume it without a duplicate copy.
 
 - [ ] **Step 2: Move account's non-inbound layers, tests, and fixture**
 
@@ -594,13 +607,9 @@ git mv lol-mcp-server/src/test/resources/fixtures/account.json \
        riot-account-core/src/test/resources/fixtures/account.json
 ```
 
-`RiotAccountRiotAdapterTest` imports `com.wkaiser.riotapimcpserver.testsupport.Fixtures`, which is still in `lol-mcp-server`. Copy it into account-core temporarily; Task 7 replaces both copies with the shared test-fixtures version:
-```bash
-mkdir -p riot-account-core/src/test/java/com/wkaiser/riotapimcpserver/testsupport
-cp lol-mcp-server/src/test/java/com/wkaiser/riotapimcpserver/testsupport/Fixtures.java \
-   riot-account-core/src/test/java/com/wkaiser/riotapimcpserver/testsupport/Fixtures.java
-```
-This duplication is temporary and intentional — it keeps this task's build green without pulling Task 7's test-fixtures work forward. Task 7 deletes both copies.
+`RiotAccountRiotAdapterTest` imports `com.wkaiser.riotapimcpserver.testsupport.Fixtures`. No copy or edit is needed: Task 2 moved that class into `riot-api-core`'s test fixtures, and Step 1's `testFixtures(project(':riot-api-core'))` dependency puts it on this module's test classpath under the same package name.
+
+`Fixtures.read()` resolves `/fixtures/<name>` from the runtime classpath, so `account.json` living in **this** module's `src/test/resources` is what makes the lookup succeed here.
 
 - [ ] **Step 3: Drop stereotypes from the library classes**
 
@@ -1130,11 +1139,11 @@ git commit -m "feat: add stdio (default) and sse transport profiles"
 
 Spec migration step 8.
 
+Test fixtures already exist (Task 2 enabled the plugin and moved `Fixtures`). This task adds the shared ArchUnit rules to them and rewrites the architecture tests.
+
 **Files:**
-- Modify: `riot-api-core/build.gradle` (add `java-test-fixtures`)
-- Create: `riot-api-core/src/testFixtures/java/com/wkaiser/riot/core/testsupport/Fixtures.java` (moved)
+- Modify: `riot-api-core/build.gradle` (add the ArchUnit dependency to test fixtures)
 - Create: `riot-api-core/src/testFixtures/java/com/wkaiser/riot/core/testsupport/HexagonRules.java`
-- Delete: both duplicated `Fixtures.java` copies
 - Rewrite: `lol-mcp-server/.../architecture/HexagonalArchitectureTest.java`
 - Create: `riot-account-core/src/test/java/com/wkaiser/riot/account/architecture/AccountArchitectureTest.java`
 - Modify: `lol-mcp-server/build.gradle`
@@ -1143,9 +1152,9 @@ Spec migration step 8.
 - Consumes: final package roots from Task 4.
 - Produces: `HexagonRules.LAYERS_RESPECT_INWARD_DEPENDENCY_RULE`, `.RESTCLIENT_CONFINED_TO_OUTBOUND_ADAPTERS`, `.MCP_TOOLS_ONLY_IN_INBOUND_ADAPTERS`, `.NO_MCP_TOOLS_AT_ALL`, `.PORTS_ARE_NAMED_PORT_AND_ARE_INTERFACES`, `.SERVICES_LIVE_IN_APPLICATION`, `.TOOLS_LIVE_IN_INBOUND_ADAPTERS`, `.ADAPTERS_LIVE_IN_OUTBOUND_RIOT` — all `public static final ArchRule`, consumed by every module's architecture test and by future game servers.
 
-- [ ] **Step 1: Enable test fixtures on core**
+- [ ] **Step 1: Add ArchUnit to core's test fixtures**
 
-`riot-api-core/build.gradle` — add the plugin and the fixtures' own dependencies:
+The `java-test-fixtures` plugin is already applied (Task 2). Add the ArchUnit dependency as `testFixturesApi` so it reaches every consuming module's architecture test transitively:
 ```groovy
 plugins {
 	id 'riot-java-conventions'
@@ -1158,30 +1167,15 @@ dependencies {
 	api 'org.springframework.boot:spring-boot-starter'
 	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 
-	// Shared across every module's architecture test.
+	// testFixturesApi (not testFixturesImplementation): HexagonRules exposes ArchRule in its
+	// public signatures, so consumers need ArchUnit on their compile classpath.
 	testFixturesApi 'com.tngtech.archunit:archunit-junit5:1.3.0'
 
 	testImplementation 'org.wiremock:wiremock-standalone:3.9.2'
 }
 ```
 
-- [ ] **Step 2: Move Fixtures into test fixtures and delete both copies**
-
-```bash
-mkdir -p riot-api-core/src/testFixtures/java/com/wkaiser/riot/core/testsupport
-git mv lol-mcp-server/src/test/java/com/wkaiser/riot/core/testsupport/Fixtures.java \
-       riot-api-core/src/testFixtures/java/com/wkaiser/riot/core/testsupport/Fixtures.java
-git rm riot-account-core/src/test/java/com/wkaiser/riot/core/testsupport/Fixtures.java
-```
-
-`FixturesTest` tests `Fixtures` and must follow it. It reads a fixture from the classpath, so it needs a fixture file present in whichever module runs it — keep it in `lol-mcp-server`, which still has five fixture JSONs:
-```bash
-# FixturesTest stays put; it now exercises the test-fixtures copy via the testFixtures dependency.
-```
-
-`SpectatorTestFixtures` is spectator-specific and stays in `lol-mcp-server` — **do not** move it to core (deviation 3 in this plan's header).
-
-- [ ] **Step 3: Write the shared rule library**
+- [ ] **Step 2: Write the shared rule library**
 
 `riot-api-core/src/testFixtures/java/com/wkaiser/riot/core/testsupport/HexagonRules.java`:
 ```java
@@ -1272,7 +1266,7 @@ public final class HexagonRules {
 
 Note `RESTCLIENT_CONFINED_TO_OUTBOUND_ADAPTERS` uses `..core.http..` — the post-rename home of `RiotApiClient` (was `..shared.http..`).
 
-- [ ] **Step 4: Rewrite the LoL architecture test**
+- [ ] **Step 3: Rewrite the LoL architecture test**
 
 Replaces `HexagonalArchitectureTest`'s eleven-rule hand-maintained matrix with one slice rule.
 
@@ -1349,7 +1343,7 @@ The final `ignoreDependency(alwaysTrue(), ..lol.shared..)` exists only if a `lol
 ls lol-mcp-server/src/main/java/com/wkaiser/riot/lol/shared 2>/dev/null || echo "EMPTY - drop the last ignoreDependency line and the alwaysTrue import"
 ```
 
-- [ ] **Step 5: Write the account library's architecture test**
+- [ ] **Step 4: Write the account library's architecture test**
 
 Encodes the module's contract — a library that ships no tools.
 
@@ -1394,9 +1388,9 @@ class AccountArchitectureTest {
 }
 ```
 
-- [ ] **Step 6: Wire the test-fixtures dependency into lol-mcp-server**
+- [ ] **Step 5: Drop lol-mcp-server's now-redundant direct ArchUnit dependency**
 
-`lol-mcp-server/build.gradle` dependencies — the ArchUnit dep now arrives transitively via `testFixturesApi`, so drop the direct one:
+The `testFixtures(project(':riot-api-core'))` line is already present (Task 2 added it). ArchUnit now arrives transitively through `testFixturesApi`, so the direct declaration is redundant — remove it. Resulting `lol-mcp-server/build.gradle` dependencies:
 ```groovy
 dependencies {
 	implementation project(':riot-api-core')
@@ -1411,7 +1405,7 @@ dependencies {
 }
 ```
 
-- [ ] **Step 7: Prove the account no-tools rule actually bites**
+- [ ] **Step 6: Prove the account no-tools rule actually bites**
 
 A rule that passes vacuously is worse than no rule. Temporarily add a tool to the library and confirm the build fails:
 
@@ -1440,14 +1434,14 @@ Record this: the no-tools property is enforced twice — by the absent dependenc
 rm riot-account-core/src/main/java/com/wkaiser/riot/account/TempCanary.java
 ```
 
-- [ ] **Step 8: Build**
+- [ ] **Step 7: Build**
 
 ```bash
 ./gradlew spotlessApply && ./gradlew build
 ```
 Expected: **BUILD SUCCESSFUL**. If the slice rule fails, read the reported cycle carefully — a genuine unexpected cross-context dependency is a finding worth reporting, not something to silence with another `ignoreDependency`.
 
-- [ ] **Step 9: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 git add -A
