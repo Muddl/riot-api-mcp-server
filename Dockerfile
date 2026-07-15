@@ -32,13 +32,11 @@ USER appuser
 COPY --from=build /workspace/build/libs/*.jar app.jar
 
 # Required runtime configuration (12-factor; no secrets are baked into the image):
-#   RIOT_API_KEY       Riot Games API key      -> bound to riot.apiKey
-#   ANTHROPIC_API_KEY  Anthropic API key       -> Spring AI model integration
-# Supply them at run time, e.g.:
+#   RIOT_API_KEY  Riot Games API key -> bound to riot.apiKey
+# Supply it at run time, e.g.:
 #   docker run --rm -p 8080:8080 \
 #     -e RIOT_API_KEY=RGAPI-xxxx \
-#     -e ANTHROPIC_API_KEY=sk-ant-xxxx \
-#     ghcr.io/<owner>/riot-api-mcp-server:latest
+#     ghcr.io/<owner>/lol-mcp-server:latest
 
 # Spring Boot serves the MCP SSE endpoint (/mcp/messages) on 8080 by default.
 EXPOSE 8080

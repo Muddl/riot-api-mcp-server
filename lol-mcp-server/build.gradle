@@ -8,8 +8,6 @@ dependencies {
 	implementation project(':riot-account-core')
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'io.github.wimdeblauwe:htmx-spring-boot:5.1.0'
-	implementation 'org.springframework.ai:spring-ai-starter-model-anthropic'
 	implementation 'org.springframework.ai:spring-ai-starter-mcp-server-webmvc'
 
 	testImplementation 'org.wiremock:wiremock-standalone:3.9.2'
