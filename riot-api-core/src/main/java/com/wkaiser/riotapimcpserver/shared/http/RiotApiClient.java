@@ -7,7 +7,6 @@ import com.wkaiser.riotapimcpserver.shared.exception.RiotApiException;
 import java.nio.charset.StandardCharsets;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatusCode;
-import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 /**
@@ -15,7 +14,6 @@ import org.springframework.web.client.RestClient;
  * that knows the Riot authentication header, base-URL assembly, and error-to-exception
  * mapping — replacing the per-service HTTP plumbing that was previously copy-pasted.
  */
-@Component
 @RequiredArgsConstructor
 public class RiotApiClient {
 

@@ -1,0 +1,15 @@
+plugins {
+	id 'riot-java-conventions'
+	id 'java-test-fixtures'
+}
+
+dependencies {
+	// api: servers reference RestClient types in adapter signatures via RiotApiClient.
+	api 'org.springframework:spring-web'
+	api 'org.springframework.boot:spring-boot-starter'
+	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+
+	testImplementation 'org.wiremock:wiremock-standalone:3.9.2'
+	// No testFixtures(project(':riot-api-core')) here: the java-test-fixtures plugin already
+	// puts this project's own testFixtures source set on its test classpath.
+}
