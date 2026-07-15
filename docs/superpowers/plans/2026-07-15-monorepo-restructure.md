@@ -376,15 +376,25 @@ dependencies {
 
 - [ ] **Step 2: Move the shared package and its tests**
 
+Create only the PARENT of each destination. Do not `mkdir` a destination path itself: `git mv SRC DST`
+renames when `DST` does not exist, but moves *into* `DST` when it does — pre-creating
+`.../riotapimcpserver/shared` silently produces `shared/shared/{config,http}`.
 ```bash
 mkdir -p riot-api-core/src/main/java/com/wkaiser/riotapimcpserver
 mkdir -p riot-api-core/src/test/java/com/wkaiser/riotapimcpserver
 git mv lol-mcp-server/src/main/java/com/wkaiser/riotapimcpserver/shared \
        riot-api-core/src/main/java/com/wkaiser/riotapimcpserver/shared
-mkdir -p riot-api-core/src/test/java/com/wkaiser/riotapimcpserver/shared
 git mv lol-mcp-server/src/test/java/com/wkaiser/riotapimcpserver/shared \
        riot-api-core/src/test/java/com/wkaiser/riotapimcpserver/shared
 ```
+
+Verify the layout before moving on — this is where the nesting bug shows up:
+```bash
+find riot-api-core/src -type d -name shared
+```
+Expected: exactly `riot-api-core/src/main/java/com/wkaiser/riotapimcpserver/shared` and
+`riot-api-core/src/test/java/com/wkaiser/riotapimcpserver/shared`. Any `shared/shared` path means a
+destination was pre-created; fix with `git mv` before continuing.
 
 `GlobalExceptionHandler` moved with `shared/exception/`. Move it back — it is web-tier code and Task 5 deletes it:
 ```bash
@@ -764,8 +774,9 @@ The mapping:
 
 | From | To | Module |
 |---|---|---|
-| `com.wkaiser.riotapimcpserver.shared` | `com.wkaiser.riot.core` | riot-api-core |
-| `com.wkaiser.riotapimcpserver.testsupport` | `com.wkaiser.riot.core.testsupport` | (both, temporarily) |
+| `com.wkaiser.riotapimcpserver.shared` | `com.wkaiser.riot.core` | riot-api-core (main + test) |
+| `com.wkaiser.riotapimcpserver.testsupport` (`Fixtures`) | `com.wkaiser.riot.core.testsupport` | riot-api-core (**testFixtures**) |
+| `com.wkaiser.riotapimcpserver.testsupport` (`FixturesTest`) | `com.wkaiser.riot.core.testsupport` | lol-mcp-server (test) |
 | `com.wkaiser.riotapimcpserver.account` | `com.wkaiser.riot.account` | riot-account-core |
 | `com.wkaiser.riotapimcpserver.account.adapter.in.mcp` | `com.wkaiser.riot.lol.account.adapter.in.mcp` | lol-mcp-server |
 | `com.wkaiser.riotapimcpserver.{summoner,match,spectator,analytics}` | `com.wkaiser.riot.lol.{...}` | lol-mcp-server |
@@ -777,23 +788,26 @@ The mapping:
 Do this with an IDE refactor if available — it updates imports atomically. Otherwise, move directories then fix imports by search-and-replace. The `shared` → `core` rename is the only one that is not a pure prefix swap.
 
 ```bash
-# riot-api-core: shared -> core
+# riot-api-core: shared -> core (main, test, AND testFixtures — Task 2 put Fixtures in testFixtures)
 mkdir -p riot-api-core/src/main/java/com/wkaiser/riot
 git mv riot-api-core/src/main/java/com/wkaiser/riotapimcpserver/shared \
        riot-api-core/src/main/java/com/wkaiser/riot/core
 mkdir -p riot-api-core/src/test/java/com/wkaiser/riot
 git mv riot-api-core/src/test/java/com/wkaiser/riotapimcpserver/shared \
        riot-api-core/src/test/java/com/wkaiser/riot/core
+mkdir -p riot-api-core/src/testFixtures/java/com/wkaiser/riot/core
+git mv riot-api-core/src/testFixtures/java/com/wkaiser/riotapimcpserver/testsupport \
+       riot-api-core/src/testFixtures/java/com/wkaiser/riot/core/testsupport
 
 # riot-account-core: account -> riot.account
+# NOTE: account-core has NO testsupport/ directory — the pre-flight amendment (deviation 6) moved
+# Fixtures into core's testFixtures instead of duplicating it here. Do not try to move one.
 mkdir -p riot-account-core/src/main/java/com/wkaiser/riot
 git mv riot-account-core/src/main/java/com/wkaiser/riotapimcpserver/account \
        riot-account-core/src/main/java/com/wkaiser/riot/account
 mkdir -p riot-account-core/src/test/java/com/wkaiser/riot
 git mv riot-account-core/src/test/java/com/wkaiser/riotapimcpserver/account \
        riot-account-core/src/test/java/com/wkaiser/riot/account
-git mv riot-account-core/src/test/java/com/wkaiser/riotapimcpserver/testsupport \
-       riot-account-core/src/test/java/com/wkaiser/riot/core/testsupport
 
 # lol-mcp-server: contexts -> riot.lol.*
 mkdir -p lol-mcp-server/src/main/java/com/wkaiser/riot/lol
@@ -815,6 +829,10 @@ for ctx in summoner match spectator analytics architecture; do
   git mv lol-mcp-server/src/test/java/com/wkaiser/riotapimcpserver/$ctx \
          lol-mcp-server/src/test/java/com/wkaiser/riot/lol/$ctx
 done
+# FixturesTest stays in this module (it needs a fixture JSON on the classpath, and this module keeps
+# five of them) but follows Fixtures into the core.testsupport package. Its parent `riot/core` does
+# not exist here yet — mkdir it, or the git mv fails with "destination directory does not exist".
+mkdir -p lol-mcp-server/src/test/java/com/wkaiser/riot/core
 git mv lol-mcp-server/src/test/java/com/wkaiser/riotapimcpserver/testsupport \
        lol-mcp-server/src/test/java/com/wkaiser/riot/core/testsupport
 git mv lol-mcp-server/src/test/java/com/wkaiser/riotapimcpserver/ApplicationContextLoadsTest.java \
