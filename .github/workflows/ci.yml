@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+# Least-privilege default for the whole workflow. Individual jobs elevate only
+# the scopes their actions need (see each job's `permissions:` block).
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build & verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read        # actions/checkout
+      checks: write         # mikepenz/action-junit-report publishes a check run
+      pull-requests: write  # madrapps/jacoco-report posts a PR comment
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'zulu'
+
+      # Configures Gradle with dependency caching for GitHub Actions.
+      # See: https://github.com/gradle/actions/blob/main/setup-gradle/README.md
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
+
+      # `build` gates every Phase 3 quality check: unit + WireMock adapter tests,
+      # the ArchUnit rule suite, JaCoCo report generation, and spotlessCheck.
+      - name: Build with Gradle Wrapper
+        run: ./gradlew build
+
+      # Publish JUnit results as a check run with inline annotations, even when
+      # the build failed, so failing tests are visible on the PR.
+      - name: Publish test results
+        if: always()
+        uses: mikepenz/action-junit-report@v5
+        with:
+          report_paths: '**/build/test-results/test/TEST-*.xml'
+          check_name: 'JUnit Test Results'
+          annotate_only: true
+          require_tests: true
+
+      # Comment a JaCoCo coverage summary on the PR. The XML path is the Phase 3
+      # jacocoTestReport default. Threshold is 0 here (the build already owns the
+      # soft coverage gate); this step is signal, not a blocker.
+      - name: Publish coverage summary
+        if: github.event_name == 'pull_request'
+        uses: madrapps/jacoco-report@v1.7.1
+        with:
+          paths: ${{ github.workspace }}/build/reports/jacoco/test/jacocoTestReport.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          title: 'JaCoCo Coverage Report'
+          min-coverage-overall: 0
+          min-coverage-changed-files: 0
+
+  dependency-submission:
+    name: Submit dependency graph
+    runs-on: ubuntu-latest
+    # Only on pushes to master: submitting the graph writes to the repository,
+    # and pull requests from forks cannot be granted `contents: write`.
+    if: github.event_name == 'push'
+    permissions:
+      contents: write  # gradle/actions/dependency-submission writes the graph
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'zulu'
+
+      # Generates and submits a dependency graph, enabling Dependabot alerts.
+      # See: https://github.com/gradle/actions/blob/main/dependency-submission/README.md
+      - name: Generate and submit dependency graph
+        uses: gradle/actions/dependency-submission@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
