@@ -2,14 +2,25 @@
 
 Thanks for looking at the code. This is a portfolio project, so the bar is "clean, tested, and
 consistent with the [architecture](ARCHITECTURE.md)" rather than feature breadth. Read
-[ARCHITECTURE.md](ARCHITECTURE.md) first — the dependency rule and package layout are enforced by
-ArchUnit, so a PR that ignores them will fail the build.
+[ARCHITECTURE.md](ARCHITECTURE.md) first — the dependency rule and package layout are enforced
+(some by ArchUnit, some by Gradle's module graph), so a PR that ignores them will fail the build.
+
+This is a Gradle monorepo: `riot-api-core` and `riot-account-core` are libraries, and
+`lol-mcp-server` is the (currently only) Spring Boot game server. Figure out which module a change
+belongs in before writing it:
+
+| Change | Module |
+|--------|--------|
+| HTTP/auth/error handling, routing enums, `RiotApiException` | `riot-api-core` |
+| Anything about the cross-game account context (Riot ID ↔ PUUID) | `riot-account-core` |
+| A League of Legends context (`summoner`, `match`, `spectator`, `analytics`), or that thin `account` tool | `lol-mcp-server` |
+| A new game entirely | a new server module depending on both libraries |
 
 ## Prerequisites
 
 - **Java 21** (a Gradle toolchain resolves it; the wrapper pins Gradle 9.6.1).
-- A **Riot API key** is only needed to *run* the app, never to build or test — the test suite is
-  fully offline.
+- A **Riot API key** is only needed to *run* a server, never to build or test — the test suite is
+  fully offline. No other credential (in particular, no Anthropic key) is needed for anything.
 
 ## Build, test, format
 
@@ -18,7 +29,8 @@ ArchUnit, so a PR that ignores them will fail the build.
 ./gradlew test           # tests only
 ./gradlew spotlessApply  # auto-format all sources (run before committing)
 ./gradlew spotlessCheck  # verify formatting (part of build; fails on drift)
-./gradlew bootRun        # run locally (needs RIOT_API_KEY, and ANTHROPIC_API_KEY on the classpath)
+./gradlew :lol-mcp-server:bootRun                                            # run locally, stdio (needs RIOT_API_KEY)
+./gradlew :lol-mcp-server:bootRun --args='--spring.profiles.active=sse'      # run locally, sse
 ./gradlew clean          # remove build artifacts
 ```
 
@@ -27,8 +39,9 @@ in CI.
 
 ## Package conventions
 
-New code goes into a top-level bounded context under `com.wkaiser.riotapimcpserver.<context>`, using
-the fixed internal shape:
+New code within a game server goes into a top-level bounded context under
+`com.wkaiser.riot.<game>.<context>` (e.g. `com.wkaiser.riot.lol.summoner`), using the fixed
+internal shape:
 
 | Kind | Package | Naming |
 |------|---------|--------|
@@ -38,10 +51,11 @@ the fixed internal shape:
 | Outbound Riot adapter | `<context>.adapter.out.riot` | `Riot<Context>Adapter` |
 | Inbound MCP tool | `<context>.adapter.in.mcp` | `<Context>Tool` |
 
-The invariants (also enforced by ArchUnit): only `adapter.out.riot` may use `RestClient`; only
+The invariants — from `HexagonRules` in `riot-api-core`'s test fixtures, shared by every module's
+architecture test (also enforced by ArchUnit): only `adapter.out.riot` may use `RestClient`; only
 `adapter.in.mcp` may use `@McpTool`; `application` never depends on `adapter`; contexts do not
-reference each other's internals — only `analytics` may depend on other contexts' application
-services.
+reference each other's internals except `analytics`; and only `analytics` and this server's thin
+`account` tool may depend on `riot-account-core`.
 
 ## The DTO / Lombok pattern
 
@@ -49,7 +63,7 @@ Domain models are Riot JSON shapes kept as Lombok DTOs. Every DTO uses the full 
 compiles cleanly and Jackson can deserialize it:
 
 ```java
-package com.wkaiser.riotapimcpserver.summoner.domain;
+package com.wkaiser.riot.lol.summoner.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;

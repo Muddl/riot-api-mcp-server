@@ -24,6 +24,7 @@ This README is the **single source of truth** for the hydrate/persist protocol.
 - [ADR-0003 — WireMock + port-fake testing](decisions/ADR-0003-wiremock-testing.md)
 - [ADR-0004 — ArchUnit architecture enforcement](decisions/ADR-0004-archunit-enforcement.md)
 - [ADR-0005 — Committed knowledge system](decisions/ADR-0005-knowledge-system.md)
+- [ADR-0006 — Monorepo of per-game MCP servers over a shared core](decisions/ADR-0006-monorepo-split.md)
 
 ### Patterns
 

@@ -1,0 +1,25 @@
+plugins {
+	id 'riot-java-conventions'
+	id 'java-test-fixtures'
+}
+
+dependencies {
+	// api: servers reference RestClient types in adapter signatures via RiotApiClient.
+	api 'org.springframework:spring-web'
+	api 'org.springframework.boot:spring-boot-starter'
+	// implementation, not api: RiotApiClient's RestClient.builder() resolves its JSON message
+	// converter from the *runtime* classpath, so this module must guarantee Jackson is present
+	// rather than relying on each consumer to pull in spring-boot-starter-web/-json incidentally.
+	// It is deliberately not `api` — nothing in this module's public signatures mentions Jackson,
+	// and `implementation` still puts it on every consumer's runtime classpath.
+	implementation 'org.springframework.boot:spring-boot-starter-json'
+	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+
+	// testFixturesApi (not testFixturesImplementation): HexagonRules exposes ArchRule in its
+	// public signatures, so consumers need ArchUnit on their compile classpath.
+	testFixturesApi 'com.tngtech.archunit:archunit-junit5:1.3.0'
+
+	testImplementation 'org.wiremock:wiremock-standalone:3.9.2'
+	// No testFixtures(project(':riot-api-core')) here: the java-test-fixtures plugin already
+	// puts this project's own testFixtures source set on its test classpath.
+}

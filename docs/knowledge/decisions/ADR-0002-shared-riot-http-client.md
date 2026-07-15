@@ -2,6 +2,8 @@
 
 - **Status:** Accepted
 - **Date:** 2026-07-13
+- **Amended by:** [ADR-0006](ADR-0006-monorepo-split.md) — package roots are now
+  `com.wkaiser.riot.{core,account,lol}`; this ADR's decision is unchanged.
 
 ## Context
 

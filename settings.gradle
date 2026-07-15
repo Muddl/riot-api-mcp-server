@@ -1,1 +1,6 @@
 rootProject.name = 'riot-api-mcp-server'
+
+include 'riot-api-core'
+
+include 'riot-account-core'
+include 'lol-mcp-server'

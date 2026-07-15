@@ -1,0 +1,20 @@
+# STDIO transport: the JSON-RPC protocol stream IS stdout.
+#
+# Anything else written to stdout — the Spring banner, a log line from any @Slf4j class —
+# interleaves with protocol frames and corrupts the stream. The client sees malformed JSON
+# and drops the connection, with a failure mode that looks nothing like its cause.
+# Every setting below exists to keep stdout clean; do not remove one without understanding this.
+spring:
+  main:
+    web-application-type: none
+    banner-mode: off
+  ai:
+    mcp:
+      server:
+        stdio: true
+
+logging:
+  pattern:
+    console: ""  # empty pattern disables the console appender entirely
+  file:
+    name: ${RIOT_MCP_LOG_FILE:./riot-mcp-server.log}

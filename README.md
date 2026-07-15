@@ -8,19 +8,25 @@
 
 A [Model Context Protocol](https://modelcontextprotocol.io) (MCP) server that exposes the
 [Riot Games API](https://developer.riotgames.com/) to AI models as a small set of typed tools.
-It is a Spring Boot 4.1 / Spring AI 2.0 application (Java 21) built as a **portfolio piece**:
-the point is the engineering — a clean bounded-context hexagonal architecture, a single shared
-HTTP client, HTTP-mocked tests that run in CI with no API key, and architecture rules enforced at
-build time. An MCP client (e.g. Claude Desktop) connects over SSE and can look up Riot accounts and
-League of Legends summoners, inspect live games, and pull aggregated match analytics.
+It is a Gradle monorepo on Spring Boot 4.1 / Spring AI 2.0 (Java 21) built as a **portfolio
+piece**: the point is the engineering — a clean bounded-context hexagonal architecture, a single
+shared HTTP client, HTTP-mocked tests that run in CI with no API key, and architecture rules
+enforced at build time (some by ArchUnit, some by Gradle's module graph itself). An MCP client
+(e.g. Claude Desktop) connects over `stdio` or `sse` and can look up Riot accounts and League of
+Legends summoners, inspect live games, and pull aggregated match analytics.
+
+Two libraries plus one Spring Boot server per Riot game — currently just `lol-mcp-server` for
+League of Legends. See [ARCHITECTURE.md](ARCHITECTURE.md) for the module layout and
+[ADR-0006](docs/knowledge/decisions/ADR-0006-monorepo-split.md) for why.
 
 ## Architecture at a glance
 
 Each Riot context is a self-contained hexagon: an inbound MCP adapter calls an application service,
 which depends on an outbound **port**; a Riot adapter implements that port. All HTTP, auth, and
-error handling live in one place — `shared/http/RiotApiClient`. `analytics` is a composing context
-that calls the `account`, `summoner`, and `match` application services and has no Riot adapter of
-its own.
+error handling live in one place — `riot-api-core`'s `RiotApiClient`. `analytics` is a composing
+context that calls the `account`, `summoner`, and `match` application services and has no Riot
+adapter of its own; `account` itself lives in the separate `riot-account-core` library, consumed
+by every game server.
 
 ```mermaid
 flowchart LR
@@ -55,7 +61,7 @@ flowchart LR
         SPA["RiotSpectatorAdapter"]
     end
 
-    RC["shared/http · RiotApiClient"]
+    RC["riot-api-core · RiotApiClient"]
     RIOT[("Riot Games API")]
 
     AI --> AT & ST & LT & NT
@@ -82,27 +88,29 @@ is enforced.
 ## Quick start
 
 Prerequisites: **Java 21** and a **Riot API key** (get a development key at
-<https://developer.riotgames.com/>).
+<https://developer.riotgames.com/>). Nothing else — no Anthropic key or any other credential is
+needed to build, test, or run the server.
 
 ```bash
 # 1. Provide your Riot API key (read from the environment by application.yml)
 export RIOT_API_KEY="RGAPI-your-key-here"
 
-# 2. Run the server
-./gradlew bootRun
+# 2. Run the LoL server — stdio (default) is what local MCP clients expect
+./gradlew :lol-mcp-server:bootRun
+
+# ...or over SSE, for a client that connects over HTTP
+./gradlew :lol-mcp-server:bootRun --args='--spring.profiles.active=sse'
 ```
 
-The server starts on `http://localhost:8080`; the MCP SSE message endpoint is `/mcp/messages`.
-Point your MCP client at it, or check liveness with `curl http://localhost:8080/actuator/health`.
-
-> **Note:** the Spring AI Anthropic starter is on the classpath, so `bootRun` also expects
-> `ANTHROPIC_API_KEY` to be set. It is **not** needed to build or to run the test suite — only to
-> start the application. `export ANTHROPIC_API_KEY="sk-ant-..."` before `bootRun` if you hit a
-> startup placeholder error.
+Over `sse`, the server starts on `http://localhost:8080`; the MCP message endpoint is
+`/mcp/messages`. Point your MCP client at it, or check liveness with
+`curl http://localhost:8080/actuator/health`. Over `stdio` (the default), the client spawns the
+process itself and talks JSON-RPC over its stdin/stdout — there is no port to check.
 
 ## MCP tools
 
-Four inbound adapters expose the Riot API to MCP clients:
+`lol-mcp-server` exposes four inbound adapters to MCP clients (ten tool names in total,
+unchanged by the monorepo split):
 
 | Tool (`adapter.in.mcp`) | MCP tool names | Purpose |
 |-------------------------|----------------|---------|
@@ -127,19 +135,26 @@ same run.
 
 ## Docker
 
-A multi-stage `Dockerfile` builds the app and runs it on a slim JRE 21. The container reads
-`RIOT_API_KEY` from the environment.
+A multi-stage `Dockerfile` builds one server module and runs it on a slim JRE 21, selected via
+`--build-arg SERVER_MODULE=` (default `lol-mcp-server`; one image per game server, not one per
+repo). The container reads `RIOT_API_KEY` from the environment and always runs the `sse` profile
+(`ENV SPRING_PROFILES_ACTIVE=sse` — a container has no controlling terminal for `stdio` to spawn
+into).
 
 ```bash
-docker build -t riot-api-mcp-server .
+docker build -t lol-mcp-server .
 docker run --rm -p 8080:8080 \
   -e RIOT_API_KEY="RGAPI-your-key-here" \
-  -e ANTHROPIC_API_KEY="sk-ant-..." \
-  riot-api-mcp-server
+  lol-mcp-server
 ```
 
 Tagging a release (`v*`) publishes an image to GHCR at
-`ghcr.io/muddl/riot-api-mcp-server` via the `release.yml` workflow.
+`ghcr.io/muddl/lol-mcp-server` via the `release.yml` workflow.
+
+> **Note:** the image moved from `ghcr.io/muddl/riot-api-mcp-server` (pre-monorepo) to
+> `ghcr.io/muddl/lol-mcp-server`. The old tags were not deleted, so pulling the old path still
+> works — it just silently serves the last pre-monorepo image forever, not a redirect or an error.
+> Update any pinned reference to the new path.
 
 ## Documentation
 

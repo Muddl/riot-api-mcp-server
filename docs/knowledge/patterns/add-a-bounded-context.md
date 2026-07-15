@@ -5,13 +5,14 @@ Use this when adding a new Riot API area as its own mini-hexagon. Rationale:
 [ADR-0002](../decisions/ADR-0002-shared-riot-http-client.md).
 
 Substitute `<context>` (lowercase, e.g. `champion`) and `<Name>` (PascalCase, e.g.
-`Champion`) throughout. Base path: `src/main/java/com/wkaiser/riotapimcpserver/`.
+`Champion`) throughout. Base path: `<server-module>/src/main/java/com/wkaiser/riot/<game>/`
+(e.g. `lol-mcp-server/src/main/java/com/wkaiser/riot/lol/` for the LoL server).
 
 ## 1. Create the package skeleton
 
 ```bash
 ctx=<context>
-base=src/main/java/com/wkaiser/riotapimcpserver/$ctx
+base=lol-mcp-server/src/main/java/com/wkaiser/riot/lol/$ctx
 mkdir -p $base/domain \
          $base/application/port \
          $base/adapter/in/mcp \
@@ -27,7 +28,7 @@ Plain Lombok DTO, **no framework imports**. Keep the established pattern (see
 [gotchas](../gotchas.md) for the nested-builder rule):
 
 ```java
-package com.wkaiser.riotapimcpserver.<context>.domain;
+package com.wkaiser.riot.lol.<context>.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
@@ -51,9 +52,9 @@ public class <Name> {
 The architectural boundary. An interface, in `application.port`:
 
 ```java
-package com.wkaiser.riotapimcpserver.<context>.application.port;
+package com.wkaiser.riot.lol.<context>.application.port;
 
-import com.wkaiser.riotapimcpserver.<context>.domain.<Name>;
+import com.wkaiser.riot.lol.<context>.domain.<Name>;
 
 public interface <Name>Port {
     <Name> get<Name>ById(String id);
@@ -68,12 +69,12 @@ The `X-RIOT-TOKEN` header, base URL, and non-2xx → `RiotApiException` mapping 
 already handled by `RiotApiClient` — do **not** re-implement them here.
 
 ```java
-package com.wkaiser.riotapimcpserver.<context>.adapter.out.riot;
+package com.wkaiser.riot.lol.<context>.adapter.out.riot;
 
-import com.wkaiser.riotapimcpserver.<context>.application.port.<Name>Port;
-import com.wkaiser.riotapimcpserver.<context>.domain.<Name>;
-import com.wkaiser.riotapimcpserver.shared.enums.RiotApiPlatformUri;
-import com.wkaiser.riotapimcpserver.shared.http.RiotApiClient;
+import com.wkaiser.riot.lol.<context>.application.port.<Name>Port;
+import com.wkaiser.riot.lol.<context>.domain.<Name>;
+import com.wkaiser.riot.core.enums.RiotApiPlatformUri;
+import com.wkaiser.riot.core.http.RiotApiClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -98,10 +99,10 @@ public class Riot<Name>Adapter implements <Name>Port {
 Pure logic; depends on the port, never on `RestClient` or an adapter:
 
 ```java
-package com.wkaiser.riotapimcpserver.<context>.application;
+package com.wkaiser.riot.lol.<context>.application;
 
-import com.wkaiser.riotapimcpserver.<context>.application.port.<Name>Port;
-import com.wkaiser.riotapimcpserver.<context>.domain.<Name>;
+import com.wkaiser.riot.lol.<context>.application.port.<Name>Port;
+import com.wkaiser.riot.lol.<context>.domain.<Name>;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

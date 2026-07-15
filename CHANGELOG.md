@@ -5,6 +5,40 @@ All notable changes to the Riot API MCP Server are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+Monorepo restructure (sub-project 0). Structural only — the MCP tool surface is unchanged: the
+same 10 tools with the same names, guarded by `McpToolInventoryTest`.
+
+### Added
+- **Gradle monorepo** — `riot-api-core` and `riot-account-core` (libraries) + `lol-mcp-server`
+  (Boot app), with shared build logic in a `buildSrc` convention plugin.
+- **Auto-configuration for both libraries** (`@AutoConfiguration` + `AutoConfiguration.imports`),
+  each covered by an `ApplicationContextRunner` slice test.
+- **`stdio` (default) and `sse` transport profiles.** stdio is what local MCP clients expect; see
+  `docs/knowledge/gotchas.md` for why stdout must stay clean.
+- **Shared ArchUnit rules** in `riot-api-core`'s test fixtures, so a new game server inherits the
+  architecture. `AccountArchitectureTest` asserts the account library ships no `@McpTool`.
+- **ADR-0006** documenting the split.
+
+### Changed
+- Package roots are now `com.wkaiser.riot.{core,account,lol}` — the old
+  `com.wkaiser.riotapimcpserver` was a server name doing a library's job.
+- The cross-context ArchUnit matrix (one rule per context, each listing every other) is now a
+  single `slices()` rule that stays correct as contexts are added.
+- **Breaking (packaging):** the published image is now `ghcr.io/<owner>/lol-mcp-server`, one per
+  game server, built via `--build-arg SERVER_MODULE=`. Previously `riot-api-mcp-server`.
+  **The old `riot-api-mcp-server` tags are not deleted**, so anyone still pulling that path keeps
+  silently receiving the last pre-monorepo image rather than getting an error. Repoint any pull to
+  the new name; a stale image that starts successfully will not announce itself.
+
+### Removed
+- **`ANTHROPIC_API_KEY` is no longer required to start the server.** The Anthropic starter was
+  never used (no `ChatClient`/`ChatModel` anywhere) but `application.yml` demanded its key at boot.
+- `htmx-spring-boot` — unused; no controllers, no templates.
+- `GlobalExceptionHandler` — `@RestControllerAdvice` in an app with no controllers. Spring AI
+  converts `@McpTool` exceptions itself, so it could never fire.
+
 ## [1.1.0] - 2026-07-13
 
 Portfolio sanitization: a real hexagonal architecture, HTTP-mocked tests, build-time enforcement, a
