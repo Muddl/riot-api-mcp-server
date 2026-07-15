@@ -26,6 +26,21 @@ class AccountArchitectureTest {
     @ArchTest
     static final ArchRule no_mcp_tools_in_this_library = HexagonRules.NO_MCP_TOOLS_AT_ALL;
 
+    /**
+     * Complements {@link #no_mcp_tools_in_this_library} rather than duplicating it: that rule checks
+     * method annotations, this one checks class naming. A {@code *Tool} class here with no
+     * {@code @McpTool} method would satisfy the first and fail this one.
+     *
+     * <p>{@code allowEmptyShould(true)} because this library ships no tools, so the rule matches
+     * nothing — which is the intent, not an oversight. It exists to fail if a {@code *Tool} ever
+     * appears here. Verified by planting a {@code ProbeTool}: the rule fails as intended. The opt-in
+     * is applied at the use site, never in {@link HexagonRules}, so the same constant stays
+     * empty-intolerant in {@code lol-mcp-server}, where four real tool classes must satisfy it.
+     */
+    @ArchTest
+    static final ArchRule tools_live_in_inbound_adapters =
+            HexagonRules.TOOLS_LIVE_IN_INBOUND_ADAPTERS.allowEmptyShould(true);
+
     @ArchTest
     static final ArchRule layers_respect_inward_dependency_rule = HexagonRules.LAYERS_RESPECT_INWARD_DEPENDENCY_RULE;
 

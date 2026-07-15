@@ -29,8 +29,8 @@ same 10 tools with the same names, guarded by `McpToolInventoryTest`.
 - **Breaking (packaging):** the published image is now `ghcr.io/<owner>/lol-mcp-server`, one per
   game server, built via `--build-arg SERVER_MODULE=`. Previously `riot-api-mcp-server`.
   **The old `riot-api-mcp-server` tags are not deleted**, so anyone still pulling that path keeps
-  silently receiving the last pre-monorepo image rather than getting an error. Say so plainly here —
-  a stale image that works is worse than one that fails, because nobody investigates it.
+  silently receiving the last pre-monorepo image rather than getting an error. Repoint any pull to
+  the new name; a stale image that starts successfully will not announce itself.
 
 ### Removed
 - **`ANTHROPIC_API_KEY` is no longer required to start the server.** The Anthropic starter was
