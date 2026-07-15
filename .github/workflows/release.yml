@@ -1,9 +1,10 @@
 name: Release
 
-on:
+on: 
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
 
 # Pushing to GHCR needs write access to GitHub Packages; nothing else is written.
 permissions:
