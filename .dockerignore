@@ -4,7 +4,6 @@
 # more than one version's jar is present locally.
 **/build/
 **/.gradle/
-.gradle/
 .git/
 .github/
 .superpowers/
