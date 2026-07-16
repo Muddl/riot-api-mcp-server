@@ -72,9 +72,9 @@ import com.wkaiser.riot.account.domain.RiotAccount;
  * A deliberate architecture violation, used only as a negative control by {@link
  * HexagonalArchitectureNegativeControlTest}.
  *
- * <p>It pretends to be a summoner-context class reaching into the shared account library, which
- * {@code only_analytics_and_the_account_tool_use_the_account_library} forbids. It lives in test
- * sources, so {@code ImportOption.DoNotIncludeTests} keeps it out of the real scan in {@link
+ * <p>It reaches into the shared account library from a package outside the allowlist, which {@code
+ * only_analytics_and_the_account_tool_use_the_account_library} forbids. It lives in test sources, so
+ * {@code ImportOption.DoNotIncludeTests} keeps it out of the real scan in {@link
  * HexagonalArchitectureTest} — it can never fail the production rule. The negative control imports
  * it explicitly by class, which bypasses that filter.
  *
@@ -96,7 +96,6 @@ Create `lol-mcp-server/src/test/java/com/wkaiser/riot/lol/architecture/Hexagonal
 ```java
 package com.wkaiser.riot.lol.architecture;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.tngtech.archunit.core.domain.JavaClasses;
@@ -112,8 +111,10 @@ import org.junit.jupiter.api.Test;
  * violations are found, and the rule passes while guarding nothing. That is exactly how the
  * prohibition this rule replaced was silently retired once already (see the rule's javadoc).
  *
- * <p>These tests are inverted on purpose: each asserts the rule FAILS when fed a violation.
- * If one of them ever goes green by <em>not</em> throwing, the rule has stopped enforcing anything.
+ * <p>This test is inverted on purpose: it asserts the rule FAILS when fed a violation. If it ever
+ * goes green by <em>not</em> throwing, the rule has stopped enforcing anything. That also covers the
+ * condition's matcher specifically — point it at a package that does not exist and this test stops
+ * throwing, which is the whole failure being guarded against.
  */
 class HexagonalArchitectureNegativeControlTest {
 
@@ -125,17 +126,6 @@ class HexagonalArchitectureNegativeControlTest {
                         .check(violating))
                 .isInstanceOf(AssertionError.class)
                 .hasMessageContaining("ArchFixtureIllegalAccountUser");
-    }
-
-    @Test
-    void account_library_rule_condition_matches_the_real_account_library() {
-        // Guards the condition specifically. If the condition's package matcher ever stops matching
-        // riot-account-core, the rule above would report zero violations and pass. Importing the
-        // real library class and asserting the fixture's dependency is seen keeps that honest.
-        JavaClasses violating = new ClassFileImporter().importClasses(ArchFixtureIllegalAccountUser.class);
-
-        assertThat(violating.get(ArchFixtureIllegalAccountUser.class).getDirectDependenciesFromSelf())
-                .anyMatch(d -> d.getTargetClass().getPackageName().startsWith("com.wkaiser.riot.account"));
     }
 }
 ```
@@ -324,7 +314,7 @@ Fix each hit by hand — these are docs and workflows, where surrounding prose m
 
 Expected: `BUILD SUCCESSFUL`. Anything red means the move is wrong, not that a feature broke. In particular `HexagonalArchitectureNegativeControlTest` must still pass — that is Task 1 earning its keep.
 
-Note that `account_library_rule_condition_matches_the_real_account_library` asserts on the string `com.wkaiser.riot.account`, and Step 3's `sed` rewrites it to `com.muddl.riot.account` along with everything else. That is correct and intended: it is the one deliberate fully-qualified name in the suite, and it asserts on *real dependencies* rather than defining a rule, so it must track the actual package. Every other matcher is relative and needs no edit — if the `sed` had been the only thing standing between this rename and a silently-retired rule, Task 1 would not have been necessary.
+The negative control needs no edit: its fixture's `import com.wkaiser.riot.account.domain.RiotAccount` is rewritten by Step 3's `sed` like any other import, and the rule it exercises now uses relative matchers. That is the point — if a `sed` over string literals had been the only thing standing between this rename and a silently-retired rule, Task 1 would not have been necessary.
 
 - [ ] **Step 6: Verify no reference survives**
 
@@ -822,6 +812,8 @@ LABEL org.opencontainers.image.title="${SERVER_MODULE}" \
 ```
 
 - [ ] **Step 7: Build the image and verify the labels are queryable**
+
+Requires a running Docker daemon. If `docker info` fails, do **not** skip this silently and do not block the task: report the Dockerfile change as complete with a `DONE_WITH_CONCERNS` status naming the unverified step, and the controller will run it once Docker is up. (This has happened before in this repo — see the progress ledger's Phase 6 notes.)
 
 ```bash
 docker build \
