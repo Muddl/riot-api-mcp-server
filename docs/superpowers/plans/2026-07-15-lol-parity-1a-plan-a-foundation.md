@@ -431,13 +431,15 @@ version = '0.1.0'
 
 - [ ] **Step 4: Verify each module reports its own version**
 
-**Do not use `-q` here.** The `properties` task logs at lifecycle level, which `-q` suppresses — you get empty output and a false read either way. (`-q` is still correct for `println`-based tasks like Task 5's `printModuleVersions`; that is a different mechanism.)
+**Do not pipe this through `head -1`.** The `properties` task's output begins with a blank line, so `head -1` captures that and closes the pipe, printing nothing — a check that reports no version at all, in either direction. Match the line instead:
 
 ```bash
 for m in riot-api-core riot-account-core lol-mcp-server; do
-  echo -n "$m -> "; ./gradlew :$m:properties --property version 2>&1 | grep -i '^version:'
+  echo -n "$m -> "; ./gradlew -q :$m:properties --property version | grep -i '^version:'
 done
 ```
+
+Keep `-q`. Gradle's informational tasks (`properties`, `tasks`, `dependencies`) log through `logger.quiet()` precisely so they stay visible under `-q`, which is what makes them scriptable; without `-q` you get lifecycle noise instead. The same reasoning is why `-q` is correct for Task 5's `println`-based `printModuleVersions`.
 
 Expected: each prints `version: 0.1.0`. They agree today by coincidence, not by construction — Task 4 proves they can diverge.
 
