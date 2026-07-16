@@ -14,7 +14,7 @@ Entries below predate the per-module split and are kept as the repository's hist
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## Pre-split history — monorepo restructure (sub-project 0)
 
 Monorepo restructure (sub-project 0). Structural only — the MCP tool surface is unchanged: the
 same 10 tools with the same names, guarded by `McpToolInventoryTest`.
@@ -31,7 +31,7 @@ same 10 tools with the same names, guarded by `McpToolInventoryTest`.
 - **ADR-0006** documenting the split.
 
 ### Changed
-- Package roots are now `com.muddl.riot.{core,account,lol}` — the old
+- Package roots are now `com.wkaiser.riot.{core,account,lol}` — the old
   `com.wkaiser.riotapimcpserver` was a server name doing a library's job.
 - The cross-context ArchUnit matrix (one rule per context, each listing every other) is now a
   single `slices()` rule that stays correct as contexts are added.
