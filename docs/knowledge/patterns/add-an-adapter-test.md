@@ -19,13 +19,13 @@ Point the real `RestClient` at WireMock via `RiotApiProperties.setBaseUrlOverrid
 build the adapter with a real `RiotApiClient`:
 
 ```java
-package com.wkaiser.riot.lol.<context>.adapter.out.riot;
+package com.muddl.riot.lol.<context>.adapter.out.riot;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
-import com.wkaiser.riot.lol.<context>.domain.<Name>;
-import com.wkaiser.riot.core.config.RiotApiProperties;
-import com.wkaiser.riot.core.enums.RiotApiPlatformUri;
-import com.wkaiser.riot.core.http.RiotApiClient;
+import com.muddl.riot.lol.<context>.domain.<Name>;
+import com.muddl.riot.core.config.RiotApiProperties;
+import com.muddl.riot.core.enums.RiotApiPlatformUri;
+import com.muddl.riot.core.http.RiotApiClient;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

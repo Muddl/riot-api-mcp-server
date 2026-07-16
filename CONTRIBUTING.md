@@ -40,7 +40,7 @@ in CI.
 ## Package conventions
 
 New code within a game server goes into a top-level bounded context under
-`com.wkaiser.riot.<game>.<context>` (e.g. `com.wkaiser.riot.lol.summoner`), using the fixed
+`com.muddl.riot.<game>.<context>` (e.g. `com.muddl.riot.lol.summoner`), using the fixed
 internal shape:
 
 | Kind | Package | Naming |
@@ -63,7 +63,7 @@ Domain models are Riot JSON shapes kept as Lombok DTOs. Every DTO uses the full 
 compiles cleanly and Jackson can deserialize it:
 
 ```java
-package com.wkaiser.riot.lol.summoner.domain;
+package com.muddl.riot.lol.summoner.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;

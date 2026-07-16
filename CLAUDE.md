@@ -41,12 +41,12 @@ keys or network access; use WireMock (adapters) or port fakes (services) instead
 
 A Gradle monorepo. Two libraries and one server per game:
 
-- **`riot-api-core`** (`com.wkaiser.riot.core`) — `RiotApiClient` (all HTTP/auth/error handling),
+- **`riot-api-core`** (`com.muddl.riot.core`) — `RiotApiClient` (all HTTP/auth/error handling),
   `RiotApiProperties`, routing enums, `RiotApiException`. Auto-configured, never
   component-scanned. Its test fixtures hold the shared `HexagonRules` and `Fixtures`.
-- **`riot-account-core`** (`com.wkaiser.riot.account`) — the cross-game account-v1 context.
+- **`riot-account-core`** (`com.muddl.riot.account`) — the cross-game account-v1 context.
   Domain + service + outbound adapter, **no `@McpTool`** (ArchUnit-enforced).
-- **`lol-mcp-server`** (`com.wkaiser.riot.lol`) — bounded-context hexagons `summoner`, `match`,
+- **`lol-mcp-server`** (`com.muddl.riot.lol`) — bounded-context hexagons `summoner`, `match`,
   `spectator`, `analytics`, plus a tool-only `account` package. Per context: `domain/`,
   `application/` (+ `application/port/`), `adapter/in/mcp/`, `adapter/out/riot/`.
 
@@ -89,7 +89,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the step-by-step recipes and
 - Type: SYNC. Transports: `stdio` (default) and `sse` (message endpoint `/mcp/messages`, port
   `8080`).
 - Tools are auto-discovered via Spring AI's `@McpTool` annotation scanning.
-- `lol-mcp-server`'s four tool classes moved packages under `com.wkaiser.riot.lol` but keep their
+- `lol-mcp-server`'s four tool classes moved packages under `com.muddl.riot.lol` but keep their
   names and locations relative to their context: `RiotAccountTool` (`account.adapter.in.mcp`),
   `SummonerTool` (`summoner.adapter.in.mcp`), `LiveGameTool` (`spectator.adapter.in.mcp`),
   `AnalyticsTool` (`analytics.adapter.in.mcp`) — the ten MCP tool names themselves are unchanged

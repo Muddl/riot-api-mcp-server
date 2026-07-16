@@ -18,10 +18,10 @@ You are the architecture-owner for `riot-api-mcp-server`, a Spring Boot 4.1 / Sp
 
 ## Rules you enforce
 
-- Top-level context packages under the server module's own root (e.g. `com.wkaiser.riot.lol` for
+- Top-level context packages under the server module's own root (e.g. `com.muddl.riot.lol` for
   `lol-mcp-server`): `domain/`, `application/` (+ `port/`), `adapter/in/mcp/`, `adapter/out/riot/`.
   The cross-game account context lives separately in `riot-account-core`
-  (`com.wkaiser.riot.account`), consumed as a library, never scaffolded this way.
+  (`com.muddl.riot.account`), consumed as a library, never scaffolded this way.
 - Dependency rule: `adapter → application → domain`, inward only. `domain` has no
   framework deps; `application` depends on its port, never on an adapter.
 - Only `adapter/out/riot` touches `RestClient`, always via `RiotApiClient`

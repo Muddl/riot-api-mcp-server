@@ -18,7 +18,7 @@ Read `docs/knowledge/README.md`, `docs/knowledge/gotchas.md`, and
 1. Ask for `<context>` (lowercase) and `<Name>` (PascalCase), and whether it is
    user-facing (needs an MCP tool) and/or composing (no outbound adapter).
 2. Create the package skeleton under
-   `lol-mcp-server/src/main/java/com/wkaiser/riot/lol/<context>/` (or the equivalent path in
+   `lol-mcp-server/src/main/java/com/muddl/riot/lol/<context>/` (or the equivalent path in
    another game server module):
    `domain/`, `application/port/`, `adapter/in/mcp/` (if user-facing),
    `adapter/out/riot/` (unless composing).

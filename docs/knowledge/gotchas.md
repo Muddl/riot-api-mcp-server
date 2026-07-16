@@ -45,7 +45,7 @@ MCP tools are auto-discovered by Spring AI's annotation scanner — there is no 
 registry. For a tool to appear:
 
 - the class must be a Spring bean (`@Component`) in a scanned package under the server's own
-  package root (e.g. `com.wkaiser.riot.lol` for `lol-mcp-server`);
+  package root (e.g. `com.muddl.riot.lol` for `lol-mcp-server`);
 - `@McpTool`/`@McpToolParam` must be imported from
   `org.springframework.ai.mcp.annotation`;
 - each `@McpTool` `name` must be **unique** across the whole app (a duplicate silently

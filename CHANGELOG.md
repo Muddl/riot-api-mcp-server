@@ -22,8 +22,11 @@ same 10 tools with the same names, guarded by `McpToolInventoryTest`.
 - **ADR-0006** documenting the split.
 
 ### Changed
-- Package roots are now `com.wkaiser.riot.{core,account,lol}` — the old
+- Package roots are now `com.muddl.riot.{core,account,lol}` — the old
   `com.wkaiser.riotapimcpserver` was a server name doing a library's job.
+- **Group and package root renamed `com.wkaiser` → `com.muddl`** (group and package root move
+  together; Java convention is that the package root matches the group). Pure motion — no
+  behaviour change, and the MCP tool contract is untouched (`McpToolInventoryTest` stays green).
 - The cross-context ArchUnit matrix (one rule per context, each listing every other) is now a
   single `slices()` rule that stays correct as contexts are added.
 - **Breaking (packaging):** the published image is now `ghcr.io/<owner>/lol-mcp-server`, one per
