@@ -1,2 +1,17 @@
 // Root project holds no code. Shared build logic lives in buildSrc/riot-java-conventions.gradle;
 // each module applies it. Module list is in settings.gradle.
+
+// Emits `<module>=<version>` for each module, one per line, for CI to read into step outputs
+// (see .github/workflows/release.yml). Versions are per-module (ADR-0010), so a release needs to
+// ask the build what they are rather than assume one number for the repo.
+//
+// Deliberately resolved in doLast: `subprojects` at the root's configuration time would run before
+// the subprojects are evaluated, and every version would read `unspecified`.
+tasks.register('printModuleVersions') {
+	group = 'help'
+	description = 'Prints each module version as <module>=<version>, one per line.'
+	outputs.upToDateWhen { false }
+	doLast {
+		project.subprojects.each { sub -> println "${sub.name}=${sub.version}" }
+	}
+}

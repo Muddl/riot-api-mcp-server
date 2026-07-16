@@ -32,6 +32,21 @@ WORKDIR /app
 
 ARG SERVER_MODULE=lol-mcp-server
 
+# Provenance: which library versions are baked into this image. The libraries are consumed by
+# project reference, so nothing else records them — without these labels, "core 0.1.0 has a flaw,
+# which images embed it?" means rebuilding and guessing. See ADR-0010.
+# Defaults are `dev` so a local `docker build` with no args still succeeds; CI passes real values.
+ARG SERVER_VERSION=dev
+ARG RIOT_API_CORE_VERSION=dev
+ARG RIOT_ACCOUNT_CORE_VERSION=dev
+
+LABEL org.opencontainers.image.title="${SERVER_MODULE}" \
+      org.opencontainers.image.version="${SERVER_VERSION}" \
+      org.opencontainers.image.source="https://github.com/Muddl/riot-api-mcp-server" \
+      org.opencontainers.image.licenses="MIT" \
+      com.muddl.riot.riot-api-core.version="${RIOT_API_CORE_VERSION}" \
+      com.muddl.riot.riot-account-core.version="${RIOT_ACCOUNT_CORE_VERSION}"
+
 # Run as an unprivileged user rather than root.
 RUN useradd --system --uid 10001 --shell /usr/sbin/nologin appuser
 USER appuser

@@ -3,6 +3,9 @@ plugins {
 	id 'org.springframework.boot'
 }
 
+evaluationDependsOn(':riot-api-core')
+evaluationDependsOn(':riot-account-core')
+
 // Independent of the other modules — see ADR-0010. 0.1.0: new coordinates, plus the tool contract
 // break landing in Plan C. Pre-1.0, so a breaking change bumps the minor.
 version = '0.1.0'
@@ -17,4 +20,26 @@ dependencies {
 	testImplementation 'org.wiremock:wiremock-standalone:3.9.2'
 	testImplementation testFixtures(project(':riot-api-core'))
 	testImplementation testFixtures(project(':riot-account-core'))
+}
+
+// Provenance: record which library versions this jar embeds.
+//
+// The libraries are consumed by project reference, so their versions appear in no dependency
+// declaration and nothing downstream records them. Without this, "core 0.1.0 has a flaw — which
+// builds embed it?" is unanswerable. See ADR-0010.
+//
+// Read at configuration time into locals: settings.gradle includes the libraries before this
+// module, so they are already evaluated. Step 3 verifies the real values landed rather than
+// trusting that ordering.
+def apiCoreVersion = project(':riot-api-core').version.toString()
+def accountCoreVersion = project(':riot-account-core').version.toString()
+
+tasks.named('bootJar') {
+	manifest {
+		attributes(
+			'Implementation-Title': project.name,
+			'Implementation-Version': project.version.toString(),
+			'Riot-Api-Core-Version': apiCoreVersion,
+			'Riot-Account-Core-Version': accountCoreVersion)
+	}
 }

@@ -1,0 +1,13 @@
+# The image builds from source: every module's build/ is produced inside the build stage. Copying
+# the host's build/ in is wrong twice over — it ships stale artifacts into a from-source build, and
+# Dockerfile:40 globs build/libs/*.jar into a single-file destination, which fails outright once
+# more than one version's jar is present locally.
+**/build/
+**/.gradle/
+.gradle/
+.git/
+.github/
+.superpowers/
+docs/
+*.md
+!README.md
