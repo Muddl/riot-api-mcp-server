@@ -73,3 +73,27 @@ No unit test catches this. Verify by piping a JSON-RPC `initialize` + `tools/lis
 and asserting every stdout line parses as JSON (see the sub-project 0 plan, Task 10).
 
 The `sse` profile is unaffected — the protocol runs over HTTP, so console logging is safe.
+
+## ArchUnit: a fully-qualified package in a rule's *condition* passes vacuously when that package moves
+
+`noClasses().that().<selector>().should().dependOnClassesThat().resideInAPackage("com.example.foo..")`
+has two package matchers, and they fail differently:
+
+- The **selector** (`that()`) picks which classes are checked. If it matches nothing, ArchUnit fails
+  loudly — a `should()` that checked zero classes is an error.
+- The **condition** (`should()`) decides what counts as a violation. If it matches nothing, there
+  are simply **zero violations — and the rule passes**, green, enforcing nothing.
+
+This bit `only_analytics_and_the_account_tool_use_the_account_library`, whose condition named
+`com.wkaiser.riot.account..`. The `com.wkaiser` → `com.muddl` rename would have left it green and
+useless. The rule that exists *because* a prohibition was once silently retired was itself one
+rename away from silent retirement.
+
+Two rules follow:
+
+1. **Keep matchers relative** (`..riot.account..`, not `com.muddl.riot.account..`) so no rule has an
+   opinion about the group. `@AnalyzeClasses` needs a real root, but its failure is loud.
+2. **Negative-control anything package-string-dependent.** A green build cannot distinguish
+   "passing" from "vacuously passing". `HexagonalArchitectureNegativeControlTest` imports a
+   deliberate violation and asserts the rule *fails*. If a negative control ever goes green by not
+   throwing, the rule is dead.

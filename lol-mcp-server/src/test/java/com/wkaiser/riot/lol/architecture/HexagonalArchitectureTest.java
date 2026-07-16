@@ -63,7 +63,7 @@ class HexagonalArchitectureTest {
      * {@link #only_analytics_and_the_account_tool_use_the_account_library} exists — see below.
      */
     @ArchTest
-    static final ArchRule contexts_do_not_depend_on_each_other = slices().matching("com.wkaiser.riot.lol.(*)..")
+    static final ArchRule contexts_do_not_depend_on_each_other = slices().matching("..riot.lol.(*)..")
             .should()
             .notDependOnEachOther()
             .ignoreDependency(resideInAPackage("..lol.spectator.."), resideInAPackage("..lol.summoner.."))
@@ -75,10 +75,16 @@ class HexagonalArchitectureTest {
      * shared account library.
      * <p>
      * Before the monorepo split, the account context lived under this server's package root, so the
-     * cross-context matrix forbade summoner/match/spectator from touching it. Extracting it to
-     * com.wkaiser.riot.account moved it outside {@link #contexts_do_not_depend_on_each_other}'s
-     * matcher, which silently retired those three prohibitions — nothing violated them, so nothing
-     * failed. This restores the guarantee.
+     * cross-context matrix forbade summoner/match/spectator from touching it. Extracting it to the
+     * account library moved it outside {@link #contexts_do_not_depend_on_each_other}'s matcher,
+     * which silently retired those three prohibitions — nothing violated them, so nothing failed.
+     * This restores the guarantee.
+     * <p>
+     * Matchers here are deliberately relative ({@code ..riot.account..}, not a fully-qualified
+     * name). This rule's package sits in its <em>condition</em>, not its selector, so a
+     * fully-qualified name would make the rule pass vacuously the moment the group changed — the
+     * same silent-retirement failure it exists to prevent. {@link
+     * HexagonalArchitectureNegativeControlTest} proves it still bites.
      * <p>
      * riot-account-core is a domain context, not infrastructure (that distinction is why it is its
      * own module rather than part of riot-api-core), so "any module may consume it" is not the
@@ -90,5 +96,5 @@ class HexagonalArchitectureTest {
             .resideOutsideOfPackages("..lol.analytics..", "..lol.account..")
             .should()
             .dependOnClassesThat()
-            .resideInAPackage("com.wkaiser.riot.account..");
+            .resideInAPackage("..riot.account..");
 }
