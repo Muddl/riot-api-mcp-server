@@ -1,9 +1,18 @@
-# Changelog
+# Changelog — repository
 
-All notable changes to the Riot API MCP Server are documented in this file.
+Repo-wide changes only: build tooling, CI, the module graph, and root documentation.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project
-adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+**Per-module history lives with the module** — [`riot-api-core`](riot-api-core/CHANGELOG.md),
+[`riot-account-core`](riot-account-core/CHANGELOG.md), [`lol-mcp-server`](lol-mcp-server/CHANGELOG.md).
+Each is independently versioned and tagged (`<module>/v<semver>`); see
+[ADR-0010](docs/knowledge/decisions/ADR-0010-versioning-and-coordinates.md).
+
+The rule: **a change is logged in the CHANGELOG of every module whose version it bumps.** This file
+covers only changes that bump no module.
+
+Entries below predate the per-module split and are kept as the repository's history to that point.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
@@ -24,9 +33,6 @@ same 10 tools with the same names, guarded by `McpToolInventoryTest`.
 ### Changed
 - Package roots are now `com.muddl.riot.{core,account,lol}` — the old
   `com.wkaiser.riotapimcpserver` was a server name doing a library's job.
-- **Group and package root renamed `com.wkaiser` → `com.muddl`** (group and package root move
-  together; Java convention is that the package root matches the group). Pure motion — no
-  behaviour change, and the MCP tool contract is untouched (`McpToolInventoryTest` stays green).
 - The cross-context ArchUnit matrix (one rule per context, each listing every other) is now a
   single `slices()` rule that stays correct as contexts are added.
 - **Breaking (packaging):** the published image is now `ghcr.io/<owner>/lol-mcp-server`, one per
