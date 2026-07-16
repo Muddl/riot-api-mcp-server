@@ -84,10 +84,10 @@ has two package matchers, and they fail differently:
 - The **condition** (`should()`) decides what counts as a violation. If it matches nothing, there
   are simply **zero violations — and the rule passes**, green, enforcing nothing.
 
-This bit `only_analytics_and_the_account_tool_use_the_account_library`, whose condition named
-`com.wkaiser.riot.account..`. The `com.wkaiser` → `com.muddl` rename would have left it green and
-useless. The rule that exists *because* a prohibition was once silently retired was itself one
-rename away from silent retirement.
+This bit `only_analytics_and_the_account_tool_use_the_account_domain` (at the time named
+`..._account_library`), whose condition named `com.wkaiser.riot.account..`. The `com.wkaiser` →
+`com.muddl` rename would have left it green and useless. The rule that exists *because* a
+prohibition was once silently retired was itself one rename away from silent retirement.
 
 Two rules follow:
 
