@@ -12,14 +12,14 @@ why the monorepo split happened; the hexagon rationale itself predates it and st
 ## Module layout
 
 ```
-riot-api-core/         library — com.wkaiser.riot.core
+riot-api-core/         library — com.muddl.riot.core
   config/                 RiotApiProperties, RiotApiAutoConfiguration
   enums/                  RiotApiRegionUri, RiotApiPlatformUri
   exception/              RiotApiException
   http/                   RiotApiClient (all HTTP/auth/error handling)
   (testFixtures)          HexagonRules, Fixtures — shared across every module's tests
 
-riot-account-core/     library — com.wkaiser.riot.account
+riot-account-core/     library — com.muddl.riot.account
   domain/                 RiotAccount
   application/            RiotAccountService
   application/port/       RiotAccountPort
@@ -27,7 +27,7 @@ riot-account-core/     library — com.wkaiser.riot.account
   config/                 RiotAccountAutoConfiguration
   (no @McpTool — see below)
 
-lol-mcp-server/        Spring Boot app — com.wkaiser.riot.lol
+lol-mcp-server/        Spring Boot app — com.muddl.riot.lol
   account/adapter/in/mcp/     RiotAccountTool (thin — delegates into riot-account-core)
   summoner/, match/, spectator/, analytics/   full hexagons, as described below
 ```
@@ -42,7 +42,7 @@ coupling to know about. **Dependency rule at the module level:** `lol-mcp-server
 `no_mcp_tools_in_this_library` rule). account-v1 is cross-game: a tool declared in the library would
 appear, identically named, in every installed game server and collide inside the MCP client. Each
 server instead owns a thin inbound adapter of its own — `lol-mcp-server`'s is
-`com.wkaiser.riot.lol.account.adapter.in.mcp.RiotAccountTool`, which has no domain or application
+`com.muddl.riot.lol.account.adapter.in.mcp.RiotAccountTool`, which has no domain or application
 layer of its own; those live in `riot-account-core`. That asymmetry — a context with only an
 `adapter/in/mcp/` package — is intentional, not an oversight; see ADR-0006's "Asymmetry to know
 about."
@@ -65,17 +65,17 @@ are recorded as decisions in [`docs/knowledge/decisions/`](docs/knowledge/decisi
 ## Bounded contexts
 
 ```
-com.wkaiser.riot.lol                     (lol-mcp-server)
+com.muddl.riot.lol                     (lol-mcp-server)
 ├── account/      Thin @McpTool only — real context lives in riot-account-core
 ├── summoner/     League of Legends summoner profiles (platform-routed)
 ├── match/        Match IDs and match detail (region-routed); no MCP tool
 ├── spectator/    Live-game / featured-game data (platform-routed)
 └── analytics/    Composing context — aggregates account + summoner + match
 
-com.wkaiser.riot.account                 (riot-account-core library)
+com.muddl.riot.account                 (riot-account-core library)
 └── (no top-level split — this whole module is one cross-game context)
 
-com.wkaiser.riot.core                    (riot-api-core library)
+com.muddl.riot.core                    (riot-api-core library)
 └── Cross-cutting for every module: config, the HTTP client, enums, exceptions
 ```
 
@@ -132,7 +132,7 @@ flowchart TB
 
 ## The shared Riot HTTP client
 
-All HTTP plumbing lives in `riot-api-core`'s `com.wkaiser.riot.core.http.RiotApiClient` (a
+All HTTP plumbing lives in `riot-api-core`'s `com.muddl.riot.core.http.RiotApiClient` (a
 `@Component`, auto-configured by `RiotApiAutoConfiguration`). It exposes two pre-configured
 `RestClient` factories:
 
@@ -155,7 +155,7 @@ adapter, not the shared handler: `RiotSpectatorAdapter` catches `RiotApiExceptio
 
 ## Regional vs. platform routing
 
-Riot splits endpoints across two host families. `riot-api-core`'s `com.wkaiser.riot.core.enums`
+Riot splits endpoints across two host families. `riot-api-core`'s `com.muddl.riot.core.enums`
 models both:
 
 - `RiotApiRegionUri` — `AMERICAS`, `EUROPE`, `ASIA`, `SEA` — for account and match endpoints.
@@ -175,7 +175,7 @@ deliberate:
   nothing for a test to check.
 - **The intra-module hexagon rules are enforced by ArchUnit**, run under `./gradlew build`. They
   are defined once, in `HexagonRules` (`riot-api-core`'s test fixtures,
-  `com.wkaiser.riot.core.testsupport`), and declared as `@ArchTest` fields by each module's own
+  `com.muddl.riot.core.testsupport`), and declared as `@ArchTest` fields by each module's own
   architecture test — `HexagonalArchitectureTest` in `lol-mcp-server` (10 rules) and
   `AccountArchitectureTest` in `riot-account-core` (7 rules) — so a new game server inherits the
   architecture instead of copy-pasting it:
@@ -193,10 +193,10 @@ deliberate:
     `analytics→match`.
   - **Account-library usage is a separate, additional rule** —
     `only_analytics_and_the_account_tool_use_the_account_library` — because extracting the
-    account context to `com.wkaiser.riot.account` moved it outside the slice matcher above,
+    account context to `com.muddl.riot.account` moved it outside the slice matcher above,
     which would otherwise silently have retired the old prohibitions on summoner/match/spectator
     depending on account. Stated deny-by-default: only `analytics` and `account` may depend on
-    `com.wkaiser.riot.account..`.
+    `..riot.account..`.
 
 **JaCoCo** measures coverage on every `test` run and CI publishes the summary to the pull request;
 the threshold is intentionally conservative — the signal is "coverage is visible," not an arbitrary

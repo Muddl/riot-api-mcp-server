@@ -12,6 +12,7 @@ This README is the **single source of truth** for the hydrate/persist protocol.
 
 | Area | What lives here |
 |------|-----------------|
+| [`roadmap.md`](roadmap.md) | The living program plan — where the sub-projects stand, what is deferred |
 | [`decisions/`](decisions/) | Architecture Decision Records (ADRs) — one decision per file |
 | [`patterns/`](patterns/) | Copy-pasteable how-to guides for recurring procedures |
 | [`gotchas.md`](gotchas.md) | Sharp edges and non-obvious pitfalls, newest appended at the bottom |
@@ -25,6 +26,7 @@ This README is the **single source of truth** for the hydrate/persist protocol.
 - [ADR-0004 — ArchUnit architecture enforcement](decisions/ADR-0004-archunit-enforcement.md)
 - [ADR-0005 — Committed knowledge system](decisions/ADR-0005-knowledge-system.md)
 - [ADR-0006 — Monorepo of per-game MCP servers over a shared core](decisions/ADR-0006-monorepo-split.md)
+- [ADR-0010 — Artifact coordinates, per-module versioning, and provenance stamping](decisions/ADR-0010-versioning-and-coordinates.md)
 
 ### Patterns
 
@@ -39,11 +41,12 @@ This README is the **single source of truth** for the hydrate/persist protocol.
 Before changing anything:
 
 1. Read this `README.md`.
-2. Read [`gotchas.md`](gotchas.md) — it is short and prevents the most common mistakes.
-3. Read the ADRs relevant to the area you are touching (e.g. adding an outbound
+2. Read [`roadmap.md`](roadmap.md) — where the program stands, and what is deliberately deferred.
+3. Read [`gotchas.md`](gotchas.md) — it is short and prevents the most common mistakes.
+4. Read the ADRs relevant to the area you are touching (e.g. adding an outbound
    adapter → [ADR-0001](decisions/ADR-0001-hexagonal.md) and
    [ADR-0002](decisions/ADR-0002-shared-riot-http-client.md)).
-4. If your task matches a pattern, follow the matching guide in [`patterns/`](patterns/).
+5. If your task matches a pattern, follow the matching guide in [`patterns/`](patterns/).
    Unsure of a domain term? Check [`glossary.md`](glossary.md).
 
 ### Persist (at the end of a task)
@@ -58,6 +61,8 @@ Write findings back so the next person does not re-derive them. Keep every entry
   link it from this README's Patterns list.
 - **Hit a new pitfall?** Append a section to the bottom of [`gotchas.md`](gotchas.md).
 - **Introduced a new domain term?** Add it to [`glossary.md`](glossary.md).
+- **Finished a sub-project, or moved its scope?** Update [`roadmap.md`](roadmap.md). Scope lives
+  there, not in the dated specs — those are snapshots and are not edited retroactively.
 
 Do not edit an existing ADR to reverse a decision — supersede it with a new ADR
 and set the old one's **Status** to `Superseded by ADR-000N`.

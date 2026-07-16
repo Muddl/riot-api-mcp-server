@@ -1,26 +1,141 @@
 name: Release
 
-on: 
+# Tags are module-scoped: `<module>/v<semver>`, e.g. `lol-mcp-server/v0.1.0`. Each module is
+# versioned and released independently (ADR-0010), so a flat `v*` namespace cannot say which
+# module a release is for.
+on:
   push:
     tags:
-      - 'v*'
+      - '*/v*'
   workflow_dispatch:
+    inputs:
+      module:
+        description: 'Module to release (e.g. lol-mcp-server)'
+        required: true
+      version:
+        description: 'Version to release (e.g. 0.1.0)'
+        required: true
 
-# Pushing to GHCR needs write access to GitHub Packages; nothing else is written.
 permissions:
   contents: read
   packages: write
 
 jobs:
-  publish-image:
-    name: Build & publish container image
+  # Parses the tag, then checks it against what the build actually says. This is the second half of
+  # the alignment gate: verifyRelease proves version <-> CHANGELOG agree at build time; this proves
+  # the tag agrees with the version. Previously the image tag came from the git tag and the jar's
+  # version came from Gradle, and nothing reconciled them.
+  resolve:
+    name: Resolve and verify release target
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        server: [lol-mcp-server]
+    outputs:
+      module: ${{ steps.parse.outputs.module }}
+      version: ${{ steps.parse.outputs.version }}
+      is_server: ${{ steps.parse.outputs.is_server }}
+      # Index syntax, not dot access: module names contain hyphens, which a GitHub Actions
+      # expression parses as subtraction (`outputs.riot-api-core` reads as riot minus api minus core).
+      api_core_version: ${{ steps.versions.outputs['riot-api-core'] }}
+      account_core_version: ${{ steps.versions.outputs['riot-account-core'] }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'zulu'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
+
+      # docker/metadata-action's type=semver cannot parse a prefixed tag, so extraction is explicit.
+      - name: Parse tag
+        id: parse
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            MODULE="${{ inputs.module }}"
+            VERSION="${{ inputs.version }}"
+          else
+            REF="${GITHUB_REF#refs/tags/}"          # e.g. lol-mcp-server/v0.1.0
+            MODULE="${REF%%/v*}"
+            VERSION="${REF#*/v}"
+          fi
+
+          if [ -z "$MODULE" ] || [ -z "$VERSION" ]; then
+            echo "::error::Could not parse module/version from '${GITHUB_REF#refs/tags/}'. Expected <module>/v<semver>."
+            exit 1
+          fi
+          if [ ! -d "$MODULE" ]; then
+            echo "::error::Module '$MODULE' is not a directory in this repo."
+            exit 1
+          fi
+
+          # Only server modules produce images. A library tag is a GitHub Release and nothing more:
+          # the libraries are versioned for provenance, not published as artifacts (ADR-0010).
+          case "$MODULE" in
+            *-mcp-server) IS_SERVER=true ;;
+            *)            IS_SERVER=false ;;
+          esac
+
+          echo "module=$MODULE"     >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION"   >> "$GITHUB_OUTPUT"
+          echo "is_server=$IS_SERVER" >> "$GITHUB_OUTPUT"
+          echo "Releasing $MODULE $VERSION (server image: $IS_SERVER)"
+
+      # Emits `<module>=<version>` lines straight into GITHUB_OUTPUT. -q is load-bearing: any other
+      # Gradle output (warnings, task banners) would land in GITHUB_OUTPUT and corrupt it.
+      - name: Read module versions from the build
+        id: versions
+        run: ./gradlew -q printModuleVersions >> "$GITHUB_OUTPUT"
+
+      # These come from string-literal lookups into printModuleVersions' output. An unresolved key
+      # yields "", and an empty --build-arg silently overrides the Dockerfile's ARG default, so the
+      # image would ship blank provenance labels, green. The whole point of stamping is answering
+      # "which images embed riot-api-core 0.1.0?" — "" is not an answer. Fail here instead.
+      - name: Verify library versions resolved
+        run: |
+          set -euo pipefail
+          API_CORE="${{ steps.versions.outputs['riot-api-core'] }}"
+          ACCOUNT_CORE="${{ steps.versions.outputs['riot-account-core'] }}"
+          if [ -z "$API_CORE" ] || [ -z "$ACCOUNT_CORE" ]; then
+            echo "::error::Library versions did not resolve (riot-api-core='$API_CORE', riot-account-core='$ACCOUNT_CORE'). Provenance labels would ship blank."
+            exit 1
+          fi
+          echo "Library versions resolved: riot-api-core=$API_CORE riot-account-core=$ACCOUNT_CORE"
+
+      # The tag is a claim; the build is the fact. If they disagree, the tag is wrong.
+      - name: Verify the tag matches the module's declared version
+        run: |
+          set -euo pipefail
+          TAG_VERSION="${{ steps.parse.outputs.version }}"
+          BUILD_VERSION="${{ steps.versions.outputs[steps.parse.outputs.module] }}"
+          if [ "$TAG_VERSION" != "$BUILD_VERSION" ]; then
+            echo "::error::Tag says ${{ steps.parse.outputs.module }} $TAG_VERSION, but its build.gradle says $BUILD_VERSION."
+            exit 1
+          fi
+          echo "Tag and build agree: $TAG_VERSION"
+
+      # verifyRelease also asserts the CHANGELOG has a matching heading.
+      - name: Verify the module builds and its changelog is aligned
+        run: ./gradlew :${{ steps.parse.outputs.module }}:build
+
+  publish-image:
+    name: Build & publish container image
+    needs: resolve
+    if: needs.resolve.outputs.is_server == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      # fetch-depth: 0 is load-bearing, not a performance knob. actions/checkout defaults to
+      # fetch-depth: 1 / fetch-tags: false, so `git tag --list` below would see ONLY the tag that
+      # triggered this run — making the released version trivially the highest, and moving :latest
+      # on every release including a re-released old patch. That is the exact bug the HIGHEST
+      # computation exists to prevent.
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -32,18 +147,35 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Derives image tags/labels from the pushed git tag. metadata-action always
-      # lowercases the image name, so the `Muddl` owner resolves to ghcr.io/muddl/...
-      # (GHCR rejects uppercase repository paths).
-      - name: Extract image metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository_owner }}/${{ matrix.server }}
-          tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest
+      # Tags are computed from the parsed version, not from the raw git ref: type=semver cannot
+      # read a prefixed tag. `latest` is applied only when this is the newest release for THIS
+      # module — previously it was unconditional, so re-releasing an older patch moved `latest`
+      # backwards.
+      - name: Compute image tags
+        id: tags
+        run: |
+          set -euo pipefail
+          MODULE="${{ needs.resolve.outputs.module }}"
+          VERSION="${{ needs.resolve.outputs.version }}"
+          IMAGE="ghcr.io/$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')/$MODULE"
+          MINOR="${VERSION%.*}"
+
+          TAGS="$IMAGE:$VERSION,$IMAGE:$MINOR"
+
+          # Is the version being released the highest for THIS module? Fold $VERSION into the
+          # comparison rather than asking "is it the highest already-tagged version" — on
+          # workflow_dispatch no tag exists, so the tag-only form finds nothing and never applies
+          # :latest, even for a genuine first release. On a tag push the triggering tag is already
+          # fetched, so it appears in both forms and the answer is unchanged.
+          HIGHEST=$( { echo "$VERSION"; git tag --list "$MODULE/v*" | sed "s|^$MODULE/v||"; } | sort -V | tail -1 )
+          if [ "$VERSION" = "$HIGHEST" ]; then
+            TAGS="$TAGS,$IMAGE:latest"
+            echo "$VERSION is the highest version for $MODULE — moving :latest."
+          else
+            echo "$VERSION is not the highest for $MODULE (that is $HIGHEST) — leaving :latest alone."
+          fi
+
+          echo "tags=$TAGS" >> "$GITHUB_OUTPUT"
 
       - name: Build and push image
         uses: docker/build-push-action@v6
@@ -51,7 +183,35 @@ jobs:
           context: .
           file: ./Dockerfile
           build-args: |
-            SERVER_MODULE=${{ matrix.server }}
+            SERVER_MODULE=${{ needs.resolve.outputs.module }}
+            SERVER_VERSION=${{ needs.resolve.outputs.version }}
+            RIOT_API_CORE_VERSION=${{ needs.resolve.outputs.api_core_version }}
+            RIOT_ACCOUNT_CORE_VERSION=${{ needs.resolve.outputs.account_core_version }}
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.tags.outputs.tags }}
+
+  # Libraries are versioned and tagged but not published (ADR-0010): a library tag records that a
+  # version exists and what changed in it. Note it ships nothing on its own — the fix reaches users
+  # only when each server re-releases and re-stamps its image.
+  publish-release-notes:
+    name: Publish GitHub Release
+    needs: resolve
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          # Without this, the action defaults tag_name to github.ref_name — the tag on a tag push
+          # (correct), but the *branch* name under workflow_dispatch, which this workflow
+          # deliberately supports (see the `module`/`version` inputs above and the HIGHEST logic
+          # in publish-image). Left implicit, a dispatch run creates a release pointing at a tag
+          # called e.g. "master".
+          tag_name: ${{ needs.resolve.outputs.module }}/v${{ needs.resolve.outputs.version }}
+          name: ${{ needs.resolve.outputs.module }} ${{ needs.resolve.outputs.version }}
+          body_path: ${{ needs.resolve.outputs.module }}/CHANGELOG.md
+          draft: true

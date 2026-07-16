@@ -5,8 +5,11 @@ plugins {
 	id 'com.diffplug.spotless'
 }
 
-group = 'com.wkaiser'
-version = '0.0.2-SNAPSHOT'
+// group is shared: every module publishes under the same coordinates. version is deliberately
+// NOT here — it is per-module (see ADR-0010). A version is a module-specific fact, and a
+// module-specific fact at the shared altitude is exactly how three modules ended up sharing one
+// version number by construction.
+group = 'com.muddl'
 
 java {
 	toolchain {
@@ -99,4 +102,53 @@ tasks.named('check') {
 tasks.named('test') {
 	useJUnitPlatform()
 	finalizedBy tasks.named('jacocoTestReport')
+}
+
+// The version and the CHANGELOG are one act, not two.
+//
+// Bumping without a changelog entry used to be something you had to remember; here it is a red
+// build. Versions are concrete (not -SNAPSHOT) on master, so this runs on every `./gradlew build`,
+// not only at release time. The heading is matched without a date, so entries accumulate under the
+// target version's heading during a development cycle and the date is filled in at tag time.
+//
+// See ADR-0010. This is the same "enforced, not documented" move as the @McpTool ArchUnit rule.
+def moduleName = project.name
+def changelogFile = file('CHANGELOG.md')
+// project.version is set later in this module's own build.gradle — after the `plugins {}` block
+// that applies this convention plugin has already run. A `def` captured here at script-configuration
+// time freezes on Gradle's default "unspecified" before that assignment ever executes, so every
+// module would read back "unspecified" regardless of what its build.gradle declares. Read it lazily
+// via a provider so it's resolved at task-execution time, once configuration has actually finished.
+def moduleVersionProvider = providers.provider { project.version.toString() }
+
+tasks.register('verifyRelease') {
+	group = 'verification'
+	description = "Fails if ${moduleName}'s version has no matching heading in its CHANGELOG.md."
+	// Deliberately no inputs. inputs exist to drive up-to-date checking, and upToDateWhen { false }
+	// below already forces this task to run every time - so an inputs.file(changelogFile) would only
+	// add Gradle's own file-existence validation, which runs before doLast and would preempt the
+	// task's more useful "CHANGELOG.md is missing" GradleException with a generic "Input file does
+	// not exist" instead.
+	// No outputs: this is a pure assertion, so it runs every time rather than caching a "pass".
+	outputs.upToDateWhen { false }
+
+	doLast {
+		def moduleVersion = moduleVersionProvider.get()
+		if (!changelogFile.exists()) {
+			throw new GradleException(
+				"${moduleName}: CHANGELOG.md is missing. Every module owns its own changelog (ADR-0010).")
+		}
+		def heading = "## [${moduleVersion}]"
+		if (!changelogFile.text.contains(heading)) {
+			throw new GradleException(
+				"${moduleName}: version is ${moduleVersion} but CHANGELOG.md has no '${heading}' heading.\n" +
+				"  Add the heading and describe the change, or correct the version.\n" +
+				"  A bump without an entry is the drift this gate exists to stop (ADR-0010).\n" +
+				"  The /prepare-release skill walks the whole flow.")
+		}
+	}
+}
+
+tasks.named('check') {
+	dependsOn tasks.named('verifyRelease')
 }

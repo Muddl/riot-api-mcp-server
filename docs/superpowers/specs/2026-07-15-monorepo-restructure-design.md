@@ -40,6 +40,10 @@ is the reason several decisions below go the way they do.
 
 ## Program roadmap (context only — this spec covers #0)
 
+> **Superseded as a source of truth.** This table is a snapshot as of 2026-07-15 and is left
+> unedited as history. The living roadmap is [`docs/knowledge/roadmap.md`](../../knowledge/roadmap.md)
+> — notably, sub-project 1 has since been split into **1a** (foundation) and **1b** (breadth).
+
 | # | Sub-project | Scope |
 |---|---|---|
 | **0** | **Monorepo restructure + extract `riot-api-core`** | **This spec.** |
