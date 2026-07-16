@@ -140,13 +140,17 @@ jobs:
 
           TAGS="$IMAGE:$VERSION,$IMAGE:$MINOR"
 
-          # Highest existing tag for this module, compared with sort -V.
-          LATEST=$(git tag --list "$MODULE/v*" | sed "s|^$MODULE/v||" | sort -V | tail -1)
-          if [ "$VERSION" = "$LATEST" ]; then
+          # Is the version being released the highest for THIS module? Fold $VERSION into the
+          # comparison rather than asking "is it the highest already-tagged version" — on
+          # workflow_dispatch no tag exists, so the tag-only form finds nothing and never applies
+          # :latest, even for a genuine first release. On a tag push the triggering tag is already
+          # fetched, so it appears in both forms and the answer is unchanged.
+          HIGHEST=$( { echo "$VERSION"; git tag --list "$MODULE/v*" | sed "s|^$MODULE/v||"; } | sort -V | tail -1 )
+          if [ "$VERSION" = "$HIGHEST" ]; then
             TAGS="$TAGS,$IMAGE:latest"
-            echo "$VERSION is the highest tag for $MODULE — moving :latest."
+            echo "$VERSION is the highest version for $MODULE — moving :latest."
           else
-            echo "$VERSION is not the highest tag for $MODULE (that is $LATEST) — leaving :latest alone."
+            echo "$VERSION is not the highest for $MODULE (that is $HIGHEST) — leaving :latest alone."
           fi
 
           echo "tags=$TAGS" >> "$GITHUB_OUTPUT"
