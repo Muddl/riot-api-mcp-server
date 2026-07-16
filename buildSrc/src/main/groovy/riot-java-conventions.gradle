@@ -124,8 +124,11 @@ def moduleVersionProvider = providers.provider { project.version.toString() }
 tasks.register('verifyRelease') {
 	group = 'verification'
 	description = "Fails if ${moduleName}'s version has no matching heading in its CHANGELOG.md."
-	inputs.property('version', moduleVersionProvider)
-	inputs.file(changelogFile).withPropertyName('changelog')
+	// Deliberately no inputs. inputs exist to drive up-to-date checking, and upToDateWhen { false }
+	// below already forces this task to run every time - so an inputs.file(changelogFile) would only
+	// add Gradle's own file-existence validation, which runs before doLast and would preempt the
+	// task's more useful "CHANGELOG.md is missing" GradleException with a generic "Input file does
+	// not exist" instead.
 	// No outputs: this is a pure assertion, so it runs every time rather than caching a "pass".
 	outputs.upToDateWhen { false }
 
