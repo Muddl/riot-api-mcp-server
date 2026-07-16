@@ -5,8 +5,11 @@ plugins {
 	id 'com.diffplug.spotless'
 }
 
+// group is shared: every module publishes under the same coordinates. version is deliberately
+// NOT here — it is per-module (see ADR-0010). A version is a module-specific fact, and a
+// module-specific fact at the shared altitude is exactly how three modules ended up sharing one
+// version number by construction.
 group = 'com.muddl'
-version = '0.0.2-SNAPSHOT'
 
 java {
 	toolchain {

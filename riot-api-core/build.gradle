@@ -3,6 +3,10 @@ plugins {
 	id 'java-test-fixtures'
 }
 
+// Independent of the other modules — see ADR-0010. 0.1.0: new coordinates, plus the 429 retry and
+// error taxonomy landing in Plan B. Pre-1.0, so a breaking change bumps the minor.
+version = '0.1.0'
+
 dependencies {
 	// api: servers reference RestClient types in adapter signatures via RiotApiClient.
 	api 'org.springframework:spring-web'

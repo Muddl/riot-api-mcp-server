@@ -97,3 +97,17 @@ Two rules follow:
    "passing" from "vacuously passing". `HexagonalArchitectureNegativeControlTest` imports a
    deliberate violation and asserts the rule *fails*. If a negative control ever goes green by not
    throwing, the rule is dead.
+
+## Gradle ignores `gradle.properties` in a subproject directory
+
+Gradle reads `gradle.properties` from the **root project directory** and `GRADLE_USER_HOME` — not
+from subproject directories. Dropping `riot-api-core/gradle.properties` with `version=1.2.3` in it
+does nothing, and Gradle says nothing: the file is silently ignored, and the module keeps whatever
+version it had.
+
+This is why per-module versions are declared in each module's `build.gradle` (see ADR-0010) rather
+than in a per-module properties file, which is the more obvious-looking option and does not work.
+
+The convention plugin sets `group` (shared) but deliberately **not** `version` (per-module). A
+version is a module-specific fact, and a module-specific fact at the shared altitude is how three
+modules came to share one version number by construction.
