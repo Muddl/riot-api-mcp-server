@@ -1,6 +1,7 @@
 package com.muddl.riot.core.config;
 
 import com.muddl.riot.core.enums.RiotApiRegionUri;
+import java.time.Duration;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -25,4 +26,10 @@ public class RiotApiProperties {
      * for every Riot client. Used by tests to point requests at a local mock server.
      */
     private String baseUrlOverride;
+
+    /** How many times to retry a 429 before giving up and surfacing the error. */
+    private int maxRetries = 3;
+
+    /** Backoff used between 429 retries when the response carries no usable {@code Retry-After}. */
+    private Duration retryBackoff = Duration.ofSeconds(1);
 }

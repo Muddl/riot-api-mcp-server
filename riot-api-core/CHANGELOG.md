@@ -12,6 +12,11 @@ versioning: [SemVer](https://semver.org/spec/v2.0.0.html), pre-1.0 (breaking →
 First independently versioned release. Previously this module shared one `0.0.2-SNAPSHOT` with the
 whole repo — see [ADR-0010](../docs/knowledge/decisions/ADR-0010-versioning-and-coordinates.md).
 
+### Added
+- Automatic retry on HTTP 429, honouring the `Retry-After` header (falling back to a configurable
+  `riot.retry-backoff`, default 1s) up to `riot.max-retries` attempts (default 3). This is reactive
+  retry, not a proactive rate limiter — see [ADR-0007](../docs/knowledge/decisions/ADR-0007-core-hardening-boundary.md).
+
 ### Changed
 - **Breaking:** coordinates are now `com.muddl`, package root `com.muddl.riot.core`.
 - **Breaking:** `RiotApiException` messages are now actionable, status-derived text (e.g. a 403
