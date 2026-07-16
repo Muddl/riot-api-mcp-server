@@ -26,6 +26,8 @@ This README is the **single source of truth** for the hydrate/persist protocol.
 - [ADR-0004 — ArchUnit architecture enforcement](decisions/ADR-0004-archunit-enforcement.md)
 - [ADR-0005 — Committed knowledge system](decisions/ADR-0005-knowledge-system.md)
 - [ADR-0006 — Monorepo of per-game MCP servers over a shared core](decisions/ADR-0006-monorepo-split.md)
+- [ADR-0007 — Core hardening boundary](decisions/ADR-0007-core-hardening-boundary.md)
+- [ADR-0008 — Shared player-identity resolution](decisions/ADR-0008-shared-player-identity-resolution.md)
 - [ADR-0010 — Artifact coordinates, per-module versioning, and provenance stamping](decisions/ADR-0010-versioning-and-coordinates.md)
 
 ### Patterns
