@@ -260,12 +260,21 @@ Doing it now, with one server, is the cheapest it will ever be.
 
 - [ ] **Step 1: Inventory every occurrence before touching anything**
 
+Search by **exclusion, not inclusion**. An allowlist of extensions is how a rename misses a file: this repo carries `com.wkaiser` in `additional-spring-configuration-metadata.json`, which an `--include='*.java' --include='*.gradle' --include='*.yml'` filter silently skips — and since that file is Spring Boot config metadata rather than compiled code, nothing goes red when it rots.
+
 ```bash
-grep -rn 'com\.wkaiser\|com/wkaiser' --include='*.java' --include='*.gradle' --include='*.yml' --include='*.md' --include='*.imports' . | grep -v '/build/' | wc -l
-grep -rln 'com\.wkaiser\|com/wkaiser' --include='*.java' --include='*.gradle' --include='*.yml' --include='*.md' --include='*.imports' . | grep -v '/build/'
+git grep -l 'com\.wkaiser\|com/wkaiser' -- . ':!docs/' ':!.superpowers/'
 ```
 
-Expected: a file list covering all three modules' sources, the convention plugin, both `AutoConfiguration.imports` files, and some docs. Record the count — Step 6 asserts it reaches zero.
+Expected: all three modules' sources, the convention plugin, both `AutoConfiguration.imports` files, `lol-mcp-server/src/main/resources/additional-spring-configuration-metadata.json`, and `CHANGELOG.md`. `git grep` respects `.gitignore`, so `build/` output is excluded for free.
+
+Then the docs, which need judgment rather than substitution:
+
+```bash
+git grep -l 'com\.wkaiser' -- docs/knowledge/ CLAUDE.md README.md ARCHITECTURE.md CONTRIBUTING.md
+```
+
+Record both lists — Step 6 asserts the first reaches zero (except `CHANGELOG.md`'s released entries).
 
 - [ ] **Step 2: Move the directory trees**
 
@@ -318,11 +327,15 @@ The negative control needs no edit: its fixture's `import com.wkaiser.riot.accou
 
 - [ ] **Step 6: Verify no reference survives**
 
+Extension-agnostic, for the reason in Step 1 — an allowlist is how the miss happens:
+
 ```bash
-grep -rn 'com\.wkaiser\|com/wkaiser' --include='*.java' --include='*.gradle' --include='*.yml' --include='*.imports' . | grep -v '/build/'
+git grep -l 'com\.wkaiser\|com/wkaiser' -- . ':!docs/' ':!.superpowers/' ':!CHANGELOG.md'
 ```
 
-Expected: **no output**. (Markdown under `docs/superpowers/specs/` is deliberately excluded and may still mention it.)
+Expected: **no output**.
+
+`CHANGELOG.md` is excluded because its *released* entries describe `com.wkaiser.riot.*` as the package root at the time they shipped — that is history and must not be rewritten. Everything under `docs/superpowers/` (dated specs and plans) is excluded for the same reason. `docs/knowledge/` is judged by hand in Step 4: some of it narrates this very rename and would become nonsense under substitution.
 
 ```bash
 find . -path ./build -prune -o -type d -name wkaiser -print
@@ -1381,7 +1394,7 @@ believe something is fixed when it isn't."
 ## Plan A exit criteria
 
 - `./gradlew build` green.
-- No `com.wkaiser` reference outside `docs/superpowers/specs/` (historical snapshots).
+- `git grep -l 'com\.wkaiser' -- . ':!docs/' ':!.superpowers/' ':!CHANGELOG.md'` returns nothing. Extension-agnostic on purpose: an `--include=` allowlist already missed `additional-spring-configuration-metadata.json` once during Task 2, and that file is not compile-validated, so a stale FQN there is silent.
 - Each module reports its own `0.1.0` via `./gradlew -q printModuleVersions`.
 - `verifyRelease` **demonstrated to fail** on a version/changelog mismatch, not merely observed passing.
 - `HexagonalArchitectureNegativeControlTest` green — the account-library rule provably still bites after the rename.
