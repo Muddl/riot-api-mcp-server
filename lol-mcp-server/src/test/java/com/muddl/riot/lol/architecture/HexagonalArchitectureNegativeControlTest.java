@@ -1,5 +1,6 @@
 package com.muddl.riot.lol.architecture;
 
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.tngtech.archunit.core.domain.JavaClasses;
@@ -7,29 +8,34 @@ import com.tngtech.archunit.core.importer.ClassFileImporter;
 import org.junit.jupiter.api.Test;
 
 /**
- * Proves the package-string-dependent rules in {@link HexagonalArchitectureTest} actually bite.
+ * Proves the split account rule in {@link HexagonalArchitectureTest} bites on both sides.
  *
- * <p>A green build is not evidence for these rules, because the failure mode <em>is</em> a green
- * build: {@code only_analytics_and_the_account_tool_use_the_account_library} carries its package in
- * the rule's <em>condition</em>, so if that package moves the condition matches nothing, zero
- * violations are found, and the rule passes while guarding nothing. That is exactly how the
- * prohibition this rule replaced was silently retired once already (see the rule's javadoc).
- *
- * <p>This test is inverted on purpose: it asserts the rule FAILS when fed a violation. If it ever
- * goes green by <em>not</em> throwing, the rule has stopped enforcing anything. That also covers the
- * condition's matcher specifically — point it at a package that does not exist and this test stops
- * throwing, which is the whole failure being guarded against.
+ * <p>A green build is not evidence for a package-string rule, because the failure mode <em>is</em> a
+ * green build: {@code only_analytics_and_the_account_tool_use_the_account_domain} carries its package
+ * in the rule's <em>condition</em>, so if that package moved the condition would match nothing, zero
+ * violations would be found, and the rule would pass while guarding nothing. So this test asserts the
+ * rule FAILS on a domain violation and, separately, does NOT fail on a legal identity dependency —
+ * the two halves of the split.
  */
 class HexagonalArchitectureNegativeControlTest {
 
     @Test
-    void account_library_rule_rejects_a_non_allowlisted_context() {
+    void account_domain_rule_rejects_a_non_allowlisted_context_using_the_domain() {
         JavaClasses violating = new ClassFileImporter().importClasses(ArchFixtureIllegalAccountUser.class);
 
         assertThatThrownBy(() ->
-                        HexagonalArchitectureTest.only_analytics_and_the_account_tool_use_the_account_library.check(
+                        HexagonalArchitectureTest.only_analytics_and_the_account_tool_use_the_account_domain.check(
                                 violating))
                 .isInstanceOf(AssertionError.class)
                 .hasMessageContaining("ArchFixtureIllegalAccountUser");
+    }
+
+    @Test
+    void account_domain_rule_allows_a_non_allowlisted_context_using_the_identity_resolver() {
+        JavaClasses legal = new ClassFileImporter().importClasses(ArchFixtureLegalResolverUser.class);
+
+        assertThatCode(() -> HexagonalArchitectureTest.only_analytics_and_the_account_tool_use_the_account_domain.check(
+                        legal))
+                .doesNotThrowAnyException();
     }
 }
