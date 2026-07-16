@@ -112,8 +112,15 @@ jobs:
     if: needs.resolve.outputs.is_server == 'true'
     runs-on: ubuntu-latest
     steps:
+      # fetch-depth: 0 is load-bearing, not a performance knob. actions/checkout defaults to
+      # fetch-depth: 1 / fetch-tags: false, so `git tag --list` below would see ONLY the tag that
+      # triggered this run — making the released version trivially the highest, and moving :latest
+      # on every release including a re-released old patch. That is the exact bug the HIGHEST
+      # computation exists to prevent.
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
