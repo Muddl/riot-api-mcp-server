@@ -40,15 +40,19 @@ What versioning buys instead is **provenance**: each server's jar manifest and i
 the library versions it embeds, so *"core 0.1.0 has a flaw — which images embed it?"* is answerable
 from the registry without rebuilding.
 
-**Cross-module version reads are lazy, resolved at task-execution time, not at configuration time.**
-The convention plugin is applied to a module before that module's own `version = '...'` line runs, so
-anything that captures `project.version` eagerly (a plain `def` at script-configuration time) freezes
-on Gradle's default `'unspecified'`. `verifyRelease`, `lol-mcp-server`'s manifest stamping (which
-reads `riot-api-core` and `riot-account-core`'s versions across project boundaries), and the root's
-`printModuleVersions` all read versions through `providers.provider { ... }`, resolved inside
-`doLast`. The alternative tried first, `evaluationDependsOn`, was rejected: it forces eager
-cross-project evaluation, makes correctness depend on `settings.gradle`'s include order — which
-Gradle does not contract — and is incompatible with `--configuration-on-demand`.
+**Cross-module version reads are lazy, resolved after configuration finishes, not eagerly at
+configuration time.** The convention plugin is applied to a module before that module's own
+`version = '...'` line runs, so anything that captures `project.version` eagerly (a plain `def` at
+script-configuration time) freezes on Gradle's default `'unspecified'`. Two mechanisms fix this,
+fitting where each is used: `verifyRelease` and `lol-mcp-server`'s manifest stamping (which read
+`riot-api-core` and `riot-account-core`'s versions across project boundaries **during
+configuration**) defer via `providers.provider { ... }`, resolved lazily. The root's
+`printModuleVersions` reads `sub.version` directly with no provider, because its whole body already
+runs inside `doLast` — by execution time every subproject is evaluated and `sub.version` is real; a
+provider there would be redundant indirection over a value already safe to read. The alternative
+tried first, `evaluationDependsOn`, was rejected: it forces eager cross-project evaluation, makes
+correctness depend on `settings.gradle`'s include order — which Gradle does not contract — and is
+incompatible with `--configuration-on-demand`.
 
 **Tags are `<module>/v<semver>`.** `release.yml` parses module and version from the tag, fails if
 they disagree with the module's `build.gradle`, and builds only that module. Server tags publish an
