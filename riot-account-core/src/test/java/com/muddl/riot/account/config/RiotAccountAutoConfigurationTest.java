@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.muddl.riot.account.adapter.out.riot.RiotAccountRiotAdapter;
 import com.muddl.riot.account.application.RiotAccountService;
 import com.muddl.riot.account.application.port.RiotAccountPort;
+import com.muddl.riot.account.identity.PlayerIdentityResolver;
 import com.muddl.riot.core.config.RiotApiAutoConfiguration;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
@@ -24,6 +25,11 @@ class RiotAccountAutoConfigurationTest {
             assertThat(context).hasSingleBean(RiotAccountPort.class);
             assertThat(context.getBean(RiotAccountPort.class)).isInstanceOf(RiotAccountRiotAdapter.class);
         });
+    }
+
+    @Test
+    void registers_the_player_identity_resolver() {
+        runner.run(context -> assertThat(context).hasSingleBean(PlayerIdentityResolver.class));
     }
 
     @Test

@@ -111,3 +111,30 @@ than in a per-module properties file, which is the more obvious-looking option a
 The convention plugin sets `group` (shared) but deliberately **not** `version` (per-module). A
 version is a module-specific fact, and a module-specific fact at the shared altitude is how three
 modules came to share one version number by construction.
+
+## The identity cache keys on Riot ID → PUUID, never the reverse — Riot IDs are mutable
+
+`PlayerIdentityResolver` (riot-account-core) caches to avoid a second Riot call per player-keyed
+tool invocation. It caches **Riot ID → PUUID**, with a bounded TTL (Caffeine `expireAfterWrite`),
+and deliberately does not cache PUUID → anything:
+
+- **PUUIDs are stable.** A raw PUUID needs no lookup at all, so it is returned as-is with no cache
+  entry.
+- **Riot IDs are mutable.** A player can change their `GameName#TAG`. So a `GameName#TAG → PUUID`
+  mapping can go stale, and the TTL (default 5 minutes) bounds how stale. Do not raise the TTL to
+  "improve the hit rate" without accepting more staleness — that is the trade the TTL exists to make.
+
+A failed lookup (no such account) is **not** cached: Caffeine's `get(key, loader)` stores nothing
+when the loader throws, so a later retry re-checks. Don't add negative caching without a reason — a
+mistyped Riot ID that later becomes valid should resolve.
+
+## Caffeine `maximumSize` is approximate and eviction is asynchronous
+
+Caffeine's `maximumSize` is a bound, not a hard cap enforced synchronously — eviction runs on an
+executor, so the cache can briefly hold more than `maximumSize` entries, and an entry is not
+guaranteed to be gone the instant the bound is exceeded. **Do not write a test asserting exact
+size-based eviction** (`put maxSize+1, assert the eldest is gone`) — it is flaky. If you ever must,
+build the cache with `.executor(Runnable::run)` and call `cache.cleanUp()` first. TTL expiry, by
+contrast, is deterministic on read: `expireAfterWrite` + an injected `Ticker` is exactly why the
+identity tests can advance time by hand and assert re-fetch. Size eviction is Caffeine's guarantee to
+keep; it is not ours to test.
