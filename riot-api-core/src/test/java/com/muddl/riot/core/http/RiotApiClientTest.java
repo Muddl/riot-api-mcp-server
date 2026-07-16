@@ -63,8 +63,8 @@ class RiotApiClientTest {
     }
 
     @Test
-    void maps_error_response_to_RiotApiException_with_status() {
-        stubFor(get(urlEqualTo("/boom")).willReturn(aResponse().withStatus(429).withBody("rate limited")));
+    void maps_error_response_to_RiotApiException_with_actionable_message_and_raw_body() {
+        stubFor(get(urlEqualTo("/boom")).willReturn(aResponse().withStatus(403).withBody("forbidden raw body")));
 
         assertThatThrownBy(() -> riotApiClient
                         .platform(RiotApiPlatformUri.NA1)
@@ -73,8 +73,8 @@ class RiotApiClientTest {
                         .retrieve()
                         .body(String.class))
                 .isInstanceOf(RiotApiException.class)
-                .hasMessageContaining("rate limited")
-                .extracting(e -> ((RiotApiException) e).getStatusCode())
-                .isEqualTo(429);
+                .hasMessage("Your Riot API key is invalid or expired — development keys expire every 24 hours")
+                .extracting(e -> ((RiotApiException) e).getRawBody())
+                .isEqualTo("forbidden raw body");
     }
 }

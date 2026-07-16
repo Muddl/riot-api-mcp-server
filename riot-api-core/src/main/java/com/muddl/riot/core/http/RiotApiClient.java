@@ -37,8 +37,7 @@ public class RiotApiClient {
                 .defaultHeader(RIOT_TOKEN_HEADER, properties.getApiKey())
                 .defaultStatusHandler(HttpStatusCode::isError, (request, response) -> {
                     String body = new String(response.getBody().readAllBytes(), StandardCharsets.UTF_8);
-                    throw new RiotApiException(
-                            "Riot API error: " + body, response.getStatusCode().value());
+                    throw RiotApiException.forStatus(response.getStatusCode().value(), body);
                 })
                 .build();
     }

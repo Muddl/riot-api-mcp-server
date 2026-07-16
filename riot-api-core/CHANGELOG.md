@@ -14,3 +14,6 @@ whole repo — see [ADR-0010](../docs/knowledge/decisions/ADR-0010-versioning-an
 
 ### Changed
 - **Breaking:** coordinates are now `com.muddl`, package root `com.muddl.riot.core`.
+- **Breaking:** `RiotApiException` messages are now actionable, status-derived text (e.g. a 403
+  explains that development keys expire every 24 hours) instead of the raw Riot body. The raw body
+  moves to `RiotApiException.getRawBody()`. See [ADR-0007](../docs/knowledge/decisions/ADR-0007-core-hardening-boundary.md).
