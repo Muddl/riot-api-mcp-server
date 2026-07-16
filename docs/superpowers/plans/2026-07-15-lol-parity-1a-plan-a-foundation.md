@@ -431,13 +431,24 @@ version = '0.1.0'
 
 - [ ] **Step 4: Verify each module reports its own version**
 
+**Do not use `-q` here.** The `properties` task logs at lifecycle level, which `-q` suppresses — you get empty output and a false read either way. (`-q` is still correct for `println`-based tasks like Task 5's `printModuleVersions`; that is a different mechanism.)
+
 ```bash
 for m in riot-api-core riot-account-core lol-mcp-server; do
-  echo -n "$m: "; ./gradlew -q :$m:properties --property version | head -1
+  echo -n "$m -> "; ./gradlew :$m:properties --property version 2>&1 | grep -i '^version:'
 done
 ```
 
 Expected: each prints `version: 0.1.0`. They agree today by coincidence, not by construction — Task 4 proves they can diverge.
+
+Corroborate against the artifact names, which cannot lie about what the build actually produced:
+
+```bash
+./gradlew clean :riot-api-core:jar :lol-mcp-server:bootJar
+ls riot-api-core/build/libs/ lol-mcp-server/build/libs/
+```
+
+Expected: every jar carries `-0.1.0`, and no `0.0.2-SNAPSHOT` artifact remains. The `clean` matters — without it, stale jars from the previous version linger and later tasks glob them (see Task 5).
 
 - [ ] **Step 5: Append the gotcha (only if Step 1 confirmed it)**
 
@@ -802,6 +813,42 @@ riot-api-core=0.1.0
 ```
 
 No `unspecified` values. (Order follows Gradle's project ordering; CI parses by key, not position.)
+
+- [ ] **Step 6a: Add a `.dockerignore` — the version bump made a latent bug live**
+
+The repo has no `.dockerignore`, so `COPY riot-api-core ./riot-api-core` (`Dockerfile:20-22`) drags each module's local `build/` directory into the image context. `Dockerfile:40` then does:
+
+```dockerfile
+COPY --from=build /workspace/${SERVER_MODULE}/build/libs/*.jar app.jar
+```
+
+A glob matching more than one source against a single-file destination is an error in Docker. This was survivable while every local jar shared one version; now that Task 3 moved modules to `0.1.0`, a developer's `build/libs/` holds both `lol-mcp-server-0.0.2-SNAPSHOT.jar` and `lol-mcp-server-0.1.0.jar` (plus `-plain` variants), so the glob matches four files and the build fails. It also silently copies stale, wrong-version artifacts into a build that is supposed to compile from source.
+
+Create `.dockerignore`:
+
+```
+# The image builds from source: every module's build/ is produced inside the build stage. Copying
+# the host's build/ in is wrong twice over — it ships stale artifacts into a from-source build, and
+# Dockerfile:40 globs build/libs/*.jar into a single-file destination, which fails outright once
+# more than one version's jar is present locally.
+**/build/
+**/.gradle/
+.gradle/
+.git/
+.github/
+.superpowers/
+docs/
+*.md
+!README.md
+```
+
+- [ ] **Step 6b: Verify the context shrank and the glob is unambiguous**
+
+```bash
+docker build --build-arg SERVER_MODULE=lol-mcp-server -t lol-mcp-server:ignore-check . 2>&1 | grep -i 'transferring context\|ERROR' | head -3
+```
+
+Expected: the context transfer is small (KBs/low MBs, not hundreds of MBs) and there is no `ERROR`. If Docker is unavailable, see the note in Step 7.
 
 - [ ] **Step 6: Add OCI provenance labels to the Dockerfile**
 
