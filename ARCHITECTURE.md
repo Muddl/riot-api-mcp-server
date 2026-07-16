@@ -196,7 +196,7 @@ deliberate:
     account context to `com.muddl.riot.account` moved it outside the slice matcher above,
     which would otherwise silently have retired the old prohibitions on summoner/match/spectator
     depending on account. Stated deny-by-default: only `analytics` and `account` may depend on
-    `com.muddl.riot.account..`.
+    `..riot.account..`.
 
 **JaCoCo** measures coverage on every `test` run and CI publishes the summary to the pull request;
 the threshold is intentionally conservative — the signal is "coverage is visible," not an arbitrary
