@@ -64,8 +64,17 @@ affect the server, say so out loud rather than skipping silently.
 Order matters: bumping first gives you a red build and a temptation to write the entry to satisfy
 the gate rather than to describe the change.
 
-In `<module>/CHANGELOG.md`, under a `## [<new-version>] - YYYY-MM-DD` heading, using Keep a Changelog
-sections (`Added` / `Changed` / `Fixed` / `Removed`). Mark breaking changes **Breaking:**.
+`verifyRelease` matches the `## [<version>]` heading without a date, so entries accumulate under the
+target version during a development cycle. Check `<module>/CHANGELOG.md` for one that's already
+there:
+
+- **No heading for this version yet:** add one, `## [<new-version>] - unreleased` — not a date yet,
+  see step 7.
+- **Heading already exists as `## [<version>] - unreleased`:** that's the common case once a module
+  has an in-progress cycle. Add to it; do not write a second heading for the same version.
+
+Either way, use Keep a Changelog sections (`Added` / `Changed` / `Fixed` / `Removed`). Mark breaking
+changes **Breaking:**.
 
 Write what changed for someone consuming the module, and why — not the commit list. If a server
 entry exists only because of a library fix, name the library and version.
@@ -73,7 +82,8 @@ entry exists only because of a library fix, name the library and version.
 ## 5. Bump
 
 In `<module>/build.gradle`, edit `version = '...'`. One module at a time; do not touch modules that
-did not change.
+did not change. If the version is already bumped and the changelog heading already reads
+`- unreleased` (i.e. this release was already staged), there is nothing to do here — move on.
 
 ## 6. Verify
 
@@ -85,6 +95,9 @@ did not change.
 disagreement, do not work around the gate.
 
 ## 7. Commit and tag
+
+Fill in the date now: replace the heading's `- unreleased` with `- YYYY-MM-DD`. Don't add a second
+heading — edit the one from step 4 in place.
 
 ```bash
 git add <module>/build.gradle <module>/CHANGELOG.md
