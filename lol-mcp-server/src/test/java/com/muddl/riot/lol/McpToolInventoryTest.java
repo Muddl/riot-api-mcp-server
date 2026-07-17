@@ -24,8 +24,7 @@ import org.springframework.ai.mcp.annotation.McpTool;
 class McpToolInventoryTest {
 
     static final Set<String> EXPECTED_TOOL_NAMES = Set.of(
-            "get_riot_account_by_riot_id",
-            "get_riot_account_by_puuid",
+            "lol_account_by_player",
             "get_lol_summoner_by_puuid",
             "get_current_game_by_summoner_id",
             "get_featured_games",

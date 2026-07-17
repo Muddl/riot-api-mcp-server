@@ -9,8 +9,11 @@ import org.springframework.ai.mcp.annotation.McpToolParam;
 import org.springframework.stereotype.Component;
 
 /**
- * MCP server tool for accessing Riot account functionality.
- * Exposes methods that can be called by AI models via the MCP server.
+ * MCP tool for Riot account lookups. Takes a single {@code player} — a {@code GameName#TAG} Riot ID
+ * or a raw PUUID — and returns the account. It disambiguates on {@code #} and calls the account
+ * service directly (rather than routing through {@code PlayerIdentityResolver}) because it needs
+ * account <em>data</em> for both forms, and the resolver returns only a PUUID; this tool is on the
+ * account-domain allow-list, so the direct call is legal.
  */
 @Slf4j
 @Component
@@ -20,20 +23,29 @@ public class RiotAccountTool {
     private final RiotAccountService accountService;
 
     @McpTool(
-            name = "get_riot_account_by_riot_id",
-            description = "Get Riot account information by Riot ID (gameName#tagLine)")
-    public RiotAccount getAccountByRiotId(
-            @McpToolParam(description = "The player's in-game name", required = true) String gameName,
-            @McpToolParam(description = "The player's tag line (e.g. NA1)", required = true) String tagLine) {
-        log.info("MCP Tool - Getting account by Riot ID: {}#{}", gameName, tagLine);
-        return accountService.getAccountByRiotId(gameName, tagLine);
+            name = "lol_account_by_player",
+            description = "Get Riot account information by player (a Riot ID as GameName#TAG, or a raw PUUID).")
+    public RiotAccount getAccountByPlayer(
+            @McpToolParam(description = "The player as a Riot ID (GameName#TAG) or a raw PUUID", required = true)
+                    String player) {
+        if (player == null || player.isBlank()) {
+            throw new IllegalArgumentException(unparseableMessage(player));
+        }
+        String trimmed = player.trim();
+        if (trimmed.indexOf('#') < 0) {
+            log.info("MCP Tool - Getting account by PUUID");
+            return accountService.getAccountByPuuid(trimmed);
+        }
+        String[] parts = trimmed.split("#", -1);
+        if (parts.length != 2 || parts[0].isBlank() || parts[1].isBlank()) {
+            throw new IllegalArgumentException(unparseableMessage(player));
+        }
+        log.info("MCP Tool - Getting account by Riot ID: {}#{}", parts[0], parts[1]);
+        return accountService.getAccountByRiotId(parts[0], parts[1]);
     }
 
-    @McpTool(name = "get_riot_account_by_puuid", description = "Get Riot account information by PUUID")
-    public RiotAccount getAccountByPuuid(
-            @McpToolParam(description = "The player's PUUID (encrypted universally unique ID)", required = true)
-                    String puuid) {
-        log.info("MCP Tool - Getting account by PUUID: {}", puuid);
-        return accountService.getAccountByPuuid(puuid);
+    private static String unparseableMessage(String player) {
+        return "Cannot parse player '" + player + "'. Provide a Riot ID as GameName#TAG "
+                + "(for example Faker#KR1) or a raw PUUID.";
     }
 }
