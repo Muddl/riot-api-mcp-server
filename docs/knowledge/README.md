@@ -30,6 +30,7 @@ This README is the **single source of truth** for the hydrate/persist protocol.
 - [ADR-0008 — Shared player-identity resolution](decisions/ADR-0008-shared-player-identity-resolution.md)
 - [ADR-0009 — MCP tool contract](decisions/ADR-0009-mcp-tool-contract.md)
 - [ADR-0010 — Artifact coordinates, per-module versioning, and provenance stamping](decisions/ADR-0010-versioning-and-coordinates.md)
+- [ADR-0011 — Documentation topology and the per-module doc gate](decisions/ADR-0011-doc-topology.md)
 
 ### Patterns
 

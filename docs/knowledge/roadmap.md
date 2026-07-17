@@ -13,7 +13,7 @@ not edited retroactively. When scope moves, it moves here.
 | # | Sub-project | Status | Spec |
 |---|---|---|---|
 | 0 | Monorepo restructure + extract `riot-api-core` | ✅ Done | [2026-07-15](../superpowers/specs/2026-07-15-monorepo-restructure-design.md) |
-| **1a** | **LoL parity — foundation** | 🔨 In progress | [2026-07-15](../superpowers/specs/2026-07-15-lol-parity-foundation-design.md) |
+| **1a** | **LoL parity — foundation** | ✅ Done | [2026-07-15](../superpowers/specs/2026-07-15-lol-parity-foundation-design.md) |
 | 1b | LoL parity — breadth | ⏳ Not started | — |
 | 2 | TFT server | ⏳ Not started | — |
 | 3 | Valorant server | ⏳ Not started | — |
@@ -28,7 +28,7 @@ Pure structural refactor. Extracted `riot-api-core` (HTTP, routing, errors) and 
 server. No endpoints added, no behaviour changed. See
 [ADR-0006](decisions/ADR-0006-monorepo-split.md).
 
-### 1a — LoL parity: foundation 🔨
+### 1a — LoL parity: foundation ✅
 
 The first feature work on the new structure, and therefore the template the other four servers
 inherit. Organizing principle: **everything a second game server would otherwise copy gets built
@@ -44,9 +44,18 @@ once, in a library, in this cycle.**
 - Tool contract sweep: `<game>_<context>_<action>`, the single `player` param
 - Per-module docs and the monorepo sanity check
 
-**Progress:** Plans A (coordinates + release engineering), B (library hardening: retry, error
-taxonomy, identity resolver), and C (LoL server: correctness, the League exemplar, the tool-contract
-sweep) complete. Plan D (per-module docs + the monorepo sanity check) follows.
+**Progress:** ✅ Complete. Plans A (coordinates + release engineering), B (library hardening: retry,
+error taxonomy, identity resolver), C (LoL server: correctness, the League exemplar, the tool-contract
+sweep), and D (per-module docs + the monorepo sanity check) all landed. Every module documents itself,
+enforced by `verifyModuleDocs`; the sanity pass confirmed the convention plugin, dependency scopes,
+and the absence of live `com.wkaiser` references. The handoff contract for 1b is in
+[1a's spec](../superpowers/specs/2026-07-15-lol-parity-foundation-design.md#handoff-contract--what-1b-inherits).
+This "Done" covers all planned implementation plus the automatable checks (unit/ArchUnit/JaCoCo/
+Spotless, and `McpToolInventoryTest` asserting the seven-tool inventory). Two standing gates remain
+**pending / user-owed**, carried forward rather than claimed passed: the live transport handshake
+(stdio + sse, `initialize` → `tools/list` → one `tools/call`, asserting stdout JSON purity) and the
+Spectator-V5 / League-V4 endpoint-path verification against the live Riot developer portal — both
+require a live `RIOT_API_KEY` and a human in the loop, per the Standing constraints below.
 
 **Split from 1b deliberately.** Sub-project 1 originally bundled correctness, six new contexts, the
 contract sweep, and conventions. Sub-project 0's lesson was that mixing pure motion with behaviour
