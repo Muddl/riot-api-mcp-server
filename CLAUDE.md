@@ -53,7 +53,7 @@ A Gradle monorepo. Two libraries and one server per game:
 **Dependency rule:** servers → `riot-account-core` → `riot-api-core`, never back. Gradle enforces
 this at compile time. Within a module, ArchUnit enforces `adapter → application → domain` (inward
 only), `RestClient` only in `adapter.out.riot`, `@McpTool` only in `adapter.in.mcp`, and context
-independence via a slice rule (exceptions: spectator→summoner, analytics→summoner, analytics→match).
+independence via a slice rule (exceptions: analytics→summoner, analytics→match).
 A separate rule confines use of the account library to the `analytics` and `account` packages, since
 extracting account outside the LoL package root moved it outside that slice matcher.
 

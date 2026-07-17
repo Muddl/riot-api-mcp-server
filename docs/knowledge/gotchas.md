@@ -138,3 +138,14 @@ build the cache with `.executor(Runnable::run)` and call `cache.cleanUp()` first
 contrast, is deterministic on read: `expireAfterWrite` + an injected `Ticker` is exactly why the
 identity tests can advance time by hand and assert re-fetch. Size eviction is Caffeine's guarantee to
 keep; it is not ours to test.
+
+## An `ignoreDependency` outlives the edge it excused
+
+When a composition edge is removed (e.g. Plan C dropped `spectator → summoner` by moving spectator to
+Spectator-V5 and deleting its by-name tools), the matching `.ignoreDependency(...)` in
+`contexts_do_not_depend_on_each_other` becomes **unused but harmless** — ArchUnit does not fail on an
+exception that matches nothing, so a stale one passes green while overstating the real composition
+graph. It will not break a build, but it misleads the next reader about which contexts actually
+depend on which. Prune the exception in the same change that removes the edge; if that is deferred,
+record it (Plan C deferred this to Plan D's arch audit). The honest exception list after Plan C is
+`analytics → summoner` and `analytics → match` only.

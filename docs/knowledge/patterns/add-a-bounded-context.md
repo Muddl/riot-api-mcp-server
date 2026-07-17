@@ -4,6 +4,12 @@ Use this when adding a new Riot API area as its own mini-hexagon. Rationale:
 [ADR-0001](../decisions/ADR-0001-hexagonal.md) and
 [ADR-0002](../decisions/ADR-0002-shared-riot-http-client.md).
 
+> **New server module?** It must carry its own `README.md`, `ARCHITECTURE.md`, and `CHANGELOG.md`, or
+> the `verifyModuleDocs` build gate fails (see [ADR-0011](../decisions/ADR-0011-doc-topology.md)). The
+> module `ARCHITECTURE.md` links the shared hexagon at the repo root and documents only this server's
+> contexts and its slice exceptions. Adding a context *within* an existing server needs no new module
+> docs — update that server's `ARCHITECTURE.md` context list instead.
+
 > **Reference implementation:** the `league` context in `lol-mcp-server` is the worked example this
 > pattern describes — a full mini-hexagon with both a by-player tool and an apex tool. Read it
 > alongside this guide.

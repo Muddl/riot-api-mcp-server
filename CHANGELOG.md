@@ -14,6 +14,24 @@ Entries below predate the per-module split and are kept as the repository's hist
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## sub-project 1a Plan D — per-module docs and the monorepo sanity check
+
+Repo-wide changes only; per-module doc additions are logged in each module's own CHANGELOG.
+
+### Added
+- **`verifyModuleDocs`** — a per-module Gradle gate (in the `buildSrc` convention plugin, wired into
+  `check`) that fails the build if a module is missing `README.md`, `ARCHITECTURE.md`, or
+  `CHANGELOG.md`. Every module now documents itself; a new game server that forgets its docs goes
+  red. See [ADR-0011](docs/knowledge/decisions/ADR-0011-doc-topology.md).
+
+### Changed
+- **Monorepo sanity pass (sub-project 1a Phase 7).** Audited and confirmed: the `buildSrc`
+  convention plugin holds no module-specific value (no module name or version literal); `api` vs
+  `implementation` still reflects the real public surface after the Phase 2–3 core/account widening;
+  and no `com.wkaiser` reference survives in live source, build, or CI (only dated history retains
+  it). The `spectator → summoner` ArchUnit slice exception, dead since Plan C, was removed; no
+  ArchUnit rule carries a fully-qualified package in its condition.
+
 ## Pre-split history — monorepo restructure (sub-project 0)
 
 Monorepo restructure (sub-project 0). Structural only — the MCP tool surface is unchanged: the

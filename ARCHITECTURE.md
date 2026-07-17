@@ -29,7 +29,7 @@ riot-account-core/     library — com.muddl.riot.account
 
 lol-mcp-server/        Spring Boot app — com.muddl.riot.lol
   account/adapter/in/mcp/     RiotAccountTool (thin — delegates into riot-account-core)
-  summoner/, match/, spectator/, analytics/   full hexagons, as described below
+  summoner/, match/, spectator/, analytics/, league/   full hexagons
 ```
 
 Both libraries are consumed via `@AutoConfiguration` (`AutoConfiguration.imports`), never
@@ -64,22 +64,7 @@ are recorded as decisions in [`docs/knowledge/decisions/`](docs/knowledge/decisi
 
 ## Bounded contexts
 
-```
-com.muddl.riot.lol                     (lol-mcp-server)
-├── account/      Thin @McpTool only — real context lives in riot-account-core
-├── summoner/     League of Legends summoner profiles (platform-routed)
-├── match/        Match IDs and match detail (region-routed); no MCP tool
-├── spectator/    Live-game / featured-game data (platform-routed)
-└── analytics/    Composing context — aggregates account + summoner + match
-
-com.muddl.riot.account                 (riot-account-core library)
-└── (no top-level split — this whole module is one cross-game context)
-
-com.muddl.riot.core                    (riot-api-core library)
-└── Cross-cutting for every module: config, the HTTP client, enums, exceptions
-```
-
-Every Riot context has the same internal shape:
+Every Riot context in a server has the same internal shape:
 
 ```
 <context>/
@@ -92,11 +77,11 @@ Every Riot context has the same internal shape:
     └── out/riot/Riot<Context>Adapter   outbound adapter — implements the port with RestClient
 ```
 
-`analytics` is the exception: it has `domain/` (`PlayerMatchAnalytics`), an `application/`
-(`AnalyticsService` depending on the account/summoner/match **application services**), and an
-`adapter/in/mcp/AnalyticsTool` — but **no** `adapter/out/riot` and no port, because it makes no
-direct Riot calls. `match` is the mirror exception: it has a port and adapter but **no** inbound
-tool, because it is consumed only by `analytics`.
+Two shapes recur as deliberate exceptions: a **composing** context (an application service that
+depends on other contexts' services, with an inbound tool but no port or Riot adapter of its own),
+and a **tool-less** context (a port and adapter consumed only by a composing context, with no inbound
+tool). A server's own context list — including which contexts take which shape — lives in that
+server's ARCHITECTURE, e.g. [`lol-mcp-server`](lol-mcp-server/ARCHITECTURE.md#bounded-contexts).
 
 ## The dependency rule
 
@@ -186,18 +171,18 @@ deliberate:
   - ports are interfaces residing in `..application.port..`, both by package and by name;
   - naming: `*Service` in `application`, `*Tool` in `adapter.in.mcp`, `*Adapter` in
     `adapter.out.riot`, `*Port` interfaces in `application.port`.
-  - **Context independence within `lol-mcp-server`** is a single `slices()` rule —
-    `contexts_do_not_depend_on_each_other` — rather than the hand-maintained N-by-N matrix (one
-    rule per context, each enumerating every other) this replaced. It stays correct as contexts
-    are added. Its only exceptions: `spectator→summoner`, `analytics→summoner`,
-    `analytics→match`.
+  - **Context independence within a server** is a single `slices()` rule —
+    `contexts_do_not_depend_on_each_other` — rather than the hand-maintained N-by-N matrix (one rule
+    per context, each enumerating every other) this replaced. It stays correct as contexts are added.
+    Its deliberate composition exceptions are a per-server fact — see the server's ARCHITECTURE (e.g.
+    [`lol-mcp-server`](lol-mcp-server/ARCHITECTURE.md#context-independence-as-applied-here)).
   - **Account-domain usage is a separate, additional rule** —
-    `only_analytics_and_the_account_tool_use_the_account_domain` — because extracting the
-    account context to `com.muddl.riot.account` moved it outside the slice matcher above,
-    which would otherwise silently have retired the old prohibitions on summoner/match/spectator
-    depending on account. Stated deny-by-default: only `analytics` and `account` may depend on
-    the account **domain** (`..riot.account..`); identity resolution (`..riot.account.identity..`)
-    is deliberately excluded and open to every context (see [ADR-0008](docs/knowledge/decisions/ADR-0008-shared-player-identity-resolution.md)).
+    `only_analytics_and_the_account_tool_use_the_account_domain` — because extracting the account
+    context to `com.muddl.riot.account` moved it outside the slice matcher above, which would
+    otherwise silently have retired the old prohibitions. Stated deny-by-default: only a server's
+    `analytics` and `account` contexts may depend on the account **domain** (`..riot.account..`);
+    identity resolution (`..riot.account.identity..`) is deliberately excluded and open to every
+    context (see [ADR-0008](docs/knowledge/decisions/ADR-0008-shared-player-identity-resolution.md)).
 
 **JaCoCo** measures coverage on every `test` run and CI publishes the summary to the pull request;
 the threshold is intentionally conservative — the signal is "coverage is visible," not an arbitrary

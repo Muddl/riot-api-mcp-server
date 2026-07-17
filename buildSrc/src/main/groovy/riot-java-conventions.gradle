@@ -152,3 +152,31 @@ tasks.register('verifyRelease') {
 tasks.named('check') {
 	dependsOn tasks.named('verifyRelease')
 }
+
+// Every module carries its own README.md, ARCHITECTURE.md, and CHANGELOG.md, so a consumer of just
+// one module can read its docs and stop (sub-project 1a Phase 7, ADR-0011). Enforced, not
+// documented — the same move as verifyRelease above and the @McpTool ArchUnit rule.
+def requiredModuleDocs = ['README.md', 'ARCHITECTURE.md', 'CHANGELOG.md']
+
+tasks.register('verifyModuleDocs') {
+	group = 'verification'
+	description = "Fails if ${project.name} is missing any of ${requiredModuleDocs}."
+	// No inputs/outputs and never up-to-date, for the same reasons as verifyRelease: this is a pure
+	// assertion that must run every build, and a missing-file GradleException is more useful than
+	// Gradle's generic input-validation error.
+	outputs.upToDateWhen { false }
+
+	doLast {
+		def missing = requiredModuleDocs.findAll { !file(it).exists() }
+		if (!missing.isEmpty()) {
+			throw new GradleException(
+				"${project.name}: missing module docs ${missing}. Every module carries its own " +
+				"README.md, ARCHITECTURE.md, and CHANGELOG.md (sub-project 1a Phase 7, ADR-0011).\n" +
+				"  A consumer of just this module must be able to read its docs and stop.")
+		}
+	}
+}
+
+tasks.named('check') {
+	dependsOn tasks.named('verifyModuleDocs')
+}
