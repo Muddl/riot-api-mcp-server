@@ -17,6 +17,9 @@ whole repo — see [ADR-0010](../docs/knowledge/decisions/ADR-0010-versioning-an
   `riot.retry-backoff`, default 1s) up to `riot.max-retries` attempts (default 3), with each wait
   capped at `riot.max-retry-backoff` (default 120s) so a hostile or erroneous header cannot stall a
   thread. This is reactive retry, not a proactive rate limiter — see [ADR-0007](../docs/knowledge/decisions/ADR-0007-core-hardening-boundary.md).
+- Module-local `README.md` and `ARCHITECTURE.md` — the kernel's public API and internals now
+  document themselves, so a consumer of just this module can read its docs and stop (sub-project 1a
+  Phase 7).
 
 ### Changed
 - **Breaking:** coordinates are now `com.muddl`, package root `com.muddl.riot.core`.
