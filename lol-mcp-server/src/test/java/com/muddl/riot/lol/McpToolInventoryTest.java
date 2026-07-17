@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.muddl.riot.lol.account.adapter.in.mcp.RiotAccountTool;
 import com.muddl.riot.lol.analytics.adapter.in.mcp.AnalyticsTool;
+import com.muddl.riot.lol.league.adapter.in.mcp.LeagueTool;
 import com.muddl.riot.lol.spectator.adapter.in.mcp.LiveGameTool;
 import com.muddl.riot.lol.summoner.adapter.in.mcp.SummonerTool;
 import java.util.Arrays;
@@ -28,12 +29,18 @@ class McpToolInventoryTest {
             "get_lol_summoner_by_puuid",
             "get_current_game_by_summoner_id",
             "get_featured_games",
-            "get_lol_player_match_analytics");
+            "get_lol_player_match_analytics",
+            "lol_league_entries_by_player",
+            "lol_league_apex_by_tier");
 
     @Test
     void tool_inventory_is_unchanged() {
         Set<String> actual = Stream.of(
-                        RiotAccountTool.class, AnalyticsTool.class, LiveGameTool.class, SummonerTool.class)
+                        RiotAccountTool.class,
+                        AnalyticsTool.class,
+                        LiveGameTool.class,
+                        SummonerTool.class,
+                        LeagueTool.class)
                 .flatMap(c -> Arrays.stream(c.getDeclaredMethods()))
                 .filter(m -> m.isAnnotationPresent(McpTool.class))
                 .map(m -> m.getAnnotation(McpTool.class).name())
