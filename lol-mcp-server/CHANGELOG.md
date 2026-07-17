@@ -14,6 +14,9 @@ whole repo — see [ADR-0010](../docs/knowledge/decisions/ADR-0010-versioning-an
 ### Added
 - `lol_league_entries_by_player` and `lol_league_apex_by_tier` — ranked-league entries by player and
   the apex leagues (challenger/grandmaster/master), the exemplar League context.
+- Module-local `README.md` and `ARCHITECTURE.md` — the seven-tool surface, run/Docker instructions,
+  the LoL bounded contexts, and the updated tool diagram now live with the server (moved down from
+  the repo root under the one-altitude rule; sub-project 1a Phase 7).
 
 ### Changed
 - **Breaking:** coordinates are now `com.muddl`, package root `com.muddl.riot.lol`.
