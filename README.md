@@ -60,6 +60,7 @@ Architecture, coverage, and formatting are checked in the same run.
 | **[CLAUDE.md](CLAUDE.md)** | Guidance for AI coding agents working in this repo |
 | **Per-module READMEs** | [`riot-api-core`](riot-api-core/README.md) · [`riot-account-core`](riot-account-core/README.md) · [`lol-mcp-server`](lol-mcp-server/README.md) |
 | **[docs/knowledge/](docs/knowledge/)** | Committed knowledge base — ADRs, patterns, gotchas, glossary, roadmap |
+| **[CHANGELOG.md](CHANGELOG.md)** | Repo-wide changelog; each module keeps its own under its directory |
 
 ## License
 

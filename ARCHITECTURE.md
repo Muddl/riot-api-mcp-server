@@ -29,7 +29,7 @@ riot-account-core/     library — com.muddl.riot.account
 
 lol-mcp-server/        Spring Boot app — com.muddl.riot.lol
   account/adapter/in/mcp/     RiotAccountTool (thin — delegates into riot-account-core)
-  summoner/, match/, spectator/, analytics/   full hexagons, as described below
+  summoner/, match/, spectator/, analytics/, league/   full hexagons
 ```
 
 Both libraries are consumed via `@AutoConfiguration` (`AutoConfiguration.imports`), never
