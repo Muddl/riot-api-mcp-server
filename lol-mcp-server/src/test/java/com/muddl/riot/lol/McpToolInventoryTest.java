@@ -26,8 +26,8 @@ class McpToolInventoryTest {
     static final Set<String> EXPECTED_TOOL_NAMES = Set.of(
             "lol_account_by_player",
             "lol_summoner_by_player",
-            "get_current_game_by_summoner_id",
-            "get_featured_games",
+            "lol_spectator_current_game_by_player",
+            "lol_spectator_featured_games",
             "get_lol_player_match_analytics",
             "lol_league_entries_by_player",
             "lol_league_apex_by_tier");

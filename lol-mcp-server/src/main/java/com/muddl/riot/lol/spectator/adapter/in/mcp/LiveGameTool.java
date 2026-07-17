@@ -23,19 +23,20 @@ public class LiveGameTool {
     private final SpectatorService spectatorService;
 
     @McpTool(
-            name = "get_current_game_by_summoner_id",
+            name = "lol_spectator_current_game_by_player",
             description =
-                    "Get current live game information for a player by PUUID. Returns live game details if the player is in a game, null if not.")
-    public CurrentGameInfo getCurrentGameBySummonerId(
+                    "Get current live game information for a player (a Riot ID as GameName#TAG, or a raw PUUID). Returns live game details if in a game, null if not.")
+    public CurrentGameInfo getCurrentGameByPlayer(
             @McpToolParam(description = "The Riot platform, e.g. NA1, EUW1", required = true) String platformStr,
-            @McpToolParam(description = "The player's PUUID", required = true) String puuid) {
+            @McpToolParam(description = "The player as a Riot ID (GameName#TAG) or a raw PUUID", required = true)
+                    String player) {
         RiotApiPlatformUri platform = RiotApiPlatformUri.valueOf(platformStr);
-        log.info("MCP Tool - Getting current game by PUUID: {} on platform: {}", puuid, platform);
-        return spectatorService.getCurrentGameInfo(platform, puuid);
+        log.info("MCP Tool - Getting current game for a player on platform: {}", platform);
+        return spectatorService.getCurrentGameByPlayer(platform, player);
     }
 
     @McpTool(
-            name = "get_featured_games",
+            name = "lol_spectator_featured_games",
             description =
                     "Get list of current featured games on a platform. Featured games are high-profile matches selected by Riot.")
     public FeaturedGames getFeaturedGames(

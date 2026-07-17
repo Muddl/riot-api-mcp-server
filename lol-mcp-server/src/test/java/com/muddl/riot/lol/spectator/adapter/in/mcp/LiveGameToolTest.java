@@ -29,32 +29,33 @@ class LiveGameToolTest {
 
     private static final String TEST_PLATFORM_STRING = "NA1";
     private static final RiotApiPlatformUri TEST_PLATFORM = RiotApiPlatformUri.NA1;
-    private static final String TEST_PUUID = "test-puuid-abc123";
 
     @Test
-    void getCurrentGameBySummonerId_inGame_returnsCurrentGameInfo() {
+    void getCurrentGameByPlayer_inGame_returnsCurrentGameInfo() {
         CurrentGameInfo expected = SpectatorTestFixtures.createSampleCurrentGameInfo();
-        when(mockSpectatorService.getCurrentGameInfo(TEST_PLATFORM, TEST_PUUID)).thenReturn(expected);
+        when(mockSpectatorService.getCurrentGameByPlayer(TEST_PLATFORM, "Faker#KR1"))
+                .thenReturn(expected);
 
-        CurrentGameInfo result = liveGameTool.getCurrentGameBySummonerId(TEST_PLATFORM_STRING, TEST_PUUID);
+        CurrentGameInfo result = liveGameTool.getCurrentGameByPlayer(TEST_PLATFORM_STRING, "Faker#KR1");
 
         assertThat(result).isNotNull();
         assertThat(result.getGameId()).isEqualTo(expected.getGameId());
-        verify(mockSpectatorService).getCurrentGameInfo(TEST_PLATFORM, TEST_PUUID);
+        verify(mockSpectatorService).getCurrentGameByPlayer(TEST_PLATFORM, "Faker#KR1");
     }
 
     @Test
-    void getCurrentGameBySummonerId_notInGame_returnsNull() {
-        when(mockSpectatorService.getCurrentGameInfo(TEST_PLATFORM, TEST_PUUID)).thenReturn(null);
+    void getCurrentGameByPlayer_notInGame_returnsNull() {
+        when(mockSpectatorService.getCurrentGameByPlayer(TEST_PLATFORM, "Faker#KR1"))
+                .thenReturn(null);
 
-        assertThat(liveGameTool.getCurrentGameBySummonerId(TEST_PLATFORM_STRING, TEST_PUUID))
+        assertThat(liveGameTool.getCurrentGameByPlayer(TEST_PLATFORM_STRING, "Faker#KR1"))
                 .isNull();
-        verify(mockSpectatorService).getCurrentGameInfo(TEST_PLATFORM, TEST_PUUID);
+        verify(mockSpectatorService).getCurrentGameByPlayer(TEST_PLATFORM, "Faker#KR1");
     }
 
     @Test
-    void getCurrentGameBySummonerId_invalidPlatform_throws() {
-        assertThatThrownBy(() -> liveGameTool.getCurrentGameBySummonerId("INVALID_PLATFORM", TEST_PUUID))
+    void getCurrentGameByPlayer_invalidPlatform_throws() {
+        assertThatThrownBy(() -> liveGameTool.getCurrentGameByPlayer("INVALID_PLATFORM", "Faker#KR1"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("No enum constant");
     }
