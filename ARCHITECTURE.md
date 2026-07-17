@@ -191,12 +191,13 @@ deliberate:
     rule per context, each enumerating every other) this replaced. It stays correct as contexts
     are added. Its only exceptions: `spectator→summoner`, `analytics→summoner`,
     `analytics→match`.
-  - **Account-library usage is a separate, additional rule** —
-    `only_analytics_and_the_account_tool_use_the_account_library` — because extracting the
+  - **Account-domain usage is a separate, additional rule** —
+    `only_analytics_and_the_account_tool_use_the_account_domain` — because extracting the
     account context to `com.muddl.riot.account` moved it outside the slice matcher above,
     which would otherwise silently have retired the old prohibitions on summoner/match/spectator
     depending on account. Stated deny-by-default: only `analytics` and `account` may depend on
-    `..riot.account..`.
+    the account **domain** (`..riot.account..`); identity resolution (`..riot.account.identity..`)
+    is deliberately excluded and open to every context (see [ADR-0008](docs/knowledge/decisions/ADR-0008-shared-player-identity-resolution.md)).
 
 **JaCoCo** measures coverage on every `test` run and CI publishes the summary to the pull request;
 the threshold is intentionally conservative — the signal is "coverage is visible," not an arbitrary

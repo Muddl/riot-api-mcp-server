@@ -3,6 +3,7 @@ package com.muddl.riot.core.config;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.muddl.riot.core.enums.RiotApiRegionUri;
+import com.muddl.riot.core.http.BackoffSleeper;
 import com.muddl.riot.core.http.RiotApiClient;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
@@ -36,6 +37,20 @@ class RiotApiAutoConfigurationTest {
     void region_defaults_to_americas_when_unset() {
         runner.run(context ->
                 assertThat(context.getBean(RiotApiProperties.class).getRegion()).isEqualTo(RiotApiRegionUri.AMERICAS));
+    }
+
+    @Test
+    void registers_backoff_sleeper_bean() {
+        runner.run(context -> assertThat(context).hasSingleBean(BackoffSleeper.class));
+    }
+
+    @Test
+    void retry_defaults_are_three_attempts_and_one_second() {
+        runner.run(context -> {
+            assertThat(context.getBean(RiotApiProperties.class).getMaxRetries()).isEqualTo(3);
+            assertThat(context.getBean(RiotApiProperties.class).getRetryBackoff())
+                    .isEqualTo(java.time.Duration.ofSeconds(1));
+        });
     }
 
     @Test

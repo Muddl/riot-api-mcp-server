@@ -1,6 +1,7 @@
 package com.muddl.riot.lol.architecture;
 
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAPackage;
+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideOutsideOfPackages;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 
@@ -60,7 +61,7 @@ class HexagonalArchitectureTest {
      * <p>
      * analytics -> account needs no exception here: RiotAccountService lives in
      * com.muddl.riot.account (riot-account-core), outside this matcher. That same fact is why
-     * {@link #only_analytics_and_the_account_tool_use_the_account_library} exists — see below.
+     * {@link #only_analytics_and_the_account_tool_use_the_account_domain} exists — see below.
      */
     @ArchTest
     static final ArchRule contexts_do_not_depend_on_each_other = slices().matching("..riot.lol.(*)..")
@@ -72,7 +73,8 @@ class HexagonalArchitectureTest {
 
     /**
      * Only analytics (which composes it) and this server's thin account tool may reach into the
-     * shared account library.
+     * shared account <em>domain</em>. Identity resolution is deliberately excluded from this
+     * confinement — see the {@code identity} carve-out below.
      * <p>
      * Before the monorepo split, the account context lived under this server's package root, so the
      * cross-context matrix forbade summoner/match/spectator from touching it. Extracting it to the
@@ -80,21 +82,31 @@ class HexagonalArchitectureTest {
      * which silently retired those three prohibitions — nothing violated them, so nothing failed.
      * This restores the guarantee.
      * <p>
+     * The condition confines {@code ..riot.account..} but excludes {@code ..riot.account.identity..}:
+     * {@code PlayerIdentityResolver} is the one part of the account library every player-keyed
+     * context is <em>supposed</em> to depend on (ADR-0008). It returns a plain PUUID string, not a
+     * {@code RiotAccount}, so opening it does not open the account domain through its return type.
+     * Widening the allowlist instead would have thrown the domain guarantee away.
+     * <p>
      * Matchers here are deliberately relative ({@code ..riot.account..}, not a fully-qualified
      * name). This rule's package sits in its <em>condition</em>, not its selector, so a
      * fully-qualified name would make the rule pass vacuously the moment the group changed — the
      * same silent-retirement failure it exists to prevent. {@link
-     * HexagonalArchitectureNegativeControlTest} proves it still bites.
+     * HexagonalArchitectureNegativeControlTest} proves both halves still bite: the domain stays
+     * forbidden, the resolver stays allowed.
      * <p>
      * riot-account-core is a domain context, not infrastructure (that distinction is why it is its
      * own module rather than part of riot-api-core), so "any module may consume it" is not the
-     * intent. Stated as deny-by-default: a context added later is forbidden until listed here.
+     * intent. Stated as deny-by-default: a context added later is forbidden from the domain until
+     * listed here.
      */
     @ArchTest
-    static final ArchRule only_analytics_and_the_account_tool_use_the_account_library = noClasses()
+    static final ArchRule only_analytics_and_the_account_tool_use_the_account_domain = noClasses()
             .that()
             .resideOutsideOfPackages("..lol.analytics..", "..lol.account..")
             .should()
-            .dependOnClassesThat()
-            .resideInAPackage("..riot.account..");
+            .dependOnClassesThat(
+                    resideInAPackage("..riot.account..").and(resideOutsideOfPackages("..riot.account.identity..")))
+            .as("only analytics and the account tool use the account domain "
+                    + "(identity resolution is open to every context)");
 }

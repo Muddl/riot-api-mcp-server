@@ -1,5 +1,6 @@
 package com.muddl.riot.core.config;
 
+import com.muddl.riot.core.http.BackoffSleeper;
 import com.muddl.riot.core.http.RiotApiClient;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -18,7 +19,13 @@ public class RiotApiAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public RiotApiClient riotApiClient(RiotApiProperties properties) {
-        return new RiotApiClient(properties);
+    public BackoffSleeper backoffSleeper() {
+        return BackoffSleeper.realTime();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public RiotApiClient riotApiClient(RiotApiProperties properties, BackoffSleeper sleeper) {
+        return new RiotApiClient(properties, sleeper);
     }
 }
