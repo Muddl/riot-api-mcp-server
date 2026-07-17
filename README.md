@@ -109,15 +109,15 @@ process itself and talks JSON-RPC over its stdin/stdout — there is no port to 
 
 ## MCP tools
 
-`lol-mcp-server` exposes four inbound adapters to MCP clients (ten tool names in total,
-unchanged by the monorepo split):
+`lol-mcp-server` exposes five inbound adapters to MCP clients (seven tool names in total):
 
 | Tool (`adapter.in.mcp`) | MCP tool names | Purpose |
 |-------------------------|----------------|---------|
-| **RiotAccountTool** | `get_riot_account_by_riot_id`, `get_riot_account_by_puuid` | Cross-game Riot account lookup (Riot ID ↔ PUUID) |
-| **SummonerTool** | `get_lol_summoner_by_name`, `get_lol_summoner_by_puuid`, `get_lol_summoner_by_id` | League of Legends summoner profiles |
-| **LiveGameTool** | `get_current_game_by_summoner_name`, `get_current_game_by_summoner_id`, `get_featured_games`, `check_if_summoner_in_game` | Live-game (Spectator v4) data; returns `null`/`false` when not in a game |
-| **AnalyticsTool** | `get_lol_player_match_analytics` | Aggregated recent-match analytics, composing the account, summoner, and match services |
+| **RiotAccountTool** | `lol_account_by_player` | Riot account by player (Riot ID `GameName#TAG` or raw PUUID) |
+| **SummonerTool** | `lol_summoner_by_player` | Summoner profile by player |
+| **LiveGameTool** | `lol_spectator_current_game_by_player`, `lol_spectator_featured_games` | Live-game (Spectator v5) data; returns `null` when not in a game |
+| **AnalyticsTool** | `lol_analytics_player_matches` | Aggregated recent-match analytics, composing the account, summoner, and match services |
+| **LeagueTool** | `lol_league_entries_by_player`, `lol_league_apex_by_tier` | Ranked-league entries by player, and apex league (CHALLENGER/GRANDMASTER/MASTER) by tier + queue |
 
 ## Testing
 

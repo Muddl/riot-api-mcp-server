@@ -17,7 +17,7 @@ import org.springframework.ai.mcp.annotation.McpTool;
 /**
  * Guards the public MCP contract: exactly the seven tools sub-project 1a settled on, each named
  * {@code <game>_<context>_<action>}, every player-keyed tool taking a single {@code player} param.
- * See [ADR-0009](../../../../../../docs/knowledge/decisions/ADR-0009-mcp-tool-contract.md). If this
+ * See [ADR-0009](../../../../../../../../docs/knowledge/decisions/ADR-0009-mcp-tool-contract.md). If this
  * test fails, a tool's name changed without the contract (and this list) being updated to match.
  */
 class McpToolInventoryTest {
