@@ -1,7 +1,6 @@
 package com.muddl.riot.lol.analytics.application;
 
-import com.muddl.riot.account.application.RiotAccountService;
-import com.muddl.riot.account.domain.RiotAccount;
+import com.muddl.riot.account.identity.PlayerIdentityResolver;
 import com.muddl.riot.core.enums.RiotApiPlatformUri;
 import com.muddl.riot.core.enums.RiotApiRegionUri;
 import com.muddl.riot.lol.analytics.domain.PlayerMatchAnalytics;
@@ -27,39 +26,30 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AnalyticsService {
 
-    private final RiotAccountService accountService;
+    private final PlayerIdentityResolver identityResolver;
     private final SummonerService summonerService;
     private final MatchService matchService;
 
     /**
      * Get match analytics for a player by Riot ID (e.g., PlayerName#TAG)
-     * @param riotId The full Riot ID (format: "gameName#tagLine")
+     * @param player The player as a Riot ID (GameName#TAG) or a raw PUUID
      * @param platform The game platform (e.g., NA1, EUW1)
      * @param region The game region (e.g., AMERICAS, EUROPE)
      * @param matchCount Number of recent matches to analyze
      * @return Analytics of the player's recent matches
      */
     public PlayerMatchAnalytics getPlayerMatchAnalytics(
-            String riotId, RiotApiPlatformUri platform, RiotApiRegionUri region, int matchCount) {
-        log.info("Generating match analytics for player: {} on platform: {}", riotId, platform);
+            String player, RiotApiPlatformUri platform, RiotApiRegionUri region, int matchCount) {
+        log.info("Generating match analytics for player on platform: {}", platform);
 
-        // Parse the Riot ID into game name and tag line
-        String[] riotIdParts = riotId.split("#");
-        if (riotIdParts.length != 2) {
-            throw new IllegalArgumentException("Invalid Riot ID format. Expected format: 'gameName#tagLine'");
-        }
+        // Resolve the caller's player reference (Riot ID or raw PUUID) to a PUUID once.
+        String puuid = identityResolver.resolvePuuid(player);
 
-        String gameName = riotIdParts[0];
-        String tagLine = riotIdParts[1];
+        // Summoner name/level for the summary.
+        Summoner summoner = summonerService.getSummonerByPuuid(platform, puuid);
 
-        // Step 1: Get the account information
-        RiotAccount account = accountService.getAccountByRiotId(gameName, tagLine);
-
-        // Step 2: Get summoner information
-        Summoner summoner = summonerService.getSummonerByPuuid(platform, account.getPuuid());
-
-        // Step 3: Get recent match IDs
-        List<String> matchIds = matchService.getMatchIdsByPuuid(region, account.getPuuid(), matchCount, 0, null);
+        // Recent match IDs, then details.
+        List<String> matchIds = matchService.getMatchIdsByPuuid(region, puuid, matchCount, 0, null);
 
         // Step 4: Get match details and extract player data
         List<Match> matches = new ArrayList<>();
@@ -71,7 +61,7 @@ public class AnalyticsService {
 
             // Find the player in the participants
             for (Participant participant : match.getInfo().getParticipants()) {
-                if (participant.getPuuid().equals(account.getPuuid())) {
+                if (participant.getPuuid().equals(puuid)) {
                     playerParticipations.add(participant);
                     break;
                 }
@@ -84,7 +74,7 @@ public class AnalyticsService {
         // Handle case where no matches were found
         if (totalGames == 0) {
             return PlayerMatchAnalytics.builder()
-                    .riotId(riotId)
+                    .riotId(player)
                     .summonerName(summoner.getName())
                     .summonerLevel(summoner.getSummonerLevel())
                     .matchCount(0)
@@ -157,7 +147,7 @@ public class AnalyticsService {
 
         // Step 8: Create and return the analytics object
         return PlayerMatchAnalytics.builder()
-                .riotId(riotId)
+                .riotId(player)
                 .summonerName(summoner.getName())
                 .summonerLevel(summoner.getSummonerLevel())
                 .matchCount(totalGames)
