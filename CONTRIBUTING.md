@@ -13,8 +13,13 @@ belongs in before writing it:
 |--------|--------|
 | HTTP/auth/error handling, routing enums, `RiotApiException` | `riot-api-core` |
 | Anything about the cross-game account context (Riot ID ↔ PUUID) | `riot-account-core` |
-| A League of Legends context (`summoner`, `match`, `spectator`, `analytics`), or that thin `account` tool | `lol-mcp-server` |
+| A League of Legends context (`summoner`, `match`, `spectator`, `analytics`, `league`), or that thin `account` tool | `lol-mcp-server` |
 | A new game entirely | a new server module depending on both libraries |
+
+Each module documents its own public surface and internals — see its `README.md` and
+`ARCHITECTURE.md` ([`riot-api-core`](riot-api-core/README.md), [`riot-account-core`](riot-account-core/README.md),
+[`lol-mcp-server`](lol-mcp-server/README.md)). This file and the root [ARCHITECTURE.md](ARCHITECTURE.md)
+cover only what is shared across every module.
 
 ## Prerequisites
 
