@@ -1,0 +1,19 @@
+{
+  "leagueId": "apex-league-uuid",
+  "tier": "CHALLENGER",
+  "name": "Draven's Disciples",
+  "queue": "RANKED_SOLO_5x5",
+  "entries": [
+    {
+      "puuid": "challenger-puuid-1",
+      "leaguePoints": 1355,
+      "rank": "I",
+      "wins": 320,
+      "losses": 210,
+      "veteran": true,
+      "inactive": false,
+      "freshBlood": false,
+      "hotStreak": true
+    }
+  ]
+}
