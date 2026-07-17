@@ -26,11 +26,13 @@ class RetryOn429Interceptor implements ClientHttpRequestInterceptor {
 
     private final int maxRetries;
     private final Duration defaultBackoff;
+    private final Duration maxBackoff;
     private final BackoffSleeper sleeper;
 
-    RetryOn429Interceptor(int maxRetries, Duration defaultBackoff, BackoffSleeper sleeper) {
+    RetryOn429Interceptor(int maxRetries, Duration defaultBackoff, Duration maxBackoff, BackoffSleeper sleeper) {
         this.maxRetries = maxRetries;
         this.defaultBackoff = defaultBackoff;
+        this.maxBackoff = maxBackoff;
         this.sleeper = sleeper;
     }
 
@@ -40,13 +42,18 @@ class RetryOn429Interceptor implements ClientHttpRequestInterceptor {
         ClientHttpResponse response = execution.execute(request, body);
         int attempt = 0;
         while (response.getStatusCode().value() == TOO_MANY_REQUESTS && attempt < maxRetries) {
-            Duration wait = retryAfter(response).orElse(defaultBackoff);
+            Duration wait = clampToMax(retryAfter(response).orElse(defaultBackoff));
             response.close();
             sleeper.sleep(wait);
             attempt++;
             response = execution.execute(request, body);
         }
         return response;
+    }
+
+    /** Caps a wait at {@code maxBackoff} so a hostile or erroneous {@code Retry-After} cannot stall a thread. */
+    private Duration clampToMax(Duration wait) {
+        return wait.compareTo(maxBackoff) > 0 ? maxBackoff : wait;
     }
 
     private Optional<Duration> retryAfter(ClientHttpResponse response) {

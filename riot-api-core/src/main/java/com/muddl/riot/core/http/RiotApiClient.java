@@ -48,8 +48,11 @@ public class RiotApiClient {
         return RestClient.builder()
                 .baseUrl(resolveBaseUrl(host))
                 .defaultHeader(RIOT_TOKEN_HEADER, properties.getApiKey())
-                .requestInterceptor(
-                        new RetryOn429Interceptor(properties.getMaxRetries(), properties.getRetryBackoff(), sleeper))
+                .requestInterceptor(new RetryOn429Interceptor(
+                        properties.getMaxRetries(),
+                        properties.getRetryBackoff(),
+                        properties.getMaxRetryBackoff(),
+                        sleeper))
                 .defaultStatusHandler(HttpStatusCode::isError, (request, response) -> {
                     String body = new String(response.getBody().readAllBytes(), StandardCharsets.UTF_8);
                     throw RiotApiException.forStatus(response.getStatusCode().value(), body);

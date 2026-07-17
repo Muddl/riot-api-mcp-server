@@ -14,8 +14,9 @@ whole repo — see [ADR-0010](../docs/knowledge/decisions/ADR-0010-versioning-an
 
 ### Added
 - Automatic retry on HTTP 429, honouring the `Retry-After` header (falling back to a configurable
-  `riot.retry-backoff`, default 1s) up to `riot.max-retries` attempts (default 3). This is reactive
-  retry, not a proactive rate limiter — see [ADR-0007](../docs/knowledge/decisions/ADR-0007-core-hardening-boundary.md).
+  `riot.retry-backoff`, default 1s) up to `riot.max-retries` attempts (default 3), with each wait
+  capped at `riot.max-retry-backoff` (default 120s) so a hostile or erroneous header cannot stall a
+  thread. This is reactive retry, not a proactive rate limiter — see [ADR-0007](../docs/knowledge/decisions/ADR-0007-core-hardening-boundary.md).
 
 ### Changed
 - **Breaking:** coordinates are now `com.muddl`, package root `com.muddl.riot.core`.

@@ -189,4 +189,52 @@ class RiotApiClientTest {
         assertThat(sleeper.waits).isEmpty();
         verify(exactly(1), getRequestedFor(urlEqualTo("/forbidden")));
     }
+
+    @Test
+    void clamps_an_excessive_retry_after_to_the_max_backoff() {
+        stubFor(get(urlEqualTo("/retry"))
+                .inScenario("clamp")
+                .whenScenarioStateIs(STARTED)
+                .willReturn(aResponse().withStatus(429).withHeader("Retry-After", "99999"))
+                .willSetStateTo("recovered"));
+        stubFor(get(urlEqualTo("/retry"))
+                .inScenario("clamp")
+                .whenScenarioStateIs("recovered")
+                .willReturn(aResponse().withStatus(200).withBody("ok")));
+
+        RecordingSleeper sleeper = new RecordingSleeper();
+        clientWith(sleeper, 3, Duration.ofSeconds(1))
+                .platform(RiotApiPlatformUri.NA1)
+                .get()
+                .uri("/retry")
+                .retrieve()
+                .body(String.class);
+
+        // 99999s is clamped to the default max (120s) so one call cannot block a thread indefinitely.
+        assertThat(sleeper.waits).containsExactly(Duration.ofSeconds(120));
+    }
+
+    @Test
+    void falls_back_to_the_default_backoff_on_an_unparseable_retry_after() {
+        stubFor(get(urlEqualTo("/retry"))
+                .inScenario("bad-header")
+                .whenScenarioStateIs(STARTED)
+                .willReturn(aResponse().withStatus(429).withHeader("Retry-After", "banana"))
+                .willSetStateTo("recovered"));
+        stubFor(get(urlEqualTo("/retry"))
+                .inScenario("bad-header")
+                .whenScenarioStateIs("recovered")
+                .willReturn(aResponse().withStatus(200).withBody("ok")));
+
+        RecordingSleeper sleeper = new RecordingSleeper();
+        clientWith(sleeper, 3, Duration.ofMillis(250))
+                .platform(RiotApiPlatformUri.NA1)
+                .get()
+                .uri("/retry")
+                .retrieve()
+                .body(String.class);
+
+        // A non-numeric Retry-After is unusable, so the interceptor uses the configured default.
+        assertThat(sleeper.waits).containsExactly(Duration.ofMillis(250));
+    }
 }
