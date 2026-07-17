@@ -10,7 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-/** Riot Spectator-V4 API adapter. Spectator endpoints are platform-routed. */
+/** Riot Spectator-V5 API adapter. Spectator endpoints are platform-routed and keyed by PUUID. */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -21,17 +21,17 @@ public class RiotSpectatorAdapter implements SpectatorPort {
     private final RiotApiClient riotApiClient;
 
     @Override
-    public CurrentGameInfo getCurrentGameInfo(RiotApiPlatformUri platform, String encryptedSummonerId) {
+    public CurrentGameInfo getCurrentGameInfo(RiotApiPlatformUri platform, String puuid) {
         try {
             return riotApiClient
                     .platform(platform)
                     .get()
-                    .uri("/lol/spectator/v4/active-games/by-summoner/{encryptedSummonerId}", encryptedSummonerId)
+                    .uri("/lol/spectator/v5/active-games/by-summoner/{puuid}", puuid)
                     .retrieve()
                     .body(CurrentGameInfo.class);
         } catch (RiotApiException e) {
             if (e.getStatusCode() == NOT_FOUND) {
-                log.debug("Summoner {} is not currently in a game (404)", encryptedSummonerId);
+                log.debug("Player {} is not currently in a game (404)", puuid);
                 return null;
             }
             throw e;
@@ -43,7 +43,7 @@ public class RiotSpectatorAdapter implements SpectatorPort {
         return riotApiClient
                 .platform(platform)
                 .get()
-                .uri("/lol/spectator/v4/featured-games")
+                .uri("/lol/spectator/v5/featured-games")
                 .retrieve()
                 .body(FeaturedGames.class);
     }

@@ -14,22 +14,20 @@ import org.junit.jupiter.api.Test;
 import org.springframework.ai.mcp.annotation.McpTool;
 
 /**
- * Guards the public MCP contract across the monorepo restructure. The tool surface is
- * explicitly frozen for this cycle: the same 10 tools, same names. If this test fails
- * during a move, the move changed behavior and is wrong.
+ * Guards the public MCP contract. Sub-project 1a Plan C changes this surface deliberately —
+ * dead tools are removed (Phase 4), League is added (Phase 5), and every tool is renamed to
+ * {@code <game>_<context>_<action>} with a single {@code player} param (Phase 6). This test is
+ * updated in lockstep with each of those changes, so a failure means a tool changed without the
+ * contract being updated to match.
  */
 class McpToolInventoryTest {
 
     static final Set<String> EXPECTED_TOOL_NAMES = Set.of(
             "get_riot_account_by_riot_id",
             "get_riot_account_by_puuid",
-            "get_lol_summoner_by_name",
             "get_lol_summoner_by_puuid",
-            "get_lol_summoner_by_id",
-            "get_current_game_by_summoner_name",
             "get_current_game_by_summoner_id",
             "get_featured_games",
-            "check_if_summoner_in_game",
             "get_lol_player_match_analytics");
 
     @Test

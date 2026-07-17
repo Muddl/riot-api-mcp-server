@@ -10,11 +10,11 @@ import java.util.Map;
 /** Hand-written in-memory {@link SpectatorPort} for fast, HTTP-free service tests. */
 public class InMemorySpectatorPort implements SpectatorPort {
 
-    private final Map<String, CurrentGameInfo> gamesBySummonerId = new HashMap<>();
+    private final Map<String, CurrentGameInfo> gamesByPuuid = new HashMap<>();
     private final Map<RiotApiPlatformUri, FeaturedGames> featuredByPlatform = new HashMap<>();
 
-    public InMemorySpectatorPort putGame(String encryptedSummonerId, CurrentGameInfo game) {
-        gamesBySummonerId.put(encryptedSummonerId, game);
+    public InMemorySpectatorPort putGame(String puuid, CurrentGameInfo game) {
+        gamesByPuuid.put(puuid, game);
         return this;
     }
 
@@ -23,10 +23,9 @@ public class InMemorySpectatorPort implements SpectatorPort {
         return this;
     }
 
-    /** Returns the stored game, or {@code null} to model "summoner not in a game". */
     @Override
-    public CurrentGameInfo getCurrentGameInfo(RiotApiPlatformUri platform, String encryptedSummonerId) {
-        return gamesBySummonerId.get(encryptedSummonerId);
+    public CurrentGameInfo getCurrentGameInfo(RiotApiPlatformUri platform, String puuid) {
+        return gamesByPuuid.get(puuid);
     }
 
     @Override

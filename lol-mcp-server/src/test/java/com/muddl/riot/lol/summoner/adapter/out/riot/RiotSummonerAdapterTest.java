@@ -50,24 +50,6 @@ class RiotSummonerAdapterTest {
     }
 
     @Test
-    void getSummonerByName_parsesBody_andSendsApiKeyHeader() {
-        stubFor(get(urlEqualTo("/lol/summoner/v4/summoners/by-name/Bjergsen"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
-                        .withBody(Fixtures.read("summoner.json"))));
-
-        Summoner summoner = adapter.getSummonerByName(PLATFORM, "Bjergsen");
-
-        assertThat(summoner.getName()).isEqualTo("Bjergsen");
-        assertThat(summoner.getId()).isEqualTo("summoner-id-xyz");
-        assertThat(summoner.getPuuid()).isEqualTo("test-puuid-abc123");
-        assertThat(summoner.getSummonerLevel()).isEqualTo(350L);
-        verify(getRequestedFor(urlEqualTo("/lol/summoner/v4/summoners/by-name/Bjergsen"))
-                .withHeader("X-RIOT-TOKEN", equalTo("test-key-123")));
-    }
-
-    @Test
     void getSummonerByPuuid_hitsExpectedUrl() {
         stubFor(get(urlEqualTo("/lol/summoner/v4/summoners/by-puuid/test-puuid-abc123"))
                 .willReturn(aResponse()
@@ -83,26 +65,11 @@ class RiotSummonerAdapterTest {
     }
 
     @Test
-    void getSummonerById_hitsExpectedUrl() {
-        stubFor(get(urlEqualTo("/lol/summoner/v4/summoners/summoner-id-xyz"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
-                        .withBody(Fixtures.read("summoner.json"))));
-
-        Summoner summoner = adapter.getSummonerById(PLATFORM, "summoner-id-xyz");
-
-        assertThat(summoner.getId()).isEqualTo("summoner-id-xyz");
-        verify(getRequestedFor(urlEqualTo("/lol/summoner/v4/summoners/summoner-id-xyz"))
-                .withHeader("X-RIOT-TOKEN", equalTo("test-key-123")));
-    }
-
-    @Test
     void nonSuccessResponse_mapsToRiotApiException_withStatusPreserved() {
-        stubFor(get(urlEqualTo("/lol/summoner/v4/summoners/by-name/Ghost"))
+        stubFor(get(urlEqualTo("/lol/summoner/v4/summoners/by-puuid/ghost-puuid"))
                 .willReturn(aResponse().withStatus(403).withBody("forbidden")));
 
-        assertThatThrownBy(() -> adapter.getSummonerByName(PLATFORM, "Ghost"))
+        assertThatThrownBy(() -> adapter.getSummonerByPuuid(PLATFORM, "ghost-puuid"))
                 .isInstanceOf(RiotApiException.class)
                 .extracting(e -> ((RiotApiException) e).getStatusCode())
                 .isEqualTo(403);

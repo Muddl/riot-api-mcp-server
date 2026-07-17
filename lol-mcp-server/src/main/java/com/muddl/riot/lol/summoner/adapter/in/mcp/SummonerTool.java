@@ -20,17 +20,6 @@ public class SummonerTool {
 
     private final SummonerService summonerService;
 
-    @McpTool(
-            name = "get_lol_summoner_by_name",
-            description = "Get League of Legends summoner information by summoner name")
-    public Summoner getSummonerByName(
-            @McpToolParam(description = "The Riot platform, e.g. NA1, EUW1", required = true) String platformStr,
-            @McpToolParam(description = "The summoner's name", required = true) String summonerName) {
-        RiotApiPlatformUri platform = RiotApiPlatformUri.valueOf(platformStr);
-        log.info("MCP Tool - Getting summoner by name: {} on platform: {}", summonerName, platform);
-        return summonerService.getSummonerByName(platform, summonerName);
-    }
-
     @McpTool(name = "get_lol_summoner_by_puuid", description = "Get League of Legends summoner information by PUUID")
     public Summoner getSummonerByPuuid(
             @McpToolParam(description = "The Riot platform, e.g. NA1, EUW1", required = true) String platformStr,
@@ -39,14 +28,5 @@ public class SummonerTool {
         RiotApiPlatformUri platform = RiotApiPlatformUri.valueOf(platformStr);
         log.info("MCP Tool - Getting summoner by PUUID: {} on platform: {}", puuid, platform);
         return summonerService.getSummonerByPuuid(platform, puuid);
-    }
-
-    @McpTool(name = "get_lol_summoner_by_id", description = "Get League of Legends summoner information by summoner ID")
-    public Summoner getSummonerById(
-            @McpToolParam(description = "The Riot platform, e.g. NA1, EUW1", required = true) String platformStr,
-            @McpToolParam(description = "The encrypted summoner ID", required = true) String summonerId) {
-        RiotApiPlatformUri platform = RiotApiPlatformUri.valueOf(platformStr);
-        log.info("MCP Tool - Getting summoner by ID: {} on platform: {}", summonerId, platform);
-        return summonerService.getSummonerById(platform, summonerId);
     }
 }

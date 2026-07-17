@@ -18,15 +18,15 @@ class SpectatorServiceTest {
     @Test
     void getCurrentGameInfo_returnsStoredGame() {
         CurrentGameInfo game = SpectatorTestFixtures.createSampleCurrentGameInfo();
-        spectatorPort.putGame("summoner-in-game", game);
+        spectatorPort.putGame("player-in-game-puuid", game);
 
-        assertThat(spectatorService.getCurrentGameInfo(PLATFORM, "summoner-in-game"))
+        assertThat(spectatorService.getCurrentGameInfo(PLATFORM, "player-in-game-puuid"))
                 .isSameAs(game);
     }
 
     @Test
-    void getCurrentGameInfo_returnsNull_whenSummonerNotInGame() {
-        assertThat(spectatorService.getCurrentGameInfo(PLATFORM, "summoner-not-in-game"))
+    void getCurrentGameInfo_returnsNull_whenPlayerNotInGame() {
+        assertThat(spectatorService.getCurrentGameInfo(PLATFORM, "player-not-in-game-puuid"))
                 .isNull();
     }
 

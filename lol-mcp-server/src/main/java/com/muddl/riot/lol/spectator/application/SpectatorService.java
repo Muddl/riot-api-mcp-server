@@ -20,9 +20,9 @@ public class SpectatorService {
 
     private final SpectatorPort spectatorPort;
 
-    public CurrentGameInfo getCurrentGameInfo(RiotApiPlatformUri platform, String encryptedSummonerId) {
-        log.info("Fetching current game info for summoner ID: {} on platform: {}", encryptedSummonerId, platform);
-        return spectatorPort.getCurrentGameInfo(platform, encryptedSummonerId);
+    public CurrentGameInfo getCurrentGameInfo(RiotApiPlatformUri platform, String puuid) {
+        log.info("Fetching current game info for PUUID: {} on platform: {}", puuid, platform);
+        return spectatorPort.getCurrentGameInfo(platform, puuid);
     }
 
     public FeaturedGames getFeaturedGames(RiotApiPlatformUri platform) {
