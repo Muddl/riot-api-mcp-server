@@ -15,11 +15,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.ai.mcp.annotation.McpTool;
 
 /**
- * Guards the public MCP contract. Sub-project 1a Plan C changes this surface deliberately —
- * dead tools are removed (Phase 4), League is added (Phase 5), and every tool is renamed to
- * {@code <game>_<context>_<action>} with a single {@code player} param (Phase 6). This test is
- * updated in lockstep with each of those changes, so a failure means a tool changed without the
- * contract being updated to match.
+ * Guards the public MCP contract: exactly the seven tools sub-project 1a settled on, each named
+ * {@code <game>_<context>_<action>}, every player-keyed tool taking a single {@code player} param.
+ * See [ADR-0009](../../../../../../docs/knowledge/decisions/ADR-0009-mcp-tool-contract.md). If this
+ * test fails, a tool's name changed without the contract (and this list) being updated to match.
  */
 class McpToolInventoryTest {
 

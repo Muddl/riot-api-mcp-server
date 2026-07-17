@@ -44,8 +44,9 @@ once, in a library, in this cycle.**
 - Tool contract sweep: `<game>_<context>_<action>`, the single `player` param
 - Per-module docs and the monorepo sanity check
 
-**Progress:** Plan A (coordinates + release engineering) complete. Plans B (libraries), C (LoL
-server), D (docs + sanity check) follow.
+**Progress:** Plans A (coordinates + release engineering), B (library hardening: retry, error
+taxonomy, identity resolver), and C (LoL server: correctness, the League exemplar, the tool-contract
+sweep) complete. Plan D (per-module docs + the monorepo sanity check) follows.
 
 **Split from 1b deliberately.** Sub-project 1 originally bundled correctness, six new contexts, the
 contract sweep, and conventions. Sub-project 0's lesson was that mixing pure motion with behaviour

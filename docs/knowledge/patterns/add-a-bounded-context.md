@@ -4,6 +4,18 @@ Use this when adding a new Riot API area as its own mini-hexagon. Rationale:
 [ADR-0001](../decisions/ADR-0001-hexagonal.md) and
 [ADR-0002](../decisions/ADR-0002-shared-riot-http-client.md).
 
+> **Reference implementation:** the `league` context in `lol-mcp-server` is the worked example this
+> pattern describes — a full mini-hexagon with both a by-player tool and an apex tool. Read it
+> alongside this guide.
+>
+> **Handoff contract (sub-project 1a).** A context is one package under the server root with
+> `domain/`, `application/` + `application/port/`, `adapter/out/riot/`, and `adapter/in/mcp/`. The
+> service depends on `PlayerIdentityResolver` and its own port — never on a `RestClient`, never on
+> another context's service. The tool takes a single `player` param and is named
+> `<game>_<context>_<action>` (see [ADR-0009](../decisions/ADR-0009-mcp-tool-contract.md)). Tests are
+> a WireMock adapter test plus a port-fake service test (mock the resolver). Endpoint paths are
+> verified against the live Riot developer portal.
+
 Substitute `<context>` (lowercase, e.g. `champion`) and `<Name>` (PascalCase, e.g.
 `Champion`) throughout. Base path: `<server-module>/src/main/java/com/muddl/riot/<game>/`
 (e.g. `lol-mcp-server/src/main/java/com/muddl/riot/lol/` for the LoL server).
