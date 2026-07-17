@@ -18,6 +18,8 @@ whole repo — see [ADR-0010](../docs/knowledge/decisions/ADR-0010-versioning-an
   (Riot ID → PUUID) in a bounded, TTL-expiring Caffeine cache on an injected ticker. The open,
   cross-cutting identity surface every game server depends on — see
   [ADR-0008](../docs/knowledge/decisions/ADR-0008-shared-player-identity-resolution.md).
+- Module-local `README.md` and `ARCHITECTURE.md` — the account context and the identity resolver's
+  public API and internals now document themselves (sub-project 1a Phase 7).
 
 ### Changed
 - **Breaking:** coordinates are now `com.muddl`, package root `com.muddl.riot.account`.
