@@ -52,11 +52,16 @@ public class PlayerIdentityResolver {
             return trimmed; // already a PUUID — nothing to resolve, no Riot call, no cache entry
         }
         String[] parts = trimmed.split("#", -1);
-        if (parts.length != 2 || parts[0].isBlank() || parts[1].isBlank()) {
+        if (parts.length != 2) {
             throw new IllegalArgumentException(unparseableMessage(player));
         }
-        String gameName = parts[0];
-        String tagLine = parts[1];
+        // Trim each half so "Faker # KR1" normalizes to the same PUUID and cache key as "Faker#KR1"
+        // (internal spaces in a game name are preserved — only surrounding whitespace is removed).
+        String gameName = parts[0].trim();
+        String tagLine = parts[1].trim();
+        if (gameName.isBlank() || tagLine.isBlank()) {
+            throw new IllegalArgumentException(unparseableMessage(player));
+        }
         // get(key, loader) is atomic per key; a loader that throws (unknown Riot ID) propagates and
         // caches nothing, which is exactly the "do not cache failed lookups" behaviour we want.
         return puuidByRiotId.get(gameName + "#" + tagLine, key -> lookupPuuid(gameName, tagLine));
