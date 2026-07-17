@@ -1,10 +1,10 @@
 package com.muddl.riot.lol.analytics.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-import com.muddl.riot.account.application.InMemoryRiotAccountPort;
-import com.muddl.riot.account.application.RiotAccountService;
-import com.muddl.riot.account.domain.RiotAccount;
+import com.muddl.riot.account.identity.PlayerIdentityResolver;
 import com.muddl.riot.core.enums.RiotApiPlatformUri;
 import com.muddl.riot.core.enums.RiotApiRegionUri;
 import com.muddl.riot.lol.analytics.domain.PlayerMatchAnalytics;
@@ -23,21 +23,19 @@ class AnalyticsServiceTest {
 
     private static final RiotApiPlatformUri PLATFORM = RiotApiPlatformUri.NA1;
     private static final RiotApiRegionUri REGION = RiotApiRegionUri.AMERICAS;
+    private static final String PLAYER = "Player#NA1";
     private static final String PUUID = "puuid-1";
 
-    private final InMemoryRiotAccountPort accountPort = new InMemoryRiotAccountPort();
+    private final PlayerIdentityResolver resolver = mock(PlayerIdentityResolver.class);
     private final InMemorySummonerPort summonerPort = new InMemorySummonerPort();
     private final InMemoryMatchPort matchPort = new InMemoryMatchPort();
 
-    private final AnalyticsService analyticsService = new AnalyticsService(
-            new RiotAccountService(accountPort), new SummonerService(summonerPort), new MatchService(matchPort));
+    private final SummonerService summonerService = new SummonerService(summonerPort, resolver);
+    private final AnalyticsService analyticsService =
+            new AnalyticsService(resolver, summonerService, new MatchService(matchPort));
 
     private void givenPlayer() {
-        accountPort.add(RiotAccount.builder()
-                .puuid(PUUID)
-                .gameName("Player")
-                .tagLine("NA1")
-                .build());
+        when(resolver.resolvePuuid(PLAYER)).thenReturn(PUUID);
         summonerPort.putByPuuid(
                 PLATFORM,
                 PUUID,
@@ -49,7 +47,7 @@ class AnalyticsServiceTest {
         givenPlayer();
         matchPort.putMatchIds(PUUID, List.of());
 
-        PlayerMatchAnalytics result = analyticsService.getPlayerMatchAnalytics("Player#NA1", PLATFORM, REGION, 5);
+        PlayerMatchAnalytics result = analyticsService.getPlayerMatchAnalytics(PLAYER, PLATFORM, REGION, 5);
 
         assertThat(result.getMatchCount()).isZero();
         assertThat(result.getSummonerName()).isEqualTo("Player");
@@ -64,7 +62,7 @@ class AnalyticsServiceTest {
         matchPort.putMatchIds(PUUID, List.of("NA1_1"));
         matchPort.putMatch("NA1_1", match(true, 5, 0, 3));
 
-        PlayerMatchAnalytics result = analyticsService.getPlayerMatchAnalytics("Player#NA1", PLATFORM, REGION, 1);
+        PlayerMatchAnalytics result = analyticsService.getPlayerMatchAnalytics(PLAYER, PLATFORM, REGION, 1);
 
         assertThat(result.getMatchCount()).isEqualTo(1);
         assertThat(result.getWins()).isEqualTo(1);
@@ -81,7 +79,7 @@ class AnalyticsServiceTest {
         matchPort.putMatch("NA1_1", match(true, 10, 2, 5));
         matchPort.putMatch("NA1_2", match(false, 4, 6, 3));
 
-        PlayerMatchAnalytics result = analyticsService.getPlayerMatchAnalytics("Player#NA1", PLATFORM, REGION, 2);
+        PlayerMatchAnalytics result = analyticsService.getPlayerMatchAnalytics(PLAYER, PLATFORM, REGION, 2);
 
         assertThat(result.getMatchCount()).isEqualTo(2);
         assertThat(result.getWins()).isEqualTo(1);

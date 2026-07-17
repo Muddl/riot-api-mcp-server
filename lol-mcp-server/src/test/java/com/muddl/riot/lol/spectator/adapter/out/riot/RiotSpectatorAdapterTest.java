@@ -28,8 +28,8 @@ import org.junit.jupiter.api.Test;
 class RiotSpectatorAdapterTest {
 
     private static final RiotApiPlatformUri PLATFORM = RiotApiPlatformUri.NA1;
-    private static final String SUMMONER_ID = "encrypted-summoner-id-1";
-    private static final String ACTIVE_GAME_URL = "/lol/spectator/v4/active-games/by-summoner/" + SUMMONER_ID;
+    private static final String PUUID = "test-puuid-abc123";
+    private static final String ACTIVE_GAME_URL = "/lol/spectator/v5/active-games/by-summoner/" + PUUID;
 
     private WireMockServer wireMock;
     private SpectatorPort adapter;
@@ -60,13 +60,13 @@ class RiotSpectatorAdapterTest {
                         .withHeader("Content-Type", "application/json")
                         .withBody(Fixtures.read("current-game.json"))));
 
-        CurrentGameInfo game = adapter.getCurrentGameInfo(PLATFORM, SUMMONER_ID);
+        CurrentGameInfo game = adapter.getCurrentGameInfo(PLATFORM, PUUID);
 
         assertThat(game).isNotNull();
         assertThat(game.getGameId()).isEqualTo(4600000999L);
         assertThat(game.getGameMode()).isEqualTo("CLASSIC");
         assertThat(game.getParticipants()).hasSize(1);
-        assertThat(game.getParticipants().get(0).getSummonerName()).isEqualTo("Bjergsen");
+        assertThat(game.getParticipants().get(0).getPuuid()).isEqualTo("test-puuid-abc123");
         verify(getRequestedFor(urlEqualTo(ACTIVE_GAME_URL)).withHeader("X-RIOT-TOKEN", equalTo("test-key-123")));
     }
 
@@ -75,7 +75,7 @@ class RiotSpectatorAdapterTest {
         stubFor(get(urlEqualTo(ACTIVE_GAME_URL))
                 .willReturn(aResponse().withStatus(404).withBody("not in game")));
 
-        CurrentGameInfo game = adapter.getCurrentGameInfo(PLATFORM, SUMMONER_ID);
+        CurrentGameInfo game = adapter.getCurrentGameInfo(PLATFORM, PUUID);
 
         assertThat(game).isNull();
     }
@@ -85,7 +85,7 @@ class RiotSpectatorAdapterTest {
         stubFor(get(urlEqualTo(ACTIVE_GAME_URL))
                 .willReturn(aResponse().withStatus(500).withBody("server error")));
 
-        assertThatThrownBy(() -> adapter.getCurrentGameInfo(PLATFORM, SUMMONER_ID))
+        assertThatThrownBy(() -> adapter.getCurrentGameInfo(PLATFORM, PUUID))
                 .isInstanceOf(RiotApiException.class)
                 .extracting(e -> ((RiotApiException) e).getStatusCode())
                 .isEqualTo(500);
@@ -93,7 +93,7 @@ class RiotSpectatorAdapterTest {
 
     @Test
     void getFeaturedGames_parsesBody() {
-        stubFor(get(urlEqualTo("/lol/spectator/v4/featured-games"))
+        stubFor(get(urlEqualTo("/lol/spectator/v5/featured-games"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json")
@@ -104,7 +104,7 @@ class RiotSpectatorAdapterTest {
         assertThat(featured.getClientRefreshInterval()).isEqualTo(300L);
         assertThat(featured.getGameList()).hasSize(1);
         assertThat(featured.getGameList().get(0).getGameId()).isEqualTo(4600001234L);
-        verify(getRequestedFor(urlEqualTo("/lol/spectator/v4/featured-games"))
+        verify(getRequestedFor(urlEqualTo("/lol/spectator/v5/featured-games"))
                 .withHeader("X-RIOT-TOKEN", equalTo("test-key-123")));
     }
 }

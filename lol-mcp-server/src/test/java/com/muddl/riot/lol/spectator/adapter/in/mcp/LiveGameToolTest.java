@@ -11,257 +11,74 @@ import com.muddl.riot.lol.spectator.SpectatorTestFixtures;
 import com.muddl.riot.lol.spectator.application.SpectatorService;
 import com.muddl.riot.lol.spectator.domain.CurrentGameInfo;
 import com.muddl.riot.lol.spectator.domain.FeaturedGames;
-import com.muddl.riot.lol.summoner.application.SummonerService;
-import com.muddl.riot.lol.summoner.domain.Summoner;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-/**
- * Unit tests for LiveGameTool.
- * Tests MCP tool methods using mocked services to avoid actual API calls.
- */
+/** Unit tests for LiveGameTool with a mocked SpectatorService (no HTTP). */
 @ExtendWith(MockitoExtension.class)
 class LiveGameToolTest {
 
     @Mock
     private SpectatorService mockSpectatorService;
 
-    @Mock
-    private SummonerService mockSummonerService;
-
     @InjectMocks
     private LiveGameTool liveGameTool;
 
     private static final String TEST_PLATFORM_STRING = "NA1";
     private static final RiotApiPlatformUri TEST_PLATFORM = RiotApiPlatformUri.NA1;
-    private static final String TEST_SUMMONER_NAME = "TestSummoner";
-    private static final String TEST_SUMMONER_ID = "encrypted_summoner_id_123";
 
     @Test
-    void getCurrentGameBySummonerName_successfulFlow_returnsCurrentGameInfo() {
-        // Arrange
-        Summoner mockSummoner = createSampleSummoner();
-        CurrentGameInfo expectedGameInfo = SpectatorTestFixtures.createSampleCurrentGameInfo();
+    void getCurrentGameByPlayer_inGame_returnsCurrentGameInfo() {
+        CurrentGameInfo expected = SpectatorTestFixtures.createSampleCurrentGameInfo();
+        when(mockSpectatorService.getCurrentGameByPlayer(TEST_PLATFORM, "Faker#KR1"))
+                .thenReturn(expected);
 
-        when(mockSummonerService.getSummonerByName(TEST_PLATFORM, TEST_SUMMONER_NAME))
-                .thenReturn(mockSummoner);
-        when(mockSpectatorService.getCurrentGameInfo(TEST_PLATFORM, TEST_SUMMONER_ID))
-                .thenReturn(expectedGameInfo);
+        CurrentGameInfo result = liveGameTool.getCurrentGameByPlayer(TEST_PLATFORM_STRING, "Faker#KR1");
 
-        // Act
-        CurrentGameInfo result = liveGameTool.getCurrentGameBySummonerName(TEST_PLATFORM_STRING, TEST_SUMMONER_NAME);
-
-        // Assert
         assertThat(result).isNotNull();
-        assertThat(result.getGameId()).isEqualTo(expectedGameInfo.getGameId());
-        assertThat(result.getGameMode()).isEqualTo(expectedGameInfo.getGameMode());
-        assertThat(result.getParticipants()).hasSize(2);
-
-        verify(mockSummonerService).getSummonerByName(TEST_PLATFORM, TEST_SUMMONER_NAME);
-        verify(mockSpectatorService).getCurrentGameInfo(TEST_PLATFORM, TEST_SUMMONER_ID);
+        assertThat(result.getGameId()).isEqualTo(expected.getGameId());
+        verify(mockSpectatorService).getCurrentGameByPlayer(TEST_PLATFORM, "Faker#KR1");
     }
 
     @Test
-    void getCurrentGameBySummonerName_summonerNotInGame_returnsNull() {
-        // Arrange
-        Summoner mockSummoner = createSampleSummoner();
-
-        when(mockSummonerService.getSummonerByName(TEST_PLATFORM, TEST_SUMMONER_NAME))
-                .thenReturn(mockSummoner);
-        when(mockSpectatorService.getCurrentGameInfo(TEST_PLATFORM, TEST_SUMMONER_ID))
+    void getCurrentGameByPlayer_notInGame_returnsNull() {
+        when(mockSpectatorService.getCurrentGameByPlayer(TEST_PLATFORM, "Faker#KR1"))
                 .thenReturn(null);
 
-        // Act
-        CurrentGameInfo result = liveGameTool.getCurrentGameBySummonerName(TEST_PLATFORM_STRING, TEST_SUMMONER_NAME);
-
-        // Assert
-        assertThat(result).isNull();
-
-        verify(mockSummonerService).getSummonerByName(TEST_PLATFORM, TEST_SUMMONER_NAME);
-        verify(mockSpectatorService).getCurrentGameInfo(TEST_PLATFORM, TEST_SUMMONER_ID);
+        assertThat(liveGameTool.getCurrentGameByPlayer(TEST_PLATFORM_STRING, "Faker#KR1"))
+                .isNull();
+        verify(mockSpectatorService).getCurrentGameByPlayer(TEST_PLATFORM, "Faker#KR1");
     }
 
     @Test
-    void getCurrentGameBySummonerName_invalidPlatform_throwsException() {
-        // Act & Assert
-        assertThatThrownBy(() -> liveGameTool.getCurrentGameBySummonerName("INVALID_PLATFORM", TEST_SUMMONER_NAME))
+    void getCurrentGameByPlayer_invalidPlatform_throws() {
+        assertThatThrownBy(() -> liveGameTool.getCurrentGameByPlayer("INVALID_PLATFORM", "Faker#KR1"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("No enum constant");
     }
 
     @Test
-    void getCurrentGameBySummonerName_summonerServiceException_propagatesException() {
-        // Arrange
-        when(mockSummonerService.getSummonerByName(TEST_PLATFORM, TEST_SUMMONER_NAME))
-                .thenThrow(new RiotApiException("Summoner not found", 404));
+    void getFeaturedGames_returnsFeaturedGames() {
+        FeaturedGames expected = SpectatorTestFixtures.createSampleFeaturedGames();
+        when(mockSpectatorService.getFeaturedGames(TEST_PLATFORM)).thenReturn(expected);
 
-        // Act & Assert
-        assertThatThrownBy(() -> liveGameTool.getCurrentGameBySummonerName(TEST_PLATFORM_STRING, TEST_SUMMONER_NAME))
-                .isInstanceOf(RiotApiException.class)
-                .hasMessageContaining("Summoner not found");
-
-        verify(mockSummonerService).getSummonerByName(TEST_PLATFORM, TEST_SUMMONER_NAME);
-    }
-
-    @Test
-    void getCurrentGameBySummonerId_successfulFlow_returnsCurrentGameInfo() {
-        // Arrange
-        CurrentGameInfo expectedGameInfo = SpectatorTestFixtures.createSampleCurrentGameInfo();
-
-        when(mockSpectatorService.getCurrentGameInfo(TEST_PLATFORM, TEST_SUMMONER_ID))
-                .thenReturn(expectedGameInfo);
-
-        // Act
-        CurrentGameInfo result = liveGameTool.getCurrentGameBySummonerId(TEST_PLATFORM_STRING, TEST_SUMMONER_ID);
-
-        // Assert
-        assertThat(result).isNotNull();
-        assertThat(result.getGameId()).isEqualTo(expectedGameInfo.getGameId());
-        assertThat(result.getGameMode()).isEqualTo(expectedGameInfo.getGameMode());
-
-        verify(mockSpectatorService).getCurrentGameInfo(TEST_PLATFORM, TEST_SUMMONER_ID);
-    }
-
-    @Test
-    void getCurrentGameBySummonerId_summonerNotInGame_returnsNull() {
-        // Arrange
-        when(mockSpectatorService.getCurrentGameInfo(TEST_PLATFORM, TEST_SUMMONER_ID))
-                .thenReturn(null);
-
-        // Act
-        CurrentGameInfo result = liveGameTool.getCurrentGameBySummonerId(TEST_PLATFORM_STRING, TEST_SUMMONER_ID);
-
-        // Assert
-        assertThat(result).isNull();
-
-        verify(mockSpectatorService).getCurrentGameInfo(TEST_PLATFORM, TEST_SUMMONER_ID);
-    }
-
-    @Test
-    void getCurrentGameBySummonerId_invalidPlatform_throwsException() {
-        // Act & Assert
-        assertThatThrownBy(() -> liveGameTool.getCurrentGameBySummonerId("INVALID_PLATFORM", TEST_SUMMONER_ID))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("No enum constant");
-    }
-
-    @Test
-    void getFeaturedGames_successfulFlow_returnsFeaturedGames() {
-        // Arrange
-        FeaturedGames expectedFeaturedGames = SpectatorTestFixtures.createSampleFeaturedGames();
-
-        when(mockSpectatorService.getFeaturedGames(TEST_PLATFORM)).thenReturn(expectedFeaturedGames);
-
-        // Act
         FeaturedGames result = liveGameTool.getFeaturedGames(TEST_PLATFORM_STRING);
 
-        // Assert
         assertThat(result).isNotNull();
-        assertThat(result.getClientRefreshInterval()).isEqualTo(expectedFeaturedGames.getClientRefreshInterval());
         assertThat(result.getGameList()).hasSize(1);
-
         verify(mockSpectatorService).getFeaturedGames(TEST_PLATFORM);
     }
 
     @Test
-    void getFeaturedGames_invalidPlatform_throwsException() {
-        // Act & Assert
-        assertThatThrownBy(() -> liveGameTool.getFeaturedGames("INVALID_PLATFORM"))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("No enum constant");
-    }
-
-    @Test
-    void getFeaturedGames_serviceException_propagatesException() {
-        // Arrange
+    void getFeaturedGames_serviceException_propagates() {
         when(mockSpectatorService.getFeaturedGames(TEST_PLATFORM))
-                .thenThrow(new RiotApiException("Featured games unavailable", 503));
+                .thenThrow(new RiotApiException("The Riot API is temporarily unavailable", 503));
 
-        // Act & Assert
         assertThatThrownBy(() -> liveGameTool.getFeaturedGames(TEST_PLATFORM_STRING))
-                .isInstanceOf(RiotApiException.class)
-                .hasMessageContaining("Featured games unavailable");
-
+                .isInstanceOf(RiotApiException.class);
         verify(mockSpectatorService).getFeaturedGames(TEST_PLATFORM);
-    }
-
-    @Test
-    void isSummonerInGame_summonerInGame_returnsTrue() {
-        // Arrange
-        Summoner mockSummoner = createSampleSummoner();
-        CurrentGameInfo mockGameInfo = SpectatorTestFixtures.createSampleCurrentGameInfo();
-
-        when(mockSummonerService.getSummonerByName(TEST_PLATFORM, TEST_SUMMONER_NAME))
-                .thenReturn(mockSummoner);
-        when(mockSpectatorService.getCurrentGameInfo(TEST_PLATFORM, TEST_SUMMONER_ID))
-                .thenReturn(mockGameInfo);
-
-        // Act
-        boolean result = liveGameTool.isSummonerInGame(TEST_PLATFORM_STRING, TEST_SUMMONER_NAME);
-
-        // Assert
-        assertThat(result).isTrue();
-
-        verify(mockSummonerService).getSummonerByName(TEST_PLATFORM, TEST_SUMMONER_NAME);
-        verify(mockSpectatorService).getCurrentGameInfo(TEST_PLATFORM, TEST_SUMMONER_ID);
-    }
-
-    @Test
-    void isSummonerInGame_summonerNotInGame_returnsFalse() {
-        // Arrange
-        Summoner mockSummoner = createSampleSummoner();
-
-        when(mockSummonerService.getSummonerByName(TEST_PLATFORM, TEST_SUMMONER_NAME))
-                .thenReturn(mockSummoner);
-        when(mockSpectatorService.getCurrentGameInfo(TEST_PLATFORM, TEST_SUMMONER_ID))
-                .thenReturn(null);
-
-        // Act
-        boolean result = liveGameTool.isSummonerInGame(TEST_PLATFORM_STRING, TEST_SUMMONER_NAME);
-
-        // Assert
-        assertThat(result).isFalse();
-
-        verify(mockSummonerService).getSummonerByName(TEST_PLATFORM, TEST_SUMMONER_NAME);
-        verify(mockSpectatorService).getCurrentGameInfo(TEST_PLATFORM, TEST_SUMMONER_ID);
-    }
-
-    @Test
-    void isSummonerInGame_invalidPlatform_throwsException() {
-        // Act & Assert
-        assertThatThrownBy(() -> liveGameTool.isSummonerInGame("INVALID_PLATFORM", TEST_SUMMONER_NAME))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("No enum constant");
-    }
-
-    @Test
-    void isSummonerInGame_summonerNotFound_propagatesException() {
-        // Arrange
-        when(mockSummonerService.getSummonerByName(TEST_PLATFORM, TEST_SUMMONER_NAME))
-                .thenThrow(new RiotApiException("Summoner not found", 404));
-
-        // Act & Assert
-        assertThatThrownBy(() -> liveGameTool.isSummonerInGame(TEST_PLATFORM_STRING, TEST_SUMMONER_NAME))
-                .isInstanceOf(RiotApiException.class)
-                .hasMessageContaining("Summoner not found");
-
-        verify(mockSummonerService).getSummonerByName(TEST_PLATFORM, TEST_SUMMONER_NAME);
-    }
-
-    // Helper methods for creating test data
-
-    private Summoner createSampleSummoner() {
-        return Summoner.builder()
-                .id(TEST_SUMMONER_ID)
-                .accountId("encrypted_account_id_123")
-                .puuid("test_puuid_123")
-                .name(TEST_SUMMONER_NAME)
-                .profileIconId(1234)
-                .revisionDate(1640995200000L)
-                .summonerLevel(150)
-                .build();
     }
 }

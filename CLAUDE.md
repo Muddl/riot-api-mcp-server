@@ -8,7 +8,7 @@ start with [README.md](README.md); the authoritative design reference is
 
 A Gradle monorepo built on Spring Boot 4.1 / Spring AI 2.0 (Java 21): shared libraries plus one
 **MCP server** per Riot game, currently `lol-mcp-server`, exposing the Riot Games API to AI models
-as ten MCP tools across four tool classes. It is a portfolio piece — the value is the clean
+as seven MCP tools across five tool classes. It is a portfolio piece — the value is the clean
 bounded-context hexagonal architecture and the disciplined tests, not feature breadth.
 
 ## Knowledge base — hydrate / persist protocol
@@ -89,8 +89,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the step-by-step recipes and
 - Type: SYNC. Transports: `stdio` (default) and `sse` (message endpoint `/mcp/messages`, port
   `8080`).
 - Tools are auto-discovered via Spring AI's `@McpTool` annotation scanning.
-- `lol-mcp-server`'s four tool classes moved packages under `com.muddl.riot.lol` but keep their
-  names and locations relative to their context: `RiotAccountTool` (`account.adapter.in.mcp`),
-  `SummonerTool` (`summoner.adapter.in.mcp`), `LiveGameTool` (`spectator.adapter.in.mcp`),
-  `AnalyticsTool` (`analytics.adapter.in.mcp`) — the ten MCP tool names themselves are unchanged
-  (see the table in [README.md](README.md)).
+- `lol-mcp-server` has five tool classes under `com.muddl.riot.lol`, one per context:
+  `RiotAccountTool` (`account.adapter.in.mcp`), `SummonerTool` (`summoner.adapter.in.mcp`),
+  `LiveGameTool` (`spectator.adapter.in.mcp`), `AnalyticsTool` (`analytics.adapter.in.mcp`), and
+  `LeagueTool` (`league.adapter.in.mcp`) — Plan C renamed the tool surface to seven
+  `<game>_<context>_<action>` tools (see [ADR-0009](docs/knowledge/decisions/ADR-0009-mcp-tool-contract.md)
+  and the table in [README.md](README.md)).

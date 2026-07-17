@@ -23,21 +23,19 @@ public class AnalyticsTool {
     private final AnalyticsService analyticsService;
 
     @McpTool(
-            name = "get_lol_player_match_analytics",
+            name = "lol_analytics_player_matches",
             description = "Get detailed analytics of a League of Legends player's recent matches")
     public PlayerMatchAnalytics getPlayerMatchAnalytics(
-            @McpToolParam(description = "The player's Riot ID (gameName#tagLine)", required = true) String riotId,
+            @McpToolParam(description = "The player as a Riot ID (GameName#TAG) or a raw PUUID", required = true)
+                    String player,
             @McpToolParam(description = "The Riot platform, e.g. NA1, EUW1", required = true) String platformStr,
             @McpToolParam(description = "The Riot region, e.g. AMERICAS, EUROPE", required = true) String regionStr,
             @McpToolParam(description = "Number of recent matches to analyze, 1-100, defaults to 10", required = false)
                     Integer matchCount) {
         RiotApiPlatformUri platform = RiotApiPlatformUri.valueOf(platformStr);
         RiotApiRegionUri region = RiotApiRegionUri.valueOf(regionStr);
-
-        // Validate and normalize match count
         int count = matchCount == null ? 10 : Math.min(100, Math.max(1, matchCount));
-
-        log.info("MCP Tool - Generating match analytics for player: {} on platform: {}", riotId, platform);
-        return analyticsService.getPlayerMatchAnalytics(riotId, platform, region, count);
+        log.info("MCP Tool - Generating match analytics for a player on platform: {}", platform);
+        return analyticsService.getPlayerMatchAnalytics(player, platform, region, count);
     }
 }

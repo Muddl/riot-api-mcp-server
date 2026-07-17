@@ -14,8 +14,6 @@
   "participants": [
     {
       "championId": 103,
-      "summonerName": "Bjergsen",
-      "summonerId": "encrypted-summoner-id-1",
       "puuid": "test-puuid-abc123",
       "teamId": 100,
       "bot": false,
@@ -23,6 +21,7 @@
       "spell2Id": 7,
       "profileIconId": 4567,
       "summonerLevel": 350,
+      "riotId": "Bjergsen#NA1",
       "perks": { "perkIds": [8112, 8126], "perkStyle": 8100, "perkSubStyle": 8200 }
     }
   ]

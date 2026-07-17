@@ -16,8 +16,8 @@ for the LoL server). It depends on the application
 ## 2. The annotation
 
 `@McpTool` and `@McpToolParam` come from `org.springframework.ai.mcp.annotation`. Tool
-`name`s are stable and snake_case (e.g. `get_lol_summoner_by_name`,
-`get_current_game_by_summoner_name`). Every `@McpToolParam` needs a `description`;
+`name`s are stable and snake_case, following the `<game>_<context>_<action>` convention
+(e.g. `lol_summoner_by_player`, `lol_league_entries_by_player`). Every `@McpToolParam` needs a `description`;
 platform/region are passed as `String` and parsed to the enum inside the method.
 
 ```java
