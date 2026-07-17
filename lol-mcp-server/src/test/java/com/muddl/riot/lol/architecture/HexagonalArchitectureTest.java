@@ -55,9 +55,14 @@ class HexagonalArchitectureTest {
     static final ArchRule adapters_live_in_outbound_riot = HexagonRules.ADAPTERS_LIVE_IN_OUTBOUND_RIOT;
 
     /**
-     * Contexts are independent except for three deliberate composition edges. This replaces the
+     * Contexts are independent except for two deliberate composition edges. This replaces the
      * hand-maintained N-by-N matrix that preceded it: one rule that stays correct as contexts are
      * added, rather than one rule per context each enumerating every other.
+     * <p>
+     * The edges are analytics -> summoner and analytics -> match: analytics composes those two
+     * contexts' application services. The spectator -> summoner edge was retired in Plan C, which
+     * moved spectator to Spectator-V5 (PUUID-keyed) and dropped its by-name tools — removing
+     * LiveGameTool's dependency on SummonerService.
      * <p>
      * analytics -> account needs no exception here: RiotAccountService lives in
      * com.muddl.riot.account (riot-account-core), outside this matcher. That same fact is why
@@ -67,7 +72,6 @@ class HexagonalArchitectureTest {
     static final ArchRule contexts_do_not_depend_on_each_other = slices().matching("..riot.lol.(*)..")
             .should()
             .notDependOnEachOther()
-            .ignoreDependency(resideInAPackage("..lol.spectator.."), resideInAPackage("..lol.summoner.."))
             .ignoreDependency(resideInAPackage("..lol.analytics.."), resideInAPackage("..lol.summoner.."))
             .ignoreDependency(resideInAPackage("..lol.analytics.."), resideInAPackage("..lol.match.."));
 
