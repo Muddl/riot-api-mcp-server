@@ -1,10 +1,12 @@
 package com.muddl.riot.lol.analytics.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 import com.muddl.riot.account.application.InMemoryRiotAccountPort;
 import com.muddl.riot.account.application.RiotAccountService;
 import com.muddl.riot.account.domain.RiotAccount;
+import com.muddl.riot.account.identity.PlayerIdentityResolver;
 import com.muddl.riot.core.enums.RiotApiPlatformUri;
 import com.muddl.riot.core.enums.RiotApiRegionUri;
 import com.muddl.riot.lol.analytics.domain.PlayerMatchAnalytics;
@@ -30,7 +32,9 @@ class AnalyticsServiceTest {
     private final InMemoryMatchPort matchPort = new InMemoryMatchPort();
 
     private final AnalyticsService analyticsService = new AnalyticsService(
-            new RiotAccountService(accountPort), new SummonerService(summonerPort), new MatchService(matchPort));
+            new RiotAccountService(accountPort),
+            new SummonerService(summonerPort, mock(PlayerIdentityResolver.class)),
+            new MatchService(matchPort));
 
     private void givenPlayer() {
         accountPort.add(RiotAccount.builder()

@@ -20,13 +20,16 @@ public class SummonerTool {
 
     private final SummonerService summonerService;
 
-    @McpTool(name = "get_lol_summoner_by_puuid", description = "Get League of Legends summoner information by PUUID")
-    public Summoner getSummonerByPuuid(
+    @McpTool(
+            name = "lol_summoner_by_player",
+            description =
+                    "Get League of Legends summoner information by player (a Riot ID as GameName#TAG, or a raw PUUID).")
+    public Summoner getSummonerByPlayer(
             @McpToolParam(description = "The Riot platform, e.g. NA1, EUW1", required = true) String platformStr,
-            @McpToolParam(description = "The player's PUUID (encrypted universally unique ID)", required = true)
-                    String puuid) {
+            @McpToolParam(description = "The player as a Riot ID (GameName#TAG) or a raw PUUID", required = true)
+                    String player) {
         RiotApiPlatformUri platform = RiotApiPlatformUri.valueOf(platformStr);
-        log.info("MCP Tool - Getting summoner by PUUID: {} on platform: {}", puuid, platform);
-        return summonerService.getSummonerByPuuid(platform, puuid);
+        log.info("MCP Tool - Getting summoner for a player on platform: {}", platform);
+        return summonerService.getSummonerByPlayer(platform, player);
     }
 }
