@@ -14,6 +14,8 @@ class PlayerIdentityResolverTest {
     /** A port that counts Riot-ID lookups, so a cache hit is provable as "one call across two lookups". */
     private static final class CountingPort implements RiotAccountPort {
         private int riotIdLookups = 0;
+        private String lastGameName;
+        private String lastTagLine;
         private final RiotAccount account;
 
         CountingPort(RiotAccount account) {
@@ -23,6 +25,8 @@ class PlayerIdentityResolverTest {
         @Override
         public RiotAccount getAccountByRiotId(String gameName, String tagLine) {
             riotIdLookups++;
+            lastGameName = gameName;
+            lastTagLine = tagLine;
             return account;
         }
 
@@ -89,6 +93,25 @@ class PlayerIdentityResolverTest {
         resolver.resolvePuuid("Faker#KR1");
 
         assertThat(port.riotIdLookups).isEqualTo(2); // staleness bounded — mutable Riot IDs re-checked
+    }
+
+    @Test
+    void trims_whitespace_around_each_riot_id_component() {
+        RiotAccount account = RiotAccount.builder()
+                .puuid("resolved-puuid")
+                .gameName("Faker")
+                .tagLine("KR1")
+                .build();
+        CountingPort port = new CountingPort(account);
+        PlayerIdentityResolver resolver = resolver(port, new MutableTicker());
+
+        assertThat(resolver.resolvePuuid("Faker # KR1")).isEqualTo("resolved-puuid");
+        assertThat(port.lastGameName).isEqualTo("Faker"); // trimmed, not "Faker "
+        assertThat(port.lastTagLine).isEqualTo("KR1"); // trimmed, not " KR1"
+
+        // Spaced variants normalize to the same cache key, so no second Riot call.
+        resolver.resolvePuuid("  Faker#KR1  ");
+        assertThat(port.riotIdLookups).isEqualTo(1);
     }
 
     @Test

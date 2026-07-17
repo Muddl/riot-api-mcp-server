@@ -32,4 +32,11 @@ public class RiotApiProperties {
 
     /** Backoff used between 429 retries when the response carries no usable {@code Retry-After}. */
     private Duration retryBackoff = Duration.ofSeconds(1);
+
+    /**
+     * Upper bound on a single 429 backoff, even when {@code Retry-After} asks for longer. Riot's
+     * application-rate-limit 429 can legitimately specify up to ~120s; this caps pathological or
+     * hostile header values so one tool call cannot block a thread indefinitely.
+     */
+    private Duration maxRetryBackoff = Duration.ofSeconds(120);
 }
