@@ -37,6 +37,19 @@ class RiotAccountToolTest {
     }
 
     @Test
+    void riotIdForm_trimsWhitespaceAroundEachHalf() {
+        RiotAccount account = RiotAccount.builder()
+                .puuid("p")
+                .gameName("Faker")
+                .tagLine("KR1")
+                .build();
+        when(mockAccountService.getAccountByRiotId("Faker", "KR1")).thenReturn(account);
+
+        assertThat(accountTool.getAccountByPlayer("  Faker # KR1  ")).isSameAs(account);
+        verify(mockAccountService).getAccountByRiotId("Faker", "KR1");
+    }
+
+    @Test
     void puuidForm_routesToGetByPuuid() {
         RiotAccount account = RiotAccount.builder().puuid("raw-puuid").build();
         when(mockAccountService.getAccountByPuuid("raw-puuid")).thenReturn(account);

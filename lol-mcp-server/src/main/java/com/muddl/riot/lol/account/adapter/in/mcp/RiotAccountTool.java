@@ -40,8 +40,10 @@ public class RiotAccountTool {
         if (parts.length != 2 || parts[0].isBlank() || parts[1].isBlank()) {
             throw new IllegalArgumentException(unparseableMessage(player));
         }
-        log.info("MCP Tool - Getting account by Riot ID: {}#{}", parts[0], parts[1]);
-        return accountService.getAccountByRiotId(parts[0], parts[1]);
+        String gameName = parts[0].trim();
+        String tagLine = parts[1].trim();
+        log.info("MCP Tool - Getting account by Riot ID: {}#{}", gameName, tagLine);
+        return accountService.getAccountByRiotId(gameName, tagLine);
     }
 
     private static String unparseableMessage(String player) {
