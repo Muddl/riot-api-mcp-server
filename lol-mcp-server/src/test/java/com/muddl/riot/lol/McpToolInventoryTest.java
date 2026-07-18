@@ -7,6 +7,7 @@ import com.muddl.riot.lol.analytics.adapter.in.mcp.AnalyticsTool;
 import com.muddl.riot.lol.champion.adapter.in.mcp.ChampionTool;
 import com.muddl.riot.lol.league.adapter.in.mcp.LeagueTool;
 import com.muddl.riot.lol.spectator.adapter.in.mcp.LiveGameTool;
+import com.muddl.riot.lol.status.adapter.in.mcp.StatusTool;
 import com.muddl.riot.lol.summoner.adapter.in.mcp.SummonerTool;
 import java.util.Arrays;
 import java.util.Set;
@@ -30,7 +31,8 @@ class McpToolInventoryTest {
             "lol_analytics_player_matches",
             "lol_league_entries_by_player",
             "lol_league_apex_by_tier",
-            "lol_champion_rotation");
+            "lol_champion_rotation",
+            "lol_status_platform");
 
     @Test
     void tool_inventory_is_unchanged() {
@@ -40,7 +42,8 @@ class McpToolInventoryTest {
                         LiveGameTool.class,
                         SummonerTool.class,
                         LeagueTool.class,
-                        ChampionTool.class)
+                        ChampionTool.class,
+                        StatusTool.class)
                 .flatMap(c -> Arrays.stream(c.getDeclaredMethods()))
                 .filter(m -> m.isAnnotationPresent(McpTool.class))
                 .map(m -> m.getAnnotation(McpTool.class).name())
