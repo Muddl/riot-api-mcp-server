@@ -9,21 +9,24 @@ document covers only what is specific to the LoL server.
 
 ```
 com.muddl.riot.lol
-├── account/     Thin @McpTool only — the real context lives in riot-account-core (platform N/A)
-├── summoner/    Summoner profiles (platform-routed)
-├── match/        Match IDs and detail (region-routed); no MCP tool — consumed only by analytics
-├── spectator/   Live-game (current-game) data, Spectator-V5, PUUID-keyed (platform-routed)
-├── analytics/   Composing context — aggregates account + summoner + match; has no Riot adapter
-└── league/      Ranked entries + apex leagues, League-V4 (platform-routed) — the exemplar context
+├── account/          Thin @McpTool only — the real context lives in riot-account-core (platform N/A)
+├── summoner/         Summoner profiles (platform-routed)
+├── match/            Match IDs and detail, Match-V5 (region-routed) — now has MatchTool
+├── spectator/        Live-game (current-game) data, Spectator-V5, PUUID-keyed (platform-routed)
+├── analytics/        Composing context — aggregates account + summoner + match; has no Riot adapter
+├── league/           Ranked entries + apex leagues, League-V4 (platform-routed) — the exemplar context
+├── championmastery/  Champion mastery by player, Champion-Mastery-V4 (platform-routed)
+├── champion/         Free-to-play rotation, Champion-V3 (platform-routed) — non-player-keyed
+├── challenges/       Player challenge standing, LoL-Challenges-V1 (platform-routed)
+├── status/           Platform status/incidents, LoL-Status-V4 (platform-routed) — non-player-keyed
+└── clash/            Player Clash registrations, Clash-V1 (platform-routed)
 ```
 
-Two contexts are deliberate exceptions to the standard hexagon shape:
+One context is a deliberate exception to the standard hexagon shape:
 
 - **`analytics`** has `domain/`, an `application/` service (depending on the account/summoner/match
   application services), and an `adapter/in/mcp/` tool — but **no** `adapter/out/riot` and no port,
   because it makes no direct Riot calls.
-- **`match`** is the mirror: a port and an outbound adapter but **no** inbound tool, because it is
-  consumed only by `analytics` (exposing it directly is sub-project 1b's mechanical add-a-tool work).
 
 `league` is the **reference implementation** the remaining 1b contexts copy: a full mini-hexagon,
 born on the final tool-naming convention, and the first LoL context to depend on

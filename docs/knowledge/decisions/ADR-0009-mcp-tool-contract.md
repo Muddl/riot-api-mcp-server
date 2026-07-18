@@ -38,6 +38,10 @@ for the account domain; routing a Riot ID through the resolver would double the 
 **No aliases.** Pre-1.0, with no public consumers, the break is taken deliberately and documented
 rather than preserved behind aliases that would double the surface.
 
+> **Extended by [ADR-0014](ADR-0014-non-player-keyed-tools.md):** the single `player` param applies
+> only to player-keyed endpoints; non-player-keyed tools (e.g. `lol_champion_rotation`,
+> `lol_status_platform`, `lol_match_by_id`) take domain-appropriate params and no resolver.
+
 **The surface shrinks from ten tools to seven while capability grows:**
 
 | After | From |

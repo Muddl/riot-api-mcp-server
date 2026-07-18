@@ -167,3 +167,12 @@ post-merge only (`.github/workflows/live-eval.yml`), and never blocks a merge. C
   1`); do not parallelize it or add high-fanout tests casually.
 - **stdio stdout purity is load-bearing here too:** if the stdio session fails to connect in CI,
   suspect a stray stdout write before anything else (see the STDIO gotcha above).
+
+## Riot JSON with snake_case keys needs `@JsonProperty`
+
+Most Riot LoL DTOs are camelCase and map by field name, but **LoL-Status-V4** uses `snake_case` for
+some keys (`incident_severity`, `maintenance_status`). Jackson here matches exact names, so those
+fields need an explicit `@JsonProperty("incident_severity")` on the camelCase Java field or they
+deserialize to `null` silently — the adapter's WireMock test asserts the parsed value to catch it.
+Seen in `status`'s `StatusEntry` (sub-project 1b). Do not switch on a global naming strategy for one
+context; annotate the specific fields.
