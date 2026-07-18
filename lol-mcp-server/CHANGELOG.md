@@ -13,6 +13,8 @@ tools, built against the `league` template. See
 [the 1b spec](../docs/superpowers/specs/2026-07-18-lol-parity-breadth-design.md).
 
 ### Added
+- `lol_champion_rotation` — the current free-to-play champion rotation for a platform (Champion-V3).
+  The first non-player-keyed context (ADR-0014).
 
 ## [0.1.0] - unreleased
 

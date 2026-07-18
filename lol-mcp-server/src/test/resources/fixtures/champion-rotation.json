@@ -1,0 +1,5 @@
+{
+  "freeChampionIds": [1, 15, 22],
+  "freeChampionIdsForNewPlayers": [18, 81, 92],
+  "maxNewPlayerLevel": 10
+}
