@@ -217,6 +217,38 @@
         "win": false
       }
     ],
-    "teams": []
+    "teams": [
+      {
+        "teamId": 100,
+        "win": true,
+        "bans": [
+          { "championId": 105, "pickTurn": 1 },
+          { "championId": 51, "pickTurn": 2 }
+        ],
+        "objectives": {
+          "baron": { "first": true, "kills": 1 },
+          "champion": { "first": true, "kills": 30 },
+          "dragon": { "first": false, "kills": 3 },
+          "inhibitor": { "first": true, "kills": 2 },
+          "riftHerald": { "first": true, "kills": 1 },
+          "tower": { "first": true, "kills": 8 }
+        }
+      },
+      {
+        "teamId": 200,
+        "win": false,
+        "bans": [
+          { "championId": 63, "pickTurn": 3 }
+        ],
+        "objectives": {
+          "baron": { "first": false, "kills": 0 },
+          "champion": { "first": false, "kills": 20 },
+          "dragon": { "first": true, "kills": 1 },
+          "inhibitor": { "first": false, "kills": 0 },
+          "riftHerald": { "first": false, "kills": 0 },
+          "tower": { "first": false, "kills": 2 }
+        }
+      }
+    ]
   }
 }
