@@ -1,0 +1,7 @@
+# The active config is copied from mcpeval.<transport>.yaml at run time
+mcpeval.yaml
+# mcp-eval output
+test-reports/
+# uv / venv
+.venv/
+uv.lock
