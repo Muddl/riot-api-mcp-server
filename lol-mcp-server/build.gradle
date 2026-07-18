@@ -5,7 +5,7 @@ plugins {
 
 // Independent of the other modules — see ADR-0010. 0.1.0: new coordinates, plus the tool contract
 // break landing in Plan C. Pre-1.0, so a breaking change bumps the minor.
-version = '0.1.0'
+version = '0.2.0'
 
 dependencies {
 	implementation project(':riot-api-core')
