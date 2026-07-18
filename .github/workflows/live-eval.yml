@@ -1,0 +1,138 @@
+name: Live Eval
+
+on:
+  push:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+# Least-privilege; this workflow only reads the repo and writes its own artifacts.
+permissions:
+  contents: read
+
+jobs:
+  live-eval:
+    name: Live eval (${{ matrix.transport }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        transport: [ stdio, sse ]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Gate on the LLM key. Absent -> skip green with an actionable notice.
+      # ANTHROPIC_API_KEY is the ONLY LLM credential this workflow reads; it never
+      # references CLAUDE_CODE_OAUTH_TOKEN (separate bucket, see ADR-0012).
+      - name: Check for ANTHROPIC_API_KEY
+        id: keycheck
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "::notice title=Live evals skipped::ANTHROPIC_API_KEY is not set. Add it as a repository secret to enable the live mcp-eval suite. (This is separate from CLAUDE_CODE_OAUTH_TOKEN, which is not used here.)"
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up JDK 21
+        if: steps.keycheck.outputs.run == 'true'
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'zulu'
+
+      - name: Setup Gradle
+        if: steps.keycheck.outputs.run == 'true'
+        uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
+
+      - name: Build server jar
+        if: steps.keycheck.outputs.run == 'true'
+        run: ./gradlew :lol-mcp-server:bootJar
+
+      - name: Resolve jar path
+        if: steps.keycheck.outputs.run == 'true'
+        run: |
+          JAR="$(ls lol-mcp-server/build/libs/lol-mcp-server-*.jar | grep -v plain | head -n1)"
+          echo "LOL_MCP_JAR=$GITHUB_WORKSPACE/$JAR" >> "$GITHUB_ENV"
+
+      - name: Set up uv
+        if: steps.keycheck.outputs.run == 'true'
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install harness
+        if: steps.keycheck.outputs.run == 'true'
+        working-directory: eval
+        run: uv sync
+
+      - name: Start SSE server
+        if: steps.keycheck.outputs.run == 'true' && matrix.transport == 'sse'
+        env:
+          RIOT_API_KEY: ${{ secrets.RIOT_DEV_REG_TEST_API_KEY }}
+        run: |
+          java -jar "$LOL_MCP_JAR" --spring.profiles.active=sse > sse-server.log 2>&1 &
+          echo "SSE_PID=$!" >> "$GITHUB_ENV"
+          echo "LOL_MCP_SSE_URL=http://localhost:8080/sse" >> "$GITHUB_ENV"
+          # Wait for the port to accept connections.
+          for i in $(seq 1 30); do
+            if curl -s -o /dev/null http://localhost:8080/actuator/health; then
+              echo "server up"; break
+            fi
+            sleep 2
+          done
+
+      - name: Run live evals
+        if: steps.keycheck.outputs.run == 'true'
+        working-directory: eval
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          RIOT_API_KEY: ${{ secrets.RIOT_DEV_REG_TEST_API_KEY }}
+        run: |
+          cp "mcpeval.${{ matrix.transport }}.yaml" mcpeval.yaml
+          set +e
+          uv run mcp-eval run tests/ -v \
+            --json "test-reports/${{ matrix.transport }}.json" \
+            --html "test-reports/${{ matrix.transport }}.html" \
+            --markdown "test-reports/${{ matrix.transport }}.md"
+          echo "EVAL_EXIT=$?" >> "$GITHUB_ENV"
+          set -e
+
+      - name: Summarize outcome
+        if: steps.keycheck.outputs.run == 'true' && always()
+        working-directory: eval
+        run: |
+          {
+            echo "## Live eval — ${{ matrix.transport }}"
+            if [ "${EVAL_EXIT:-1}" = "0" ]; then
+              echo "✅ All live evals passed."
+            else
+              echo "❌ Live evals reported failures (exit ${EVAL_EXIT})."
+              echo ""
+              echo "Triage: a **CANARY** failure means Riot's live behavior may have changed — investigate the adapter's assumption before editing the test. A non-canary failure is a regression. Rate-limit / network / Riot 5xx errors are infra flakes — re-run the workflow."
+            fi
+            echo ""
+            echo "See the uploaded \`mcpeval-reports-${{ matrix.transport }}\` artifact (Markdown/HTML/JSON) for per-test detail."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload reports
+        if: steps.keycheck.outputs.run == 'true' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcpeval-reports-${{ matrix.transport }}
+          path: eval/test-reports/
+          if-no-files-found: warn
+
+      - name: Stop SSE server
+        if: always() && matrix.transport == 'sse' && env.SSE_PID != ''
+        run: kill "$SSE_PID" || true
+
+      - name: Fail the job on eval failure
+        if: steps.keycheck.outputs.run == 'true'
+        run: |
+          if [ "${EVAL_EXIT:-1}" != "0" ]; then
+            echo "Live evals failed — see the job summary and artifact."
+            exit 1
+          fi
