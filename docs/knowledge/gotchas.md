@@ -149,3 +149,21 @@ graph. It will not break a build, but it misleads the next reader about which co
 depend on which. Prune the exception in the same change that removes the edge; if that is deferred,
 record it (Plan C deferred this to Plan D's arch audit). The honest exception list after Plan C is
 `analytics → summoner` and `analytics → match` only.
+
+## The live eval harness is Python-in-a-Java-repo and hits the real Riot API
+
+`eval/` is a `uv`-managed Python (`mcpevals`) project — never built by Gradle, never part of the
+offline `./gradlew build` gate. It drives the built server jar against the **live** Riot API on CI,
+post-merge only (`.github/workflows/live-eval.yml`), and never blocks a merge. Consequences to know:
+
+- **Needs `ANTHROPIC_API_KEY`** (agent + LLM judge). This is a *separate credential bucket* from
+  `CLAUDE_CODE_OAUTH_TOKEN` (which `claude.yml` uses); the live-eval workflow must never read the
+  OAuth token. Absent key ⇒ the job skips green with a notice.
+- **Assert invariants, not exact values.** Live data (LP, match counts, who is in a game) shifts
+  between runs. A test pinned to an exact value is guaranteed to flake.
+- **A `CANARY:` failure means "investigate Riot", not "loosen the test".** Canaries guard
+  undocumented Riot behaviours our adapters depend on (e.g. spectator `404 → null`).
+- **Rate budget:** the dev key allows 100 req / 2 min. The suite runs serially (`max_concurrency:
+  1`); do not parallelize it or add high-fanout tests casually.
+- **stdio stdout purity is load-bearing here too:** if the stdio session fails to connect in CI,
+  suspect a stray stdout write before anything else (see the STDIO gotcha above).

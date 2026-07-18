@@ -24,8 +24,8 @@ cover only what is shared across every module.
 ## Prerequisites
 
 - **Java 21** (a Gradle toolchain resolves it; the wrapper pins Gradle 9.6.1).
-- A **Riot API key** is only needed to *run* a server, never to build or test — the test suite is
-  fully offline. No other credential (in particular, no Anthropic key) is needed for anything.
+- A **Riot API key** is only needed to *run* a server or the optional [live evals](#live-evals-optional-key-gated),
+  never to build or test the offline suite. The live evals additionally need an `ANTHROPIC_API_KEY`.
 
 ## Build, test, format
 
@@ -41,6 +41,22 @@ cover only what is shared across every module.
 
 `./gradlew build` is the gate that CI runs. If it is green locally with no API key, it will be green
 in CI.
+
+## Live evals (optional, key-gated)
+
+The offline suite above is the gate and needs no keys. A separate live suite in [`eval/`](eval/README.md)
+drives the server against the real Riot API with [mcp-eval](https://mcp-eval.ai/). It runs post-merge
+on CI and never blocks a merge. To run it locally you need `uv`, a personal `RIOT_API_KEY`, and an
+`ANTHROPIC_API_KEY` (separate from any Claude Code OAuth token):
+
+```bash
+./gradlew :lol-mcp-server:bootJar
+export ANTHROPIC_API_KEY=sk-ant-... RIOT_API_KEY=RGAPI-...
+export LOL_MCP_JAR="$(ls lol-mcp-server/build/libs/lol-mcp-server-*.jar | grep -v plain)"
+cd eval && uv sync && cp mcpeval.stdio.yaml mcpeval.yaml && uv run mcp-eval run tests/ -v
+```
+
+When you add or change a tool, add a live scenario with the `add-live-eval` skill.
 
 ## Package conventions
 
