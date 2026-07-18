@@ -3,7 +3,6 @@ package com.muddl.riot.lol.spectator;
 import com.muddl.riot.lol.spectator.domain.BannedChampion;
 import com.muddl.riot.lol.spectator.domain.CurrentGameInfo;
 import com.muddl.riot.lol.spectator.domain.CurrentGameParticipant;
-import com.muddl.riot.lol.spectator.domain.FeaturedGames;
 import com.muddl.riot.lol.spectator.domain.Observer;
 import com.muddl.riot.lol.spectator.domain.Perks;
 import java.util.List;
@@ -55,33 +54,6 @@ public final class SpectatorTestFixtures {
                 .spell1Id(4L)
                 .spell2Id(7L)
                 .gameCustomizationObjects(List.of())
-                .build();
-    }
-
-    public static FeaturedGames createSampleFeaturedGames() {
-        return FeaturedGames.builder()
-                .clientRefreshInterval(300L)
-                .gameList(List.of(CurrentGameInfo.builder()
-                        .gameId(987654321L)
-                        .gameStartTime(1640995200000L)
-                        .platformId("NA1")
-                        .gameMode("CLASSIC")
-                        .mapId(11L)
-                        .gameType("MATCHED_GAME")
-                        .gameQueueConfigId(420L)
-                        .gameLength(600L)
-                        .participants(List.of(
-                                createSampleParticipant("FeaturedPlayer1", 1L, 100L),
-                                createSampleParticipant("FeaturedPlayer2", 2L, 200L)))
-                        .bannedChampions(List.of(BannedChampion.builder()
-                                .championId(266L)
-                                .teamId(100L)
-                                .pickTurn(1)
-                                .build()))
-                        .observers(Observer.builder()
-                                .encryptionKey("featured_encryption_key")
-                                .build())
-                        .build()))
                 .build();
     }
 }

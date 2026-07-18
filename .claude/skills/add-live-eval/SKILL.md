@@ -17,7 +17,8 @@ Read `docs/knowledge/patterns/live-eval-harness.md` and
 1. **Pick the discovery seed.** Never hardcode an account. Discover the subject inside the agent
    prompt from a broad/keyless tool:
    - player-keyed tool → seed from `lol_league_apex_by_tier` CHALLENGER (pick any player).
-   - live-game tool → seed from `lol_spectator_featured_games` (pick a participant in a game now).
+   - live-game (spectator) tool → seed a player from apex and assert the "in a game OR cleanly not
+     in a game" invariant; there is no featured-games endpoint to force a guaranteed live subject.
 2. **Write a happy-path `@task`.** One prompt that chains discovery → the new tool. Assert:
    - `Expect.tools.was_called("<tool_name>")` (deterministic), and
    - `Expect.judge.llm(rubric=..., min_score=0.7)` on an **invariant**, never an exact live value.

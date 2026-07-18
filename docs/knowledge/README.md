@@ -32,6 +32,7 @@ This README is the **single source of truth** for the hydrate/persist protocol.
 - [ADR-0010 — Artifact coordinates, per-module versioning, and provenance stamping](decisions/ADR-0010-versioning-and-coordinates.md)
 - [ADR-0011 — Documentation topology and the per-module doc gate](decisions/ADR-0011-doc-topology.md)
 - [ADR-0012 — Live agent-driven eval harness (mcp-eval)](decisions/ADR-0012-live-eval-harness.md)
+- [ADR-0013 — Remove the featured-games tool (endpoint retired by Riot)](decisions/ADR-0013-remove-featured-games.md)
 
 ### Patterns
 

@@ -8,7 +8,7 @@ start with [README.md](README.md); the authoritative design reference is
 
 A Gradle monorepo built on Spring Boot 4.1 / Spring AI 2.0 (Java 21): shared libraries plus one
 **MCP server** per Riot game, currently `lol-mcp-server`, exposing the Riot Games API to AI models
-as seven MCP tools across five tool classes. It is a portfolio piece — the value is the clean
+as six MCP tools across five tool classes. It is a portfolio piece — the value is the clean
 bounded-context hexagonal architecture and the disciplined tests, not feature breadth.
 
 ## Knowledge base — hydrate / persist protocol
@@ -102,6 +102,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the step-by-step recipes and
 - `lol-mcp-server` has five tool classes under `com.muddl.riot.lol`, one per context:
   `RiotAccountTool` (`account.adapter.in.mcp`), `SummonerTool` (`summoner.adapter.in.mcp`),
   `LiveGameTool` (`spectator.adapter.in.mcp`), `AnalyticsTool` (`analytics.adapter.in.mcp`), and
-  `LeagueTool` (`league.adapter.in.mcp`) — Plan C renamed the tool surface to seven
-  `<game>_<context>_<action>` tools (see [ADR-0009](docs/knowledge/decisions/ADR-0009-mcp-tool-contract.md)
-  and the table in [README.md](README.md)).
+  `LeagueTool` (`league.adapter.in.mcp`) — Plan C renamed the tool surface to the
+  `<game>_<context>_<action>` convention (see [ADR-0009](docs/knowledge/decisions/ADR-0009-mcp-tool-contract.md));
+  it is now **six** tools after `lol_spectator_featured_games` was removed
+  (see [ADR-0013](docs/knowledge/decisions/ADR-0013-remove-featured-games.md)).

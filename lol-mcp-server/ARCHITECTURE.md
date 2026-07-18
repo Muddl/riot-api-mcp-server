@@ -12,7 +12,7 @@ com.muddl.riot.lol
 ├── account/     Thin @McpTool only — the real context lives in riot-account-core (platform N/A)
 ├── summoner/    Summoner profiles (platform-routed)
 ├── match/        Match IDs and detail (region-routed); no MCP tool — consumed only by analytics
-├── spectator/   Live-game / featured-game data, Spectator-V5, PUUID-keyed (platform-routed)
+├── spectator/   Live-game (current-game) data, Spectator-V5, PUUID-keyed (platform-routed)
 ├── analytics/   Composing context — aggregates account + summoner + match; has no Riot adapter
 └── league/      Ranked entries + apex leagues, League-V4 (platform-routed) — the exemplar context
 ```

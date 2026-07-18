@@ -14,7 +14,7 @@ whole repo — see [ADR-0010](../docs/knowledge/decisions/ADR-0010-versioning-an
 ### Added
 - `lol_league_entries_by_player` and `lol_league_apex_by_tier` — ranked-league entries by player and
   the apex leagues (challenger/grandmaster/master), the exemplar League context.
-- Module-local `README.md` and `ARCHITECTURE.md` — the seven-tool surface, run/Docker instructions,
+- Module-local `README.md` and `ARCHITECTURE.md` — the tool surface, run/Docker instructions,
   the LoL bounded contexts, and the updated tool diagram now live with the server (moved down from
   the repo root under the one-altitude rule; sub-project 1a Phase 7).
 
@@ -31,3 +31,8 @@ whole repo — see [ADR-0010](../docs/knowledge/decisions/ADR-0010-versioning-an
   `get_current_game_by_summoner_name`, and `check_if_summoner_in_game` — the first three routed
   through Riot-ID-era paths that no longer resolve or through `encryptedSummonerId`, which Riot is
   stripping; the fourth is redundant (a null current game answers it).
+- **Breaking:** `lol_spectator_featured_games` and its `FeaturedGames` type — Riot's current
+  Spectator-V5 API exposes only `active-games/by-summoner/{puuid}`; the featured-games endpoint was
+  retired (v5 never carried it; v4 is deprecated), so the tool always returned 403. The live eval
+  suite caught it. The surface is now six tools. See
+  [ADR-0013](../docs/knowledge/decisions/ADR-0013-remove-featured-games.md).

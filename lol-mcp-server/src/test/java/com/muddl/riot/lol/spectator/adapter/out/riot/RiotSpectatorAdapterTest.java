@@ -20,7 +20,6 @@ import com.muddl.riot.core.http.RiotApiClient;
 import com.muddl.riot.core.testsupport.Fixtures;
 import com.muddl.riot.lol.spectator.application.port.SpectatorPort;
 import com.muddl.riot.lol.spectator.domain.CurrentGameInfo;
-import com.muddl.riot.lol.spectator.domain.FeaturedGames;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -89,22 +88,5 @@ class RiotSpectatorAdapterTest {
                 .isInstanceOf(RiotApiException.class)
                 .extracting(e -> ((RiotApiException) e).getStatusCode())
                 .isEqualTo(500);
-    }
-
-    @Test
-    void getFeaturedGames_parsesBody() {
-        stubFor(get(urlEqualTo("/lol/spectator/v5/featured-games"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
-                        .withBody(Fixtures.read("featured-games.json"))));
-
-        FeaturedGames featured = adapter.getFeaturedGames(PLATFORM);
-
-        assertThat(featured.getClientRefreshInterval()).isEqualTo(300L);
-        assertThat(featured.getGameList()).hasSize(1);
-        assertThat(featured.getGameList().get(0).getGameId()).isEqualTo(4600001234L);
-        verify(getRequestedFor(urlEqualTo("/lol/spectator/v5/featured-games"))
-                .withHeader("X-RIOT-TOKEN", equalTo("test-key-123")));
     }
 }
