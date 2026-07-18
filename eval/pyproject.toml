@@ -1,0 +1,11 @@
+[project]
+name = "lol-mcp-server-evals"
+version = "0.1.0"
+description = "Live agent-driven mcp-eval regression suite for lol-mcp-server"
+requires-python = ">=3.11"
+dependencies = [
+    "mcpevals",
+]
+
+[tool.uv]
+package = false

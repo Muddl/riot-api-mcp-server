@@ -31,12 +31,14 @@ This README is the **single source of truth** for the hydrate/persist protocol.
 - [ADR-0009 — MCP tool contract](decisions/ADR-0009-mcp-tool-contract.md)
 - [ADR-0010 — Artifact coordinates, per-module versioning, and provenance stamping](decisions/ADR-0010-versioning-and-coordinates.md)
 - [ADR-0011 — Documentation topology and the per-module doc gate](decisions/ADR-0011-doc-topology.md)
+- [ADR-0012 — Live agent-driven eval harness (mcp-eval)](decisions/ADR-0012-live-eval-harness.md)
 
 ### Patterns
 
 - [Add a bounded context](patterns/add-a-bounded-context.md)
 - [Add an MCP tool](patterns/add-an-mcp-tool.md)
 - [Add an adapter test](patterns/add-an-adapter-test.md)
+- [Run and extend the live eval harness](patterns/live-eval-harness.md)
 
 ## Hydrate / Persist protocol
 

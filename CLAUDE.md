@@ -37,6 +37,16 @@ session:
 The full test suite runs **offline with no Riot API key**. Do not introduce tests that require live
 keys or network access; use WireMock (adapters) or port fakes (services) instead.
 
+The above is the offline CI gate and needs no keys. A separate **live eval harness** (`eval/`,
+Python + mcp-eval) runs agent-driven tests against the real Riot API post-merge over both transports
+— see [`docs/knowledge/patterns/live-eval-harness.md`](docs/knowledge/patterns/live-eval-harness.md)
+and [ADR-0012](docs/knowledge/decisions/ADR-0012-live-eval-harness.md). It never gates a merge and
+needs `ANTHROPIC_API_KEY` (a separate credential bucket from `CLAUDE_CODE_OAUTH_TOKEN`):
+
+```bash
+cd eval && uv sync && cp mcpeval.stdio.yaml mcpeval.yaml && uv run mcp-eval run tests/ -v
+```
+
 ## Architecture summary
 
 A Gradle monorepo. Two libraries and one server per game:

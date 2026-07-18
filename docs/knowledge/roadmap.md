@@ -109,8 +109,9 @@ Real and wanted, deliberately not scheduled. Recorded so they are not re-derived
 | Generalized host-routing abstraction | Forced by sub-project 3. TFT reuses LoL's hosts, so one data point is not enough to design from. |
 | Publishing libraries as Maven artifacts | Not planned. Libraries are versioned for provenance and consumed by project reference — see ADR-0010. |
 | Aggregate coverage report | When more than one server exists. |
-| **Automated endpoint-path verification** | A mechanism to check adapter Riot paths against the live developer portal (or an equivalent authoritative source) programmatically, so the "verified against the portal" standing constraint stops depending on a human opening a browser. Plan C surfaced the gap: the automated run could not portal-check the Spectator-V5 / League-V4 paths, so verification fell back to convention + reviewer judgement + a manual human check. Design the mechanism when there is a stable authoritative source to check against; until then the manual check is the gate. |
-| **Automated transport-handshake verification** | A mechanism (e.g. a harnessed `initialize` + `tools/list` + one `tools/call` over both stdio and SSE, asserting every stdout line parses as JSON) to automate the "green tests do not prove the server serves" standing constraint, including stdio stdout purity. Today this is a manual per-cycle step no unit test covers. Land it as a build/CI check so serving is proven, not just compiled. |
+| **Claude Code Actions integration rework** | Own effort. The repo's `claude.yml` / `claude-code-action` wiring is to be reworked for better automation writ large. Recorded as intended, not yet scheduled. Kept in a separate credential bucket (`CLAUDE_CODE_OAUTH_TOKEN`) from the live-eval harness's `ANTHROPIC_API_KEY`. |
+| ~~Automated endpoint-path verification~~ | **Shipped** as part of the live eval harness (see [ADR-0012](decisions/ADR-0012-live-eval-harness.md)). Live agent-driven evals call every tool against the real Riot API post-merge; a wrong path returns 404 and fails the eval, so paths are verified continuously rather than by a human opening the portal. |
+| ~~Automated transport-handshake verification~~ | **Shipped** as part of the live eval harness (see [ADR-0012](decisions/ADR-0012-live-eval-harness.md)). The suite runs over both stdio and sse each post-merge run; a successful stdio session is the stdout-purity check. |
 
 ## Standing constraints
 
@@ -120,10 +121,12 @@ These hold across every sub-project:
   application services. Non-negotiable.
 - **Riot endpoint paths are verified against the live developer portal**, never assumed from
   Context7 or model knowledge. Sub-project 0 found Context7 returned mostly Data Dragon and
-  Valorant/TFT material when asked for a structured LoL reference. *This check is manual today —
-  automating it is a deferred item above.*
+  Valorant/TFT material when asked for a structured LoL reference. *As of
+  [ADR-0012](decisions/ADR-0012-live-eval-harness.md) this is automated post-merge by the live eval
+  harness (`eval/`), over both transports; the offline suite remains the pre-merge gate.*
 - **Green tests do not prove the server serves.** Every cycle verifies both transports with a real
-  MCP handshake, including stdio's stdout purity. *This check is manual today — automating it is a
-  deferred item above.*
+  MCP handshake, including stdio's stdout purity. *As of
+  [ADR-0012](decisions/ADR-0012-live-eval-harness.md) this is automated post-merge by the live eval
+  harness (`eval/`), over both transports; the offline suite remains the pre-merge gate.*
 - **The intended consumer is a third party** installing against their own Riot API key. That raises
   the bar on tool naming, error messages, and key-gating behaviour.
