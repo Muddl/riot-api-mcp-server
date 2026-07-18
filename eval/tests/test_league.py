@@ -18,8 +18,11 @@ async def test_apex_challenger(agent, session):
         Expect.judge.llm(
             rubric=(
                 "The answer reports a CHALLENGER league with a non-zero number "
-                "of entries and names at least one player. It does not report an "
-                "error or an empty league."
+                "of entries and identifies at least one entry in it. A PUUID, "
+                "summoner id, or LP/rank is sufficient identification — Riot no "
+                "longer exposes human-readable summoner names in league entries, "
+                "so do not require a display name. It does not report an error or "
+                "an empty league."
             ),
             min_score=0.7,
         ),

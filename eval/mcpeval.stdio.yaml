@@ -19,10 +19,11 @@ agents:
       instruction: |
         You are a precise QA agent for a League of Legends MCP server.
         Use the provided tools to answer. Prefer NA1 as the platform and
-        AMERICAS as the region unless told otherwise. When a lookup fails,
-        report the failure plainly instead of inventing data.
+        AMERICAS as the region unless told otherwise. If a tool call returns
+        an error, do NOT retry it — report the failure plainly and stop,
+        rather than inventing data or calling it repeatedly.
       server_names: ["lol_server"]
-      max_iterations: 6
+      max_iterations: 4
 default_agent: riot_tester
 
 judge:
