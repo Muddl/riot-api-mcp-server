@@ -15,6 +15,8 @@ tools, built against the `league` template. See
 ### Added
 - `lol_champion_rotation` — the current free-to-play champion rotation for a platform (Champion-V3).
   The first non-player-keyed context (ADR-0014).
+- `lol_champion_mastery_by_player` — a player's champion masteries sorted by points, with an optional
+  top-N `count` (Champion-Mastery-V4).
 - `lol_status_platform` — a platform's current maintenances and incidents (LoL-Status-V4).
 
 ## [0.1.0] - unreleased
