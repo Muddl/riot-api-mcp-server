@@ -5,3 +5,6 @@ test-reports/
 # uv / venv
 .venv/
 uv.lock
+# python bytecode
+__pycache__/
+*.pyc
