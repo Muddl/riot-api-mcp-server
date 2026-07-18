@@ -5,7 +5,6 @@ import com.muddl.riot.core.exception.RiotApiException;
 import com.muddl.riot.core.http.RiotApiClient;
 import com.muddl.riot.lol.spectator.application.port.SpectatorPort;
 import com.muddl.riot.lol.spectator.domain.CurrentGameInfo;
-import com.muddl.riot.lol.spectator.domain.FeaturedGames;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -36,15 +35,5 @@ public class RiotSpectatorAdapter implements SpectatorPort {
             }
             throw e;
         }
-    }
-
-    @Override
-    public FeaturedGames getFeaturedGames(RiotApiPlatformUri platform) {
-        return riotApiClient
-                .platform(platform)
-                .get()
-                .uri("/lol/spectator/v5/featured-games")
-                .retrieve()
-                .body(FeaturedGames.class);
     }
 }

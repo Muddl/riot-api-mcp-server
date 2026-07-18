@@ -4,7 +4,6 @@ import com.muddl.riot.account.identity.PlayerIdentityResolver;
 import com.muddl.riot.core.enums.RiotApiPlatformUri;
 import com.muddl.riot.lol.spectator.application.port.SpectatorPort;
 import com.muddl.riot.lol.spectator.domain.CurrentGameInfo;
-import com.muddl.riot.lol.spectator.domain.FeaturedGames;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,10 +29,5 @@ public class SpectatorService {
     public CurrentGameInfo getCurrentGameInfo(RiotApiPlatformUri platform, String puuid) {
         log.info("Fetching current game info for PUUID: {} on platform: {}", puuid, platform);
         return spectatorPort.getCurrentGameInfo(platform, puuid);
-    }
-
-    public FeaturedGames getFeaturedGames(RiotApiPlatformUri platform) {
-        log.info("Fetching featured games for platform: {}", platform);
-        return spectatorPort.getFeaturedGames(platform);
     }
 }

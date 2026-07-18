@@ -6,11 +6,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.muddl.riot.core.enums.RiotApiPlatformUri;
-import com.muddl.riot.core.exception.RiotApiException;
 import com.muddl.riot.lol.spectator.SpectatorTestFixtures;
 import com.muddl.riot.lol.spectator.application.SpectatorService;
 import com.muddl.riot.lol.spectator.domain.CurrentGameInfo;
-import com.muddl.riot.lol.spectator.domain.FeaturedGames;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -58,27 +56,5 @@ class LiveGameToolTest {
         assertThatThrownBy(() -> liveGameTool.getCurrentGameByPlayer("INVALID_PLATFORM", "Faker#KR1"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("No enum constant");
-    }
-
-    @Test
-    void getFeaturedGames_returnsFeaturedGames() {
-        FeaturedGames expected = SpectatorTestFixtures.createSampleFeaturedGames();
-        when(mockSpectatorService.getFeaturedGames(TEST_PLATFORM)).thenReturn(expected);
-
-        FeaturedGames result = liveGameTool.getFeaturedGames(TEST_PLATFORM_STRING);
-
-        assertThat(result).isNotNull();
-        assertThat(result.getGameList()).hasSize(1);
-        verify(mockSpectatorService).getFeaturedGames(TEST_PLATFORM);
-    }
-
-    @Test
-    void getFeaturedGames_serviceException_propagates() {
-        when(mockSpectatorService.getFeaturedGames(TEST_PLATFORM))
-                .thenThrow(new RiotApiException("The Riot API is temporarily unavailable", 503));
-
-        assertThatThrownBy(() -> liveGameTool.getFeaturedGames(TEST_PLATFORM_STRING))
-                .isInstanceOf(RiotApiException.class);
-        verify(mockSpectatorService).getFeaturedGames(TEST_PLATFORM);
     }
 }
