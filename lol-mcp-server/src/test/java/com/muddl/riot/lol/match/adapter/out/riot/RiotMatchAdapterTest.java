@@ -112,6 +112,26 @@ class RiotMatchAdapterTest {
     }
 
     @Test
+    void getMatchById_deserializesNullBountyLevel() {
+        // Riot returns "bountyLevel": null for some real matches. If the DTO field is a
+        // primitive int, Jackson raises MismatchedInputException (FAIL_ON_NULL_FOR_PRIMITIVES)
+        // and the whole match — and any analytics over it — fails to deserialize. The live
+        // eval suite caught this against real match data; frozen fixtures had a non-null value.
+        String bodyWithNullBounty = Fixtures.read("match.json").replace("\"bountyLevel\": 0", "\"bountyLevel\": null");
+        stubFor(get(urlEqualTo("/lol/match/v5/matches/NA1_4600000001"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(bodyWithNullBounty)));
+
+        Match match = adapter.getMatchById(REGION, "NA1_4600000001");
+
+        assertThat(match.getInfo().getParticipants()).hasSize(2);
+        assertThat(match.getInfo().getParticipants().get(0).getBountyLevel()).isNull();
+        assertThat(match.getInfo().getParticipants().get(0).getChampionName()).isEqualTo("Ahri");
+    }
+
+    @Test
     void nonSuccessResponse_mapsToRiotApiException_withStatusPreserved() {
         stubFor(get(urlEqualTo("/lol/match/v5/matches/NA1_MISSING"))
                 .willReturn(aResponse().withStatus(500).withBody("server error")));
