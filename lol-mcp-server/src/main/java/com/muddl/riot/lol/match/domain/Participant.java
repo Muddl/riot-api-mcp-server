@@ -16,7 +16,10 @@ import lombok.NoArgsConstructor;
 public class Participant {
     private int assists;
     private int baronKills;
-    private int bountyLevel;
+    // Boxed: Riot returns "bountyLevel": null for some real matches, which fails to deserialize
+    // into a primitive int (FAIL_ON_NULL_FOR_PRIMITIVES). See RiotMatchAdapterTest. Read nowhere,
+    // so nullability is invisible to consumers.
+    private Integer bountyLevel;
     private int champExperience;
     private int champLevel;
     private int championId;
