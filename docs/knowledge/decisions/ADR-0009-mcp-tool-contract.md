@@ -1,6 +1,7 @@
 # ADR-0009: MCP tool contract — naming and the single `player` param
 
-- **Status:** Accepted
+- **Status:** Accepted (inventory partly superseded by [ADR-0013](ADR-0013-remove-featured-games.md)
+  — `lol_spectator_featured_games` was later removed; the naming convention here is unchanged)
 - **Date:** 2026-07-17
 
 ## Context

@@ -10,7 +10,7 @@ the player-identity resolver) — and adds the LoL-specific bounded contexts.
 
 ## MCP tools
 
-Five inbound adapters expose **seven** tools. Every player-keyed tool takes a single `player`
+Five inbound adapters expose **six** tools. Every player-keyed tool takes a single `player`
 parameter accepting either a Riot ID (`GameName#TAG`) or a raw PUUID, resolved internally — the model
 never has to chain `account → summoner → match` itself (see
 [ADR-0009](../docs/knowledge/decisions/ADR-0009-mcp-tool-contract.md)).
@@ -19,7 +19,7 @@ never has to chain `account → summoner → match` itself (see
 |---|---|---|
 | **RiotAccountTool** | `lol_account_by_player` | Riot account by player |
 | **SummonerTool** | `lol_summoner_by_player` | Summoner profile by player |
-| **LiveGameTool** | `lol_spectator_current_game_by_player`, `lol_spectator_featured_games` | Live-game (Spectator-V5) data; `null` when not in a game |
+| **LiveGameTool** | `lol_spectator_current_game_by_player` | Live-game (Spectator-V5) data; `null` when not in a game |
 | **AnalyticsTool** | `lol_analytics_player_matches` | Aggregated recent-match analytics (composes account + summoner + match) |
 | **LeagueTool** | `lol_league_entries_by_player`, `lol_league_apex_by_tier` | Ranked entries by player; apex league (CHALLENGER/GRANDMASTER/MASTER) by tier + queue |
 

@@ -26,8 +26,9 @@ run post-merge on CI over both transports against the real Riot API.
   blocking pre-merge gate. `ci.yml` remains the pre-merge gate and stays offline.
 - **Token isolation.** The workflow reads only `ANTHROPIC_API_KEY`; it never references
   `CLAUDE_CODE_OAUTH_TOKEN` (a separate bucket for `claude-code-action`). Absent key ⇒ green skip.
-- **Dynamic discovery.** Subjects are found at runtime from apex-league / featured-games inside the
-  agent conversation — nothing hardcoded to rot.
+- **Dynamic discovery.** Subjects are found at runtime from the apex-league ladder inside the agent
+  conversation — nothing hardcoded to rot. (Live-game coverage is the "not in a game" invariant:
+  there is no featured-games endpoint to force a guaranteed in-game subject — see ADR-0013.)
 
 ## Consequences
 
