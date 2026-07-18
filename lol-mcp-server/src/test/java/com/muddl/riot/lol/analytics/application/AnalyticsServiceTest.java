@@ -32,7 +32,7 @@ class AnalyticsServiceTest {
 
     private final SummonerService summonerService = new SummonerService(summonerPort, resolver);
     private final AnalyticsService analyticsService =
-            new AnalyticsService(resolver, summonerService, new MatchService(matchPort));
+            new AnalyticsService(resolver, summonerService, new MatchService(matchPort, resolver));
 
     private void givenPlayer() {
         when(resolver.resolvePuuid(PLAYER)).thenReturn(PUUID);
