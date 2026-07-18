@@ -2602,6 +2602,7 @@ git commit -m "feat(clash): add lol_clash_by_player"
 - Modify: `lol-mcp-server/src/main/java/com/muddl/riot/lol/match/application/MatchService.java`
 - Create: `lol-mcp-server/src/main/java/com/muddl/riot/lol/match/adapter/in/mcp/MatchTool.java`
 - Modify: `lol-mcp-server/src/test/java/com/muddl/riot/lol/match/application/MatchServiceTest.java`
+- Modify: `lol-mcp-server/src/test/java/com/muddl/riot/lol/analytics/application/AnalyticsServiceTest.java:35` (constructor call-site update)
 - Create: `lol-mcp-server/src/test/java/com/muddl/riot/lol/match/adapter/in/mcp/MatchToolTest.java`
 - Modify: `lol-mcp-server/src/test/java/com/muddl/riot/lol/McpToolInventoryTest.java`
 - Modify: `lol-mcp-server/CHANGELOG.md`
@@ -2735,9 +2736,21 @@ public class MatchService {
 Run: `./gradlew :lol-mcp-server:test --tests 'com.muddl.riot.lol.match.application.MatchServiceTest'`
 Expected: PASS.
 
-- [ ] **Step 5: Confirm analytics still compiles and passes (coexistence check)**
+- [ ] **Step 5: Fix the `AnalyticsServiceTest` call-site and confirm analytics still passes (coexistence check)**
 
-`AnalyticsService` constructs nothing directly — it injects the Spring-managed `MatchService` bean and calls `getMatchIdsByPuuid`, which is unchanged. Run the analytics tests to prove the change is non-disturbing:
+`AnalyticsService` (production) injects the Spring-managed `MatchService` bean and calls `getMatchIdsByPuuid`, which is unchanged — production is unaffected. But `AnalyticsServiceTest.java:35` constructs `MatchService` **directly** with the old one-arg constructor, so it will fail to compile after Step 3. That test already has a `PlayerIdentityResolver resolver = mock(...)` field in scope (line 29). Update line 35 from:
+
+```java
+            new AnalyticsService(resolver, summonerService, new MatchService(matchPort));
+```
+
+to:
+
+```java
+            new AnalyticsService(resolver, summonerService, new MatchService(matchPort, resolver));
+```
+
+Then run the analytics tests to prove the change is non-disturbing:
 
 Run: `./gradlew :lol-mcp-server:test --tests 'com.muddl.riot.lol.analytics.*'`
 Expected: PASS.
@@ -2919,6 +2932,7 @@ Expected: PASS (13-tool `McpToolInventoryTest` green).
 ```bash
 git add lol-mcp-server/src/main/java/com/muddl/riot/lol/match \
         lol-mcp-server/src/test/java/com/muddl/riot/lol/match \
+        lol-mcp-server/src/test/java/com/muddl/riot/lol/analytics/application/AnalyticsServiceTest.java \
         lol-mcp-server/src/test/java/com/muddl/riot/lol/McpToolInventoryTest.java \
         lol-mcp-server/CHANGELOG.md
 git commit -m "feat(match): expose match via lol_match_ids_by_player and lol_match_by_id"
