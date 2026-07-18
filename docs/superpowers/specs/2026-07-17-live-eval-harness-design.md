@@ -47,6 +47,7 @@ the harness adds.
 |---|---|---|
 | Test mode | **Agent-driven only** (no deterministic direct-call layer) | The WireMock suite already covers the deterministic request/parse/error contract; a direct-call live layer would duplicate it. The unique value is real-path verification, real serving, and agent-usability. |
 | LLM provider | **`ANTHROPIC_API_KEY`** (hard requirement) | mcp-eval's agent + LLM-judge assertions need a real provider key. The preconfigured `CLAUDE_CODE_OAUTH_TOKEN` is for `claude-code-action` and will **not** authenticate mcp-eval's Anthropic SDK. |
+| Token isolation | **Separate buckets** — live-eval reads `ANTHROPIC_API_KEY` only; `claude.yml` reads `CLAUDE_CODE_OAUTH_TOKEN` only | The two credentials stay in distinct buckets: no workflow, step, or `mcpeval.yaml` env wires one to the other, and mcp-eval's process env must not inherit `CLAUDE_CODE_OAUTH_TOKEN`. This spec does not modify `claude.yml`. |
 | Missing-key behavior | **Skip with a notice + green exit**, plus rich diagnostic logging | Keeps `master` from going permanently red before the secret is provisioned; "just works" once added. Diagnostics distinguish a missing key from a real failure. |
 | Transports | **Both stdio + sse** | Matches the standing constraint that every cycle verify both, including stdio stdout purity. |
 | Test subjects | **Dynamic discovery, self-seeding** | No hardcoded accounts to rot; guarantees a live subject even for spectator. |
@@ -190,7 +191,10 @@ is tagged distinctly — **"investigate Riot behavior change,"** not "your code 
   modest test count — comfortably under the dev key's 100 req / 2 min. No deliberate 429-triggering
   probe (would burn budget; the retry path is already WireMock-tested).
 - **Secrets:** `RIOT_DEV_REG_TEST_API_KEY` → the server's `RIOT_API_KEY` env; `ANTHROPIC_API_KEY` →
-  mcp-eval (user-provisioned).
+  mcp-eval (user-provisioned). **`CLAUDE_CODE_OAUTH_TOKEN` is never referenced by this workflow** —
+  the two credentials stay in separate buckets, so mcp-eval authenticates only via
+  `ANTHROPIC_API_KEY` and cannot fall back to the OAuth token. mcp-eval's process env is set
+  explicitly and does not inherit `CLAUDE_CODE_OAUTH_TOKEN`.
 - **Permissions:** least-privilege per the existing `ci.yml` convention; only the scopes the report
   upload / summary steps need.
 
@@ -222,7 +226,10 @@ Every run resolves to exactly one class, surfaced in the job summary:
 
 - **`roadmap.md`** — record this as a pre-1b track; move the two deferred verification items from
   "manual/deferred" to "automated"; soften the two matching Standing Constraints to "automated
-  post-merge; the offline suite remains the pre-merge gate."
+  post-merge; the offline suite remains the pre-merge gate." Also add a **Deferred, with a home**
+  entry: the user intends to rework the repo's **Claude Code Actions integration** (`claude.yml` /
+  `claude-code-action`) for better automation writ large — recorded as intended, not yet scheduled,
+  and deliberately out of this spec's scope.
 - **`gotchas.md`** — mcp-eval sharp edges: Python-in-a-Java-repo, live nondeterminism, the rate
   budget, and the stdout-purity/stdio interplay.
 - **`CLAUDE.md`** — build/test commands + the live-eval workflow in the development loop.
@@ -252,6 +259,9 @@ No change to the offline suite's guarantees: it still runs offline with no key.
 - **No deliberate rate-limit (429) probe.** Budget-expensive; the retry path is already
   WireMock-tested.
 - **No PR-triggered live runs.** Post-merge + dispatch only.
+- **No changes to `claude.yml` / the `claude-code-action` wiring.** `CLAUDE_CODE_OAUTH_TOKEN` and
+  `ANTHROPIC_API_KEY` stay in separate buckets; the broader Claude Code Actions rework is a recorded
+  future item, not part of this spec.
 - **No proactive/token-bucket rate limiting.** Unchanged deferred item.
 
 ## Success criteria
