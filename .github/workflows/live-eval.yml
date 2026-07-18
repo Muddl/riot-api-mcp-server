@@ -21,55 +21,68 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Gate on the LLM key. Absent -> skip green with an actionable notice.
+      # Preflight both credentials. Either missing/invalid -> skip green with an
+      # actionable notice, never a red run. This keeps an expired Riot dev key (they
+      # expire every 24h) from producing a scary red-X on master, and avoids paying
+      # for a full build + eval run that would only fail on auth.
       # ANTHROPIC_API_KEY is the ONLY LLM credential this workflow reads; it never
       # references CLAUDE_CODE_OAUTH_TOKEN (separate bucket, see ADR-0012).
-      - name: Check for ANTHROPIC_API_KEY
-        id: keycheck
+      - name: Preflight — verify keys
+        id: preflight
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          RIOT_API_KEY: ${{ secrets.RIOT_DEV_REG_TEST_API_KEY }}
         run: |
           if [ -z "$ANTHROPIC_API_KEY" ]; then
             echo "::notice title=Live evals skipped::ANTHROPIC_API_KEY is not set. Add it as a repository secret to enable the live mcp-eval suite. (This is separate from CLAUDE_CODE_OAUTH_TOKEN, which is not used here.)"
-            echo "run=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "run=true" >> "$GITHUB_OUTPUT"
+            echo "run=false" >> "$GITHUB_OUTPUT"; exit 0
           fi
+          # Probe Riot key validity with a cheap, parameter-free status call. Riot dev
+          # keys expire every 24h; an expired key makes every live-data test fail on auth.
+          code="$(curl -s -o /dev/null -w '%{http_code}' -H "X-Riot-Token: $RIOT_API_KEY" https://na1.api.riotgames.com/lol/status/v4/platform-data || echo 000)"
+          if [ "$code" = "401" ] || [ "$code" = "403" ]; then
+            echo "::notice title=Live evals skipped::Riot API key is invalid or expired (HTTP $code). Regenerate the dev key on the Riot developer portal and update the RIOT_DEV_REG_TEST_API_KEY secret — dev keys expire every 24 hours."
+            echo "run=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          if [ "$code" != "200" ]; then
+            echo "::warning title=Riot key probe inconclusive::status probe returned HTTP $code; proceeding with the eval run anyway."
+          fi
+          echo "run=true" >> "$GITHUB_OUTPUT"
 
       - name: Set up JDK 21
-        if: steps.keycheck.outputs.run == 'true'
+        if: steps.preflight.outputs.run == 'true'
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'zulu'
 
       - name: Setup Gradle
-        if: steps.keycheck.outputs.run == 'true'
+        if: steps.preflight.outputs.run == 'true'
         uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
 
       - name: Build server jar
-        if: steps.keycheck.outputs.run == 'true'
+        if: steps.preflight.outputs.run == 'true'
         run: ./gradlew :lol-mcp-server:bootJar
 
       - name: Resolve jar path
-        if: steps.keycheck.outputs.run == 'true'
+        if: steps.preflight.outputs.run == 'true'
         run: |
           JAR="$(ls lol-mcp-server/build/libs/lol-mcp-server-*.jar | grep -v plain | head -n1)"
           echo "LOL_MCP_JAR=$GITHUB_WORKSPACE/$JAR" >> "$GITHUB_ENV"
 
       - name: Set up uv
-        if: steps.keycheck.outputs.run == 'true'
+        if: steps.preflight.outputs.run == 'true'
         uses: astral-sh/setup-uv@v5
         with:
           python-version: '3.11'
 
       - name: Install harness
-        if: steps.keycheck.outputs.run == 'true'
+        if: steps.preflight.outputs.run == 'true'
         working-directory: eval
         run: uv sync
 
       - name: Start SSE server
-        if: steps.keycheck.outputs.run == 'true' && matrix.transport == 'sse'
+        if: steps.preflight.outputs.run == 'true' && matrix.transport == 'sse'
         env:
           RIOT_API_KEY: ${{ secrets.RIOT_DEV_REG_TEST_API_KEY }}
         run: |
@@ -85,7 +98,7 @@ jobs:
           done
 
       - name: Run live evals
-        if: steps.keycheck.outputs.run == 'true'
+        if: steps.preflight.outputs.run == 'true'
         working-directory: eval
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -105,7 +118,7 @@ jobs:
           set -e
 
       - name: Summarize outcome
-        if: steps.keycheck.outputs.run == 'true' && always()
+        if: steps.preflight.outputs.run == 'true' && always()
         working-directory: eval
         run: |
           {
@@ -122,7 +135,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload reports
-        if: steps.keycheck.outputs.run == 'true' && always()
+        if: steps.preflight.outputs.run == 'true' && always()
         uses: actions/upload-artifact@v4
         with:
           name: mcpeval-reports-${{ matrix.transport }}
@@ -134,7 +147,7 @@ jobs:
         run: kill "$SSE_PID" || true
 
       - name: Fail the job on eval failure
-        if: steps.keycheck.outputs.run == 'true'
+        if: steps.preflight.outputs.run == 'true'
         run: |
           if [ "${EVAL_EXIT:-1}" != "0" ]; then
             echo "Live evals failed — see the job summary and artifact."

@@ -107,6 +107,17 @@ class RiotMatchAdapterTest {
         assertThat(match.getInfo().getParticipants()).hasSize(2);
         assertThat(match.getInfo().getParticipants().get(0).getChampionName()).isEqualTo("Ahri");
         assertThat(match.getInfo().getParticipants().get(0).isWin()).isTrue();
+
+        // The team subtree (Team/Ban/Objectives/ObjectiveDetails) must deserialize from a populated
+        // teams array. These DTOs previously lacked @NoArgsConstructor/@AllArgsConstructor, so Jackson
+        // could not build them ("cannot deserialize from Object value, no Creator") — the live
+        // analytics eval caught it against real match data; this fixture's teams array used to be empty.
+        assertThat(match.getInfo().getTeams()).hasSize(2);
+        assertThat(match.getInfo().getTeams().get(0).getTeamId()).isEqualTo(100);
+        assertThat(match.getInfo().getTeams().get(0).isWin()).isTrue();
+        assertThat(match.getInfo().getTeams().get(0).getBans()).hasSize(2);
+        assertThat(match.getInfo().getTeams().get(0).getObjectives().getBaron().getKills())
+                .isEqualTo(1);
         verify(getRequestedFor(urlEqualTo("/lol/match/v5/matches/NA1_4600000001"))
                 .withHeader("X-RIOT-TOKEN", equalTo("test-key-123")));
     }
