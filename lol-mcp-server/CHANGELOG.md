@@ -19,6 +19,7 @@ tools, built against the `league` template. See
   top-N `count` (Champion-Mastery-V4).
 - `lol_challenges_by_player` — a player's challenge standing: totals, category points, and
   per-challenge progress (LoL-Challenges-V1).
+- `lol_clash_by_player` — a player's active Clash team registrations (Clash-V1).
 - `lol_status_platform` — a platform's current maintenances and incidents (LoL-Status-V4).
 
 ## [0.1.0] - unreleased
