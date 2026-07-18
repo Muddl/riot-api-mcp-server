@@ -91,7 +91,11 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           RIOT_API_KEY: ${{ secrets.RIOT_DEV_REG_TEST_API_KEY }}
         run: |
-          cp "mcpeval.${{ matrix.transport }}.yaml" mcpeval.yaml
+          # mcp-eval does NOT expand ${VAR} placeholders in the config's
+          # command/args/url/env fields, so we expand them here before it reads
+          # the file. Restricted to our three vars so nothing else is touched.
+          envsubst '${LOL_MCP_JAR} ${RIOT_API_KEY} ${LOL_MCP_SSE_URL}' \
+            < "mcpeval.${{ matrix.transport }}.yaml" > mcpeval.yaml
           set +e
           uv run mcp-eval run tests/ -v \
             --json "test-reports/${{ matrix.transport }}.json" \
