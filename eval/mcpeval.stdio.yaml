@@ -29,13 +29,11 @@ judge:
   provider: anthropic
   model: claude-haiku-4-5-20251001
   min_score: 0.7
-  temperature: 0.0
 
 execution:
   max_concurrency: 1
   timeout_seconds: 300
   retry_failed: false
-  fail_fast: false
 
 reporting:
   formats: ["json", "markdown", "html"]
