@@ -60,10 +60,28 @@ class RiotChampionAdapterTest {
 
         ChampionRotation rotation = adapter.getChampionRotation(PLATFORM);
 
-        assertThat(rotation.getMaxNewPlayerLevel()).isEqualTo(10);
-        assertThat(rotation.getFreeChampionIds()).containsExactly(1, 15, 22);
+        // Live Champion-V3 shape: `sr` / `newplayer`, no maxNewPlayerLevel. @JsonAlias maps them.
+        assertThat(rotation.getFreeChampionIds()).containsExactly(29, 30, 40);
         assertThat(rotation.getFreeChampionIdsForNewPlayers()).containsExactly(18, 81, 92);
+        assertThat(rotation.getMaxNewPlayerLevel()).isNull();
         verify(getRequestedFor(urlEqualTo(ROTATION_URL)).withHeader("X-RIOT-TOKEN", equalTo("test-key-123")));
+    }
+
+    @Test
+    void getChampionRotation_legacyDocumentedShape_stillParsesViaJsonAlias() {
+        // The developer-portal-documented shape (freeChampionIds / maxNewPlayerLevel). Riot appears to
+        // serve both, so the primary field names must still map.
+        stubFor(get(urlEqualTo(ROTATION_URL))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"freeChampionIds\":[1,15,22],\"freeChampionIdsForNewPlayers\":[18,81,92],"
+                                + "\"maxNewPlayerLevel\":10}")));
+
+        ChampionRotation rotation = adapter.getChampionRotation(PLATFORM);
+
+        assertThat(rotation.getFreeChampionIds()).containsExactly(1, 15, 22);
+        assertThat(rotation.getMaxNewPlayerLevel()).isEqualTo(10);
     }
 
     @Test
