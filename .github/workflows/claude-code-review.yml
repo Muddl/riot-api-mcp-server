@@ -3,28 +3,16 @@ name: Claude Code Review
 on:
   pull_request:
     types: [opened, synchronize, ready_for_review, reopened]
-    # Optional: Only run on specific file changes
-    # paths:
-    #   - "src/**/*.ts"
-    #   - "src/**/*.tsx"
-    #   - "src/**/*.js"
-    #   - "src/**/*.jsx"
 
 jobs:
   claude-review:
-    # Optional: Filter by PR author
-    # if: |
-    #   github.event.pull_request.user.login == 'external-contributor' ||
-    #   github.event.pull_request.user.login == 'new-developer' ||
-    #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
-
+    # Skip drafts — they aren't ready for review and would waste subscription usage.
+    if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: read
-      issues: read
+      pull-requests: write   # REQUIRED to post reviews/comments (was `read` — the no-op cause)
       id-token: write
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -32,13 +20,26 @@ jobs:
           fetch-depth: 1
 
       - name: Run Claude Code Review
-        id: claude-review
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
-          plugins: 'code-review@claude-code-plugins'
-          prompt: '/code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
-          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
-          # or https://code.claude.com/docs/en/cli-reference for available options
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
 
+            Review this pull request for a Spring Boot 4 / Spring AI MCP server (Java 21,
+            bounded-context hexagonal architecture). Focus on:
+            - Correctness and potential bugs, especially null-safety in Riot DTOs and error mapping.
+            - Hexagonal boundary violations: adapter -> application -> domain (inward only);
+              @McpTool only in adapter.in.mcp; RestClient only in adapter.out.riot.
+            - Test coverage: WireMock for outbound adapters, in-memory port fakes for services.
+            - Security: RIOT_API_KEY must never be logged or hard-coded.
+
+            The PR branch is already checked out in the working directory.
+
+            Use `gh pr comment` for top-level summary feedback.
+            Use `mcp__github_inline_comment__create_inline_comment` (with `confirmed: true`) for
+            specific line-level issues.
+            Only post GitHub comments — do not submit review text as chat messages.
+          claude_args: |
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
