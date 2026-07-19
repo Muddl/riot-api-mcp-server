@@ -1,0 +1,10 @@
+{
+  "totalPoints": { "level": "GOLD", "current": 12345, "max": 50000, "percentile": 0.42 },
+  "categoryPoints": {
+    "TEAMWORK": { "level": "SILVER", "current": 2000, "max": 10000, "percentile": 0.3 }
+  },
+  "challenges": [
+    { "challengeId": 101101, "level": "GOLD", "value": 150.0, "percentile": 0.25, "achievedTime": 1609459200000 }
+  ],
+  "preferences": { "title": "12345", "bannerAccent": "1" }
+}

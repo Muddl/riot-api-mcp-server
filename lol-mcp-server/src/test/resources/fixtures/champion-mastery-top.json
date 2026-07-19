@@ -1,0 +1,13 @@
+[
+  {
+    "puuid": "test-puuid-abc123",
+    "championId": 157,
+    "championLevel": 7,
+    "championPoints": 123456,
+    "lastPlayTime": 1609459200000,
+    "championPointsSinceLastLevel": 0,
+    "championPointsUntilNextLevel": 0,
+    "chestGranted": true,
+    "tokensEarned": 0
+  }
+]

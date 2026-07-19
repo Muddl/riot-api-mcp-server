@@ -9,21 +9,24 @@ document covers only what is specific to the LoL server.
 
 ```
 com.muddl.riot.lol
-├── account/     Thin @McpTool only — the real context lives in riot-account-core (platform N/A)
-├── summoner/    Summoner profiles (platform-routed)
-├── match/        Match IDs and detail (region-routed); no MCP tool — consumed only by analytics
-├── spectator/   Live-game (current-game) data, Spectator-V5, PUUID-keyed (platform-routed)
-├── analytics/   Composing context — aggregates account + summoner + match; has no Riot adapter
-└── league/      Ranked entries + apex leagues, League-V4 (platform-routed) — the exemplar context
+├── account/          Thin @McpTool only — the real context lives in riot-account-core (platform N/A)
+├── summoner/         Summoner profiles (platform-routed)
+├── match/            Match IDs and detail, Match-V5 (region-routed) — now has MatchTool
+├── spectator/        Live-game (current-game) data, Spectator-V5, PUUID-keyed (platform-routed)
+├── analytics/        Composing context — aggregates account + summoner + match; has no Riot adapter
+├── league/           Ranked entries + apex leagues, League-V4 (platform-routed) — the exemplar context
+├── championmastery/  Champion mastery by player, Champion-Mastery-V4 (platform-routed)
+├── champion/         Free-to-play rotation, Champion-V3 (platform-routed) — non-player-keyed
+├── challenges/       Player challenge standing, LoL-Challenges-V1 (platform-routed)
+├── status/           Platform status/incidents, LoL-Status-V4 (platform-routed) — non-player-keyed
+└── clash/            Player Clash registrations, Clash-V1 (platform-routed)
 ```
 
-Two contexts are deliberate exceptions to the standard hexagon shape:
+One context is a deliberate exception to the standard hexagon shape:
 
 - **`analytics`** has `domain/`, an `application/` service (depending on the account/summoner/match
   application services), and an `adapter/in/mcp/` tool — but **no** `adapter/out/riot` and no port,
   because it makes no direct Riot calls.
-- **`match`** is the mirror: a port and an outbound adapter but **no** inbound tool, because it is
-  consumed only by `analytics` (exposing it directly is sub-project 1b's mechanical add-a-tool work).
 
 `league` is the **reference implementation** the remaining 1b contexts copy: a full mini-hexagon,
 born on the final tool-naming convention, and the first LoL context to depend on
@@ -36,7 +39,10 @@ Every player-keyed tool takes a single `player` param (`GameName#TAG` or a raw P
 `PlayerIdentityResolver` (from `riot-account-core`) — tools stay thin pass-throughs. The one
 exception is the `account` tool, which disambiguates `#` locally because it needs account **data**
 both ways and must not round-trip through the resolver. See
-[ADR-0009](../docs/knowledge/decisions/ADR-0009-mcp-tool-contract.md).
+[ADR-0009](../docs/knowledge/decisions/ADR-0009-mcp-tool-contract.md). The non-player-keyed tools —
+`lol_champion_rotation`, `lol_status_platform`, and `lol_match_by_id` — take domain-appropriate
+params instead (a platform/region, or a match ID) and their services never depend on the resolver;
+see [ADR-0014](../docs/knowledge/decisions/ADR-0014-non-player-keyed-tools.md).
 
 ```mermaid
 flowchart LR
@@ -48,6 +54,12 @@ flowchart LR
         LT["LiveGameTool"]
         NT["AnalyticsTool"]
         GT["LeagueTool"]
+        MT["MatchTool"]
+        CMT["ChampionMasteryTool"]
+        CPT["ChampionTool"]
+        CHT["ChallengesTool"]
+        STT["StatusTool"]
+        CLT["ClashTool"]
     end
 
     subgraph app["Application services · application"]
@@ -57,21 +69,32 @@ flowchart LR
         PS["SpectatorService"]
         NS["AnalyticsService"]
         GS["LeagueService"]
+        CMS["ChampionMasteryService"]
+        CPS["ChampionService"]
+        CHS["ChallengesService"]
+        STS["StatusService"]
+        CLS["ClashService"]
     end
 
     RES["PlayerIdentityResolver<br/>(riot-account-core)"]
     RC["riot-api-core · RiotApiClient"]
     RIOT[("Riot Games API")]
 
-    AI --> AT & ST & LT & NT & GT
+    AI --> AT & ST & LT & NT & GT & MT & CMT & CPT & CHT & STT & CLT
     AT --> AS
     ST --> SS
     LT --> PS
     NT --> NS
     GT --> GS
+    MT --> MS
+    CMT --> CMS
+    CPT --> CPS
+    CHT --> CHS
+    STT --> STS
+    CLT --> CLS
     NS --> AS & SS & MS
-    SS & PS & GS & NS -. resolve player .-> RES
-    AS & SS & MS & PS & GS --> RC
+    SS & PS & GS & NS & MS & CMS & CHS & CLS -. resolve player .-> RES
+    AS & SS & MS & PS & GS & CMS & CPS & CHS & STS & CLS --> RC
     RC --> RIOT
 ```
 

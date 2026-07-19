@@ -1,0 +1,9 @@
+[
+  {
+    "summonerId": "sum-1",
+    "puuid": "test-puuid-abc123",
+    "teamId": "team-1",
+    "position": "TOP",
+    "role": "CAPTAIN"
+  }
+]

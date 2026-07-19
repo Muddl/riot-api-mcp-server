@@ -1,7 +1,10 @@
 package com.muddl.riot.lol.match.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import com.muddl.riot.account.identity.PlayerIdentityResolver;
 import com.muddl.riot.core.enums.RiotApiRegionUri;
 import com.muddl.riot.lol.match.domain.Match;
 import java.util.List;
@@ -12,7 +15,8 @@ class MatchServiceTest {
     private static final RiotApiRegionUri REGION = RiotApiRegionUri.AMERICAS;
 
     private final InMemoryMatchPort matchPort = new InMemoryMatchPort();
-    private final MatchService matchService = new MatchService(matchPort);
+    private final PlayerIdentityResolver resolver = mock(PlayerIdentityResolver.class);
+    private final MatchService matchService = new MatchService(matchPort, resolver);
 
     @Test
     void getMatchIdsByPuuid_returnsStoredIds() {
@@ -40,5 +44,14 @@ class MatchServiceTest {
     void getMatchIdsByPuuid_returnsEmpty_whenUnknownPuuid() {
         assertThat(matchService.getMatchIdsByPuuid(REGION, "unknown", 20, 0, null))
                 .isEmpty();
+    }
+
+    @Test
+    void getMatchIdsByPlayer_resolvesPlayer_thenReturnsIds() {
+        when(resolver.resolvePuuid("Faker#KR1")).thenReturn("faker-puuid");
+        matchPort.putMatchIds("faker-puuid", List.of("NA1_1", "NA1_2"));
+
+        assertThat(matchService.getMatchIdsByPlayer(REGION, "Faker#KR1", 20, 0, null))
+                .containsExactly("NA1_1", "NA1_2");
     }
 }

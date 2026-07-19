@@ -1,0 +1,24 @@
+[
+  {
+    "puuid": "test-puuid-abc123",
+    "championId": 157,
+    "championLevel": 7,
+    "championPoints": 123456,
+    "lastPlayTime": 1609459200000,
+    "championPointsSinceLastLevel": 0,
+    "championPointsUntilNextLevel": 0,
+    "chestGranted": true,
+    "tokensEarned": 0
+  },
+  {
+    "puuid": "test-puuid-abc123",
+    "championId": 64,
+    "championLevel": 5,
+    "championPoints": 54321,
+    "lastPlayTime": 1609459200000,
+    "championPointsSinceLastLevel": 100,
+    "championPointsUntilNextLevel": 2000,
+    "chestGranted": false,
+    "tokensEarned": 2
+  }
+]

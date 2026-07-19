@@ -21,6 +21,13 @@ Use this when adding a new Riot API area as its own mini-hexagon. Rationale:
 > `<game>_<context>_<action>` (see [ADR-0009](../decisions/ADR-0009-mcp-tool-contract.md)). Tests are
 > a WireMock adapter test plus a port-fake service test (mock the resolver). Endpoint paths are
 > verified against the live Riot developer portal.
+>
+> **Non-player-keyed contexts** ([ADR-0014](../decisions/ADR-0014-non-player-keyed-tools.md)): when
+> an endpoint is not keyed by a player (e.g. `champion` rotation, `status`, or a `match`-by-id
+> lookup), the tool takes domain-appropriate params instead of `player`, and the service does **not**
+> depend on `PlayerIdentityResolver`. `champion` and `status` in `lol-mcp-server` are the reference
+> non-player-keyed contexts, as `league` is for player-keyed ones. Everything else — package
+> skeleton, `<game>_<context>_<action>` name, WireMock + port-fake tests — is identical.
 
 Substitute `<context>` (lowercase, e.g. `champion`) and `<Name>` (PascalCase, e.g.
 `Champion`) throughout. Base path: `<server-module>/src/main/java/com/muddl/riot/<game>/`

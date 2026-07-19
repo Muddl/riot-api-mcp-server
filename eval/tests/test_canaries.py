@@ -87,6 +87,37 @@ async def test_spectator_not_in_game_invariant(agent, session):
     )
 
 
+@task("CANARY: clash empty-registration mapping holds (never a raw error)")
+async def test_clash_no_registration_invariant(agent, session):
+    # Use a discovered ladder player, who very often has no active Clash
+    # registration. The adapter maps Riot's null/absent response to an empty
+    # list -- the live counterpart to the spectator 404->null canary above.
+    response = await agent.generate_str(
+        "Get the CHALLENGER apex league for RANKED_SOLO_5x5 on NA1, pick any "
+        "one player, then check whether that player is registered for any "
+        "Clash tournaments on NA1. Report the result."
+    )
+    await session.assert_that(
+        Expect.tools.was_called("lol_clash_by_player"),
+        name="clash_called",
+    )
+    await session.assert_that(
+        Expect.judge.llm(
+            rubric=(
+                "The answer EITHER lists one or more Clash team "
+                "registrations for the player OR clearly states the player "
+                "has no Clash registrations. Both are valid outcomes -- an "
+                "empty result must read as a clean, expected outcome, not an "
+                "error. It must NOT surface a raw error, HTTP status, or "
+                "stack trace, and must not fabricate registrations."
+            ),
+            min_score=0.7,
+        ),
+        response=response,
+        name="clash_clean_no_registration",
+    )
+
+
 # --- Tier B: our-side input validation --------------------------------------
 
 @task("VALIDATION: invalid platform yields a usable error message")

@@ -14,7 +14,7 @@ not edited retroactively. When scope moves, it moves here.
 |---|---|---|---|
 | 0 | Monorepo restructure + extract `riot-api-core` | ✅ Done | [2026-07-15](../superpowers/specs/2026-07-15-monorepo-restructure-design.md) |
 | **1a** | **LoL parity — foundation** | ✅ Done | [2026-07-15](../superpowers/specs/2026-07-15-lol-parity-foundation-design.md) |
-| 1b | LoL parity — breadth | ⏳ Not started | — |
+| 1b | LoL parity — breadth | ✅ Done | [2026-07-18](../superpowers/specs/2026-07-18-lol-parity-breadth-design.md) |
 | 2 | TFT server | ⏳ Not started | — |
 | 3 | Valorant server | ⏳ Not started | — |
 | 4 | LoR server | ⏳ Not started | — |
@@ -79,6 +79,13 @@ that as a finding rather than absorbing it quietly.
 
 The handoff contract 1b works from is stated in
 [1a's spec](../superpowers/specs/2026-07-15-lol-parity-foundation-design.md#handoff-contract--what-1b-inherits).
+
+**Progress:** ✅ Complete. Five contexts added — `champion` (rotation), `status`, `championmastery`,
+`challenges`, `clash` — plus the `match` context's first inbound tools (`lol_match_ids_by_player`,
+`lol_match_by_id`). The tool surface grew from 6 to 13. Non-player-keyed tools extend the contract
+([ADR-0014](decisions/ADR-0014-non-player-keyed-tools.md)). **1a's falsifiable criterion held:** the
+five contexts and the match tools landed with no change to `riot-api-core` or `riot-account-core`.
+`lol-mcp-server` released as 0.2.0.
 
 ### 2 — TFT server ⏳
 
