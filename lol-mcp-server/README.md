@@ -10,10 +10,12 @@ the player-identity resolver) — and adds the LoL-specific bounded contexts.
 
 ## MCP tools
 
-Five inbound adapters expose **six** tools. Every player-keyed tool takes a single `player`
+Eleven inbound adapters expose **13** tools. Every player-keyed tool takes a single `player`
 parameter accepting either a Riot ID (`GameName#TAG`) or a raw PUUID, resolved internally — the model
 never has to chain `account → summoner → match` itself (see
-[ADR-0009](../docs/knowledge/decisions/ADR-0009-mcp-tool-contract.md)).
+[ADR-0009](../docs/knowledge/decisions/ADR-0009-mcp-tool-contract.md)). A few tools are
+non-player-keyed (platform- or region-scoped) — see
+[ADR-0014](../docs/knowledge/decisions/ADR-0014-non-player-keyed-tools.md).
 
 | Tool class (`adapter.in.mcp`) | MCP tool names | Purpose |
 |---|---|---|
@@ -22,6 +24,12 @@ never has to chain `account → summoner → match` itself (see
 | **LiveGameTool** | `lol_spectator_current_game_by_player` | Live-game (Spectator-V5) data; `null` when not in a game |
 | **AnalyticsTool** | `lol_analytics_player_matches` | Aggregated recent-match analytics (composes account + summoner + match) |
 | **LeagueTool** | `lol_league_entries_by_player`, `lol_league_apex_by_tier` | Ranked entries by player; apex league (CHALLENGER/GRANDMASTER/MASTER) by tier + queue |
+| **ChampionTool** | `lol_champion_rotation` | Current free-to-play champion rotation for a platform (non-player-keyed) |
+| **StatusTool** | `lol_status_platform` | Platform status and incidents (Status-V4, non-player-keyed) |
+| **ChampionMasteryTool** | `lol_champion_mastery_by_player` | Champion mastery for a player; optional top-N by mastery points |
+| **ChallengesTool** | `lol_challenges_by_player` | Challenges progress and points for a player |
+| **ClashTool** | `lol_clash_by_player` | Clash tournament registrations for a player |
+| **MatchTool** | `lol_match_ids_by_player`, `lol_match_by_id` | Recent match IDs for a player (region-routed, paged); full detail of one match by ID |
 
 ## Quick start
 

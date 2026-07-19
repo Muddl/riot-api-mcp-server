@@ -50,7 +50,7 @@ jobs:
             or open a pull request — a later workflow step owns all git operations. Never edit
             anything under docs/superpowers/specs/ or docs/superpowers/plans/ (immutable history).
           claude_args: |
-            --allowedTools "Read,Edit,Write,Grep,Glob,Bash(grep:*),Bash(ls:*),Bash(comm:*),Bash(git status:*),Bash(git diff:*)"
+            --allowedTools "Read,Edit,Write,Grep,Glob,Bash(grep:*),Bash(ls:*),Bash(comm:*),Bash(sort:*),Bash(wc:*),Bash(sed:*),Bash(xargs:*),Bash(basename:*),Bash(git status:*),Bash(git diff:*)"
 
       - name: Open a PR if the pass changed anything
         if: steps.gate.outputs.proceed == 'true'
@@ -67,7 +67,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b "$BRANCH"
           git add -A
-          git commit -m "chore: weekly housekeeping ($STAMP)"
+          git commit -m "chore: weekly housekeeping ($STAMP)" -m "Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
           git push -u origin "$BRANCH"
           gh pr create \
             --title "chore: weekly housekeeping ($STAMP)" \
