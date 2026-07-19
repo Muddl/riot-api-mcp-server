@@ -67,6 +67,25 @@ class RiotChampionAdapterTest {
     }
 
     @Test
+    void getChampionRotation_nullMaxNewPlayerLevel_parsesWithoutError() {
+        // Regression for the live-eval failure: Riot returned maxNewPlayerLevel as null and a
+        // primitive int threw "Cannot map null into type int". The boxed field must tolerate it.
+        stubFor(
+                get(urlEqualTo(ROTATION_URL))
+                        .willReturn(
+                                aResponse()
+                                        .withStatus(200)
+                                        .withHeader("Content-Type", "application/json")
+                                        .withBody(
+                                                "{\"freeChampionIds\":[1,2],\"freeChampionIdsForNewPlayers\":[3],\"maxNewPlayerLevel\":null}")));
+
+        ChampionRotation rotation = adapter.getChampionRotation(PLATFORM);
+
+        assertThat(rotation.getMaxNewPlayerLevel()).isNull();
+        assertThat(rotation.getFreeChampionIds()).containsExactly(1, 2);
+    }
+
+    @Test
     void nonSuccessResponse_mapsToRiotApiException_withStatusPreserved() {
         stubFor(get(urlEqualTo(ROTATION_URL))
                 .willReturn(aResponse().withStatus(403).withBody("forbidden")));

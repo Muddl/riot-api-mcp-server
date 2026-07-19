@@ -176,3 +176,18 @@ fields need an explicit `@JsonProperty("incident_severity")` on the camelCase Ja
 deserialize to `null` silently — the adapter's WireMock test asserts the parsed value to catch it.
 Seen in `status`'s `StatusEntry` (sub-project 1b). Do not switch on a global naming strategy for one
 context; annotate the specific fields.
+
+## Riot DTO number/boolean fields must be **boxed**, not primitives
+
+Riot returns `null` for fields tied to systems it has retired, and a Java **primitive** field then
+throws at deserialization: `Cannot map null into type int/boolean/long`
+(`FAIL_ON_NULL_FOR_PRIMITIVES`). The live eval caught two in sub-project 1b — Champion-Mastery-V4's
+`chestGranted` (and `tokensEarned`) went null after the 2024 mastery/chest revamp, and Champion-V3's
+`maxNewPlayerLevel` came back null — both had been declared `boolean`/`int`. Offline WireMock tests
+pass because our fixtures were fully populated; only live data has the nulls.
+
+**Rule:** declare Riot DTO number/boolean fields as boxed wrappers (`Integer`/`Long`/`Boolean`), not
+primitives. `String`s and `List`s are already null-safe. When you add a DTO, also add a WireMock case
+that feeds `null` for the nullable-looking fields and asserts it parses — that reproduces this class
+of failure offline instead of waiting for the post-merge live eval. Boxing `boolean`→`Boolean` also
+renames the Lombok getter (`isX()` → `getX()`); update call sites.

@@ -16,5 +16,7 @@ import lombok.NoArgsConstructor;
 public class ChampionRotation {
     private List<Integer> freeChampionIds;
     private List<Integer> freeChampionIdsForNewPlayers;
-    private int maxNewPlayerLevel;
+    // Boxed: Riot returns this as null in some responses, and a primitive int fails deserialization
+    // ("Cannot map null into type int"). The live eval caught it — see gotchas.md.
+    private Integer maxNewPlayerLevel;
 }

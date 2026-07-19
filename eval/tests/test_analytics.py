@@ -6,11 +6,15 @@ from mcp_eval import task, Expect
 
 @task("Analytics returns coherent aggregates for a discovered player")
 async def test_analytics_invariants(agent, session):
+    # Steer explicitly to the composite analytics tool. Sub-project 1b added granular match tools
+    # (lol_match_ids_by_player + lol_match_by_id); left unsteered, the agent assembles the analysis
+    # from those and never calls lol_analytics_player_matches, so this eval must name the tool it is
+    # here to exercise.
     response = await agent.generate_str(
         "Get the CHALLENGER apex league for RANKED_SOLO_5x5 on NA1, pick any one "
-        "player, then analyze that player's 5 most recent matches on platform NA1 "
-        "and region AMERICAS. Report their average KDA and win rate as a "
-        "percentage."
+        "player, then use the analytics tool (lol_analytics_player_matches) to "
+        "analyze that player's 5 most recent matches on platform NA1 and region "
+        "AMERICAS. Report their average KDA and win rate as a percentage."
     )
     await session.assert_that(
         Expect.tools.was_called("lol_analytics_player_matches"),

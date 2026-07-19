@@ -28,7 +28,7 @@ class ChampionMasteryToolTest {
 
     @Test
     void getMasteryByPlayer_passesArgsThrough_withNullCount() {
-        ChampionMastery m = ChampionMastery.builder().championId(157).build();
+        ChampionMastery m = ChampionMastery.builder().championId(157L).build();
         when(mockService.getMasteryByPlayer(PLATFORM, "Faker#KR1", null)).thenReturn(List.of(m));
 
         assertThat(tool.getMasteryByPlayer("NA1", "Faker#KR1", null)).containsExactly(m);
