@@ -5,6 +5,13 @@ on:
     - cron: '0 9 * * 1'   # Mondays 09:00 UTC
   workflow_dispatch:        # manual runs always proceed (bypass the commit gate)
 
+# Never let two housekeeping runs race on the same branch (e.g. a manual dispatch during a
+# scheduled run, or two scheduled runs in one week). Queue rather than cancel — a half-finished
+# maintenance pass shouldn't be killed mid-edit.
+concurrency:
+  group: weekly-housekeeping
+  cancel-in-progress: false
+
 # Least-privilege; elevate only where needed.
 permissions:
   contents: read
