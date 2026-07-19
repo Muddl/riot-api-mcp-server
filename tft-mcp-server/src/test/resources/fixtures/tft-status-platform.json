@@ -1,0 +1,14 @@
+{
+  "id": "NA1",
+  "name": "North America",
+  "locales": ["en_US"],
+  "maintenances": [],
+  "incidents": [
+    {
+      "id": 1,
+      "incident_severity": "warning",
+      "titles": [{ "locale": "en_US", "content": "Login issues" }],
+      "updates": []
+    }
+  ]
+}
