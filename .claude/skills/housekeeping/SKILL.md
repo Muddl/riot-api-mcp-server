@@ -33,7 +33,7 @@ Work through each item. For every finding, note the file, the drift, and the fix
    - Context/package names and transport details (`stdio`/`sse`) match the source tree.
 2. **KB integrity.**
    - Every ADR on disk is linked from `docs/knowledge/README.md`:
-     `comm -23 <(ls docs/knowledge/decisions/ADR-*.md | xargs -n1 basename | sort) <(grep -oE 'ADR-[0-9]{4}[^)]*\.md' docs/knowledge/README.md | sort -u)`
+     `comm -23 <(ls docs/knowledge/decisions/ADR-*.md | xargs -n1 basename | sort) <(grep -oE 'decisions/ADR-[0-9]{4}[^)]*\.md' docs/knowledge/README.md | sed 's|decisions/||' | sort -u)`
    - ADR numbering is contiguous; superseded ADRs carry `Superseded by ADR-00NN`.
    - Every relative Markdown link resolves (no dead targets) across `docs/knowledge/` and root docs.
 3. **Roadmap freshness.** `roadmap.md` status table matches reality; dates are absolute (not "last
