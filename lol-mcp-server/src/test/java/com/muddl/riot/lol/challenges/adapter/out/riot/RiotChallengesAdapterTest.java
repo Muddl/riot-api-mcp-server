@@ -71,6 +71,28 @@ class RiotChallengesAdapterTest {
     }
 
     @Test
+    void getPlayerDataByPuuid_nullNumericsOnUnachievedChallenge_parseWithoutError() {
+        // Regression for the live-eval failure: Riot returns null for a challenge's numerics (notably
+        // achievedTime) when the player has not achieved it; a primitive long/double threw "Cannot map
+        // null into type long". The boxed fields must tolerate null while the rest still parse.
+        stubFor(get(urlEqualTo(URL))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"totalPoints\":{\"level\":\"NONE\",\"current\":null,\"max\":null,"
+                                + "\"percentile\":null},\"categoryPoints\":{},\"challenges\":[{\"challengeId\":101101,"
+                                + "\"level\":\"NONE\",\"value\":null,\"percentile\":null,\"achievedTime\":null}]}")));
+
+        ChallengesPlayerData data = adapter.getPlayerDataByPuuid(PLATFORM, PUUID);
+
+        assertThat(data.getTotalPoints().getCurrent()).isNull();
+        assertThat(data.getChallenges()).hasSize(1);
+        assertThat(data.getChallenges().get(0).getChallengeId()).isEqualTo(101101L);
+        assertThat(data.getChallenges().get(0).getAchievedTime()).isNull();
+        assertThat(data.getChallenges().get(0).getValue()).isNull();
+    }
+
+    @Test
     void nonSuccessResponse_mapsToRiotApiException_withStatusPreserved() {
         stubFor(get(urlEqualTo(URL)).willReturn(aResponse().withStatus(404).withBody("not found")));
 

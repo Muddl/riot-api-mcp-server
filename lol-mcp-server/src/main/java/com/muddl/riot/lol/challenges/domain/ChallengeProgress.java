@@ -13,9 +13,12 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ChallengeProgress {
-    private long challengeId;
+    // Boxed numerics: Riot returns null for these on challenges a player has not progressed on or
+    // achieved (notably achievedTime), and a primitive long/double fails deserialization
+    // ("Cannot map null into type long"). The live eval caught achievedTime. See gotchas.md.
+    private Long challengeId;
     private String level;
-    private double value;
-    private double percentile;
-    private long achievedTime;
+    private Double value;
+    private Double percentile;
+    private Long achievedTime;
 }

@@ -191,3 +191,15 @@ primitives. `String`s and `List`s are already null-safe. When you add a DTO, als
 that feeds `null` for the nullable-looking fields and asserts it parses — that reproduces this class
 of failure offline instead of waiting for the post-merge live eval. Boxing `boolean`→`Boolean` also
 renames the Lombok getter (`isX()` → `getX()`); update call sites.
+
+## Riot's live JSON field names can differ from the developer-portal docs
+
+Champion-V3 `/lol/platform/v3/champion-rotations` is documented as returning `freeChampionIds`,
+`freeChampionIdsForNewPlayers`, `maxNewPlayerLevel` — but the **live** endpoint returns the compact
+keys `sr` and `newplayer` (and no `maxNewPlayerLevel`). Riot appears to serve both shapes. A DTO
+written to the documented names deserialized to all-null against live data (with
+`@JsonIgnoreProperties(ignoreUnknown = true)` the real keys were silently dropped), and the offline
+WireMock test passed only because its fixture had encoded the documented shape. The live eval caught
+it. **Lesson:** confirm field names against a real response (`curl` with a key), not just the portal
+schema; when both shapes exist, accept them with `@JsonAlias`. This is the concrete case behind the
+standing "verify against the live developer portal, never assume" constraint.

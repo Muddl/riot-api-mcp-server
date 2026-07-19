@@ -13,8 +13,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ChallengePoints {
+    // Boxed numerics: Riot returns null for these on categories a player has no progress in, and a
+    // primitive double fails deserialization ("Cannot map null into type double"). See gotchas.md.
     private String level;
-    private double current;
-    private double max;
-    private double percentile;
+    private Double current;
+    private Double max;
+    private Double percentile;
 }
