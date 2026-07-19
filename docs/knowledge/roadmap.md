@@ -116,7 +116,7 @@ Real and wanted, deliberately not scheduled. Recorded so they are not re-derived
 | Generalized host-routing abstraction | Forced by sub-project 3. TFT reuses LoL's hosts, so one data point is not enough to design from. |
 | Publishing libraries as Maven artifacts | Not planned. Libraries are versioned for provenance and consumed by project reference — see ADR-0010. |
 | Aggregate coverage report | When more than one server exists. |
-| **Claude Code Actions integration rework** | Own effort. The repo's `claude.yml` / `claude-code-action` wiring is to be reworked for better automation writ large. Recorded as intended, not yet scheduled. Kept in a separate credential bucket (`CLAUDE_CODE_OAUTH_TOKEN`) from the live-eval harness's `ANTHROPIC_API_KEY`. |
+| ~~Claude Code Actions integration rework~~ | **Shipped** ([ADR-0015](decisions/ADR-0015-repo-maintenance-automation.md)). The PR reviewer now posts real reviews, `@claude` can respond, and a weekly `/housekeeping` cron opens maintenance PRs — all on `CLAUDE_CODE_OAUTH_TOKEN`, separate from live-eval's `ANTHROPIC_API_KEY`. |
 | ~~Automated endpoint-path verification~~ | **Shipped** as part of the live eval harness (see [ADR-0012](decisions/ADR-0012-live-eval-harness.md)). Live agent-driven evals call every tool against the real Riot API post-merge; a wrong path returns 404 and fails the eval, so paths are verified continuously rather than by a human opening the portal. |
 | ~~Automated transport-handshake verification~~ | **Shipped** as part of the live eval harness (see [ADR-0012](decisions/ADR-0012-live-eval-harness.md)). The suite runs over both stdio and sse each post-merge run; a successful stdio session is the stdout-purity check. |
 

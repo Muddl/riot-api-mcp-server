@@ -34,6 +34,7 @@ This README is the **single source of truth** for the hydrate/persist protocol.
 - [ADR-0012 — Live agent-driven eval harness (mcp-eval)](decisions/ADR-0012-live-eval-harness.md)
 - [ADR-0013 — Remove the featured-games tool (endpoint retired by Riot)](decisions/ADR-0013-remove-featured-games.md)
 - [ADR-0014 — Non-player-keyed tools extend the tool contract](decisions/ADR-0014-non-player-keyed-tools.md)
+- [ADR-0015 — Repository maintenance automation](decisions/ADR-0015-repo-maintenance-automation.md)
 
 ### Patterns
 
