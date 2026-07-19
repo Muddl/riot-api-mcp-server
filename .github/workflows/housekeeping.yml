@@ -1,0 +1,75 @@
+name: Weekly Housekeeping
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'   # Mondays 09:00 UTC
+  workflow_dispatch:        # manual runs always proceed (bypass the commit gate)
+
+# Least-privilege; elevate only where needed.
+permissions:
+  contents: read
+
+jobs:
+  housekeeping:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write        # create the housekeeping branch
+      pull-requests: write   # open the PR
+      id-token: write
+    steps:
+      - name: Checkout (full history for the commit gate)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Gate: on a scheduled run, proceed only if commits landed in the last week.
+      # Manual (workflow_dispatch) runs always proceed.
+      - name: Commit gate
+        id: gate
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "proceed=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          COUNT="$(git rev-list --count --since='1 week ago' HEAD)"
+          if [ "$COUNT" -gt 0 ]; then
+            echo "proceed=true" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Housekeeping::$COUNT commit(s) in the last week — running."
+          else
+            echo "proceed=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Housekeeping skipped::No commits in the last week."
+          fi
+
+      - name: Run housekeeping skill (apply mode, edits only)
+        if: steps.gate.outputs.proceed == 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            Run the housekeeping skill to audit and fix drift in this repo's docs, knowledge base,
+            roadmap, skills, and agents. Apply the fixes to the working tree. Do NOT commit, push,
+            or open a pull request — a later workflow step owns all git operations. Never edit
+            anything under docs/superpowers/specs/ or docs/superpowers/plans/ (immutable history).
+          claude_args: |
+            --allowedTools "Read,Edit,Write,Grep,Glob,Bash(grep:*),Bash(ls:*),Bash(comm:*),Bash(git status:*),Bash(git diff:*)"
+
+      - name: Open a PR if the pass changed anything
+        if: steps.gate.outputs.proceed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "::notice title=Housekeeping::No changes to propose."
+            exit 0
+          fi
+          STAMP="$(date -u +%Y-W%V)"
+          BRANCH="chore/housekeeping-$STAMP"
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add -A
+          git commit -m "chore: weekly housekeeping ($STAMP)"
+          git push -u origin "$BRANCH"
+          gh pr create \
+            --title "chore: weekly housekeeping ($STAMP)" \
+            --body "Automated housekeeping pass (docs / KB / roadmap / skills / agents). Review the diff before merging." \
+            --base master --head "$BRANCH"
