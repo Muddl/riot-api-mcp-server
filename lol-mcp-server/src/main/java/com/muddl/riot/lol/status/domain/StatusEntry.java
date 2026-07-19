@@ -15,7 +15,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class StatusEntry {
-    private long id;
+    // Boxed defensively: Riot number fields can come back null, and a primitive long fails
+    // deserialization ("Cannot map null into type long"). See gotchas.md.
+    private Long id;
 
     @JsonProperty("maintenance_status")
     private String maintenanceStatus;
