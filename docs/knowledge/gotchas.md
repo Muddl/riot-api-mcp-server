@@ -211,3 +211,16 @@ opened using the automatic `GITHUB_TOKEN` (to prevent recursive runs). So the we
 `housekeeping.yml` PR (opened via `gh pr create` with `GITHUB_TOKEN`) will NOT get an automatic
 `claude-code-review.yml` run. That is expected, not a bug. If auto-review on those PRs is ever
 wanted, open them with a PAT or GitHub App token instead of `GITHUB_TOKEN`.
+
+## A merge to `master` can occasionally trigger no Actions runs (dropped push event)
+
+GitHub Actions very occasionally **drops the `push` event** for a merge to the default branch even
+when Actions is fully operational (no incident posted). Symptoms: the merge lands (`master` moves to
+the merge commit), but no `CI` / `Live Eval` run is created for that SHA, and any workflow file the
+merge *added* does not register (so `gh workflow run <new>.yml` returns `HTTP 404: not found on the
+default branch`). Observed once when merging the housekeeping/Actions PR: `pull_request` events kept
+firing normally, so it was an isolated dropped webhook, not a repo misconfiguration. Recovery: push
+any trivial follow-up commit to `master` (or merge a one-line PR) to generate a fresh push event —
+that re-triggers the missing runs and registers the new workflow. Don't debug repo settings first;
+confirm with `gh api "repos/<owner>/<repo>/actions/runs?head_sha=<sha>" --jq '.total_count'` (0 = the
+event was dropped) and check <https://www.githubstatus.com> before assuming a config problem.
