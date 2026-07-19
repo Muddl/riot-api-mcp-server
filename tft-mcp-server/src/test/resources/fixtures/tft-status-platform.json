@@ -2,7 +2,14 @@
   "id": "NA1",
   "name": "North America",
   "locales": ["en_US"],
-  "maintenances": [],
+  "maintenances": [
+    {
+      "id": 2,
+      "maintenance_status": "scheduled",
+      "titles": [{ "locale": "en_US", "content": "Scheduled maintenance" }],
+      "updates": []
+    }
+  ],
   "incidents": [
     {
       "id": 1,

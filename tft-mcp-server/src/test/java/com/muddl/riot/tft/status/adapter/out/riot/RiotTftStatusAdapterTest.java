@@ -64,6 +64,8 @@ class RiotTftStatusAdapterTest {
         assertThat(status.getIncidents()).hasSize(1);
         assertThat(status.getIncidents().get(0).getIncidentSeverity()).isEqualTo("warning");
         assertThat(status.getIncidents().get(0).getTitles().get(0).getContent()).isEqualTo("Login issues");
+        assertThat(status.getMaintenances()).hasSize(1);
+        assertThat(status.getMaintenances().get(0).getMaintenanceStatus()).isEqualTo("scheduled");
         verify(getRequestedFor(urlEqualTo(STATUS_URL)).withHeader("X-RIOT-TOKEN", equalTo("test-key-123")));
     }
 
