@@ -18,7 +18,7 @@ enforced at build time (some by ArchUnit, some by Gradle's module graph itself).
 |---|---|---|
 | [`riot-api-core`](riot-api-core/README.md) | Shared Riot HTTP kernel — `RiotApiClient`, routing enums, `RiotApiException`, config | [README](riot-api-core/README.md) · [ARCHITECTURE](riot-api-core/ARCHITECTURE.md) |
 | [`riot-account-core`](riot-account-core/README.md) | Cross-game account context + the player-identity resolver | [README](riot-account-core/README.md) · [ARCHITECTURE](riot-account-core/ARCHITECTURE.md) |
-| [`lol-mcp-server`](lol-mcp-server/README.md) | The League of Legends MCP server (six tools; stdio + sse) | [README](lol-mcp-server/README.md) · [ARCHITECTURE](lol-mcp-server/ARCHITECTURE.md) |
+| [`lol-mcp-server`](lol-mcp-server/README.md) | The League of Legends MCP server (13 tools; stdio + sse) | [README](lol-mcp-server/README.md) · [ARCHITECTURE](lol-mcp-server/ARCHITECTURE.md) |
 
 **Dependency rule:** `lol-mcp-server` → `riot-account-core` → `riot-api-core`, never back — enforced
 by Gradle at compile time (a library simply has no dependency on a game module). Each Riot context

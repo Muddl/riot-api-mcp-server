@@ -203,3 +203,11 @@ WireMock test passed only because its fixture had encoded the documented shape. 
 it. **Lesson:** confirm field names against a real response (`curl` with a key), not just the portal
 schema; when both shapes exist, accept them with `@JsonAlias`. This is the concrete case behind the
 standing "verify against the live developer portal, never assume" constraint.
+
+## PRs opened by `GITHUB_TOKEN` do not trigger other workflows
+
+GitHub deliberately does not fire `pull_request`/`push` workflow events for refs created or PRs
+opened using the automatic `GITHUB_TOKEN` (to prevent recursive runs). So the weekly
+`housekeeping.yml` PR (opened via `gh pr create` with `GITHUB_TOKEN`) will NOT get an automatic
+`claude-code-review.yml` run. That is expected, not a bug. If auto-review on those PRs is ever
+wanted, open them with a PAT or GitHub App token instead of `GITHUB_TOKEN`.
