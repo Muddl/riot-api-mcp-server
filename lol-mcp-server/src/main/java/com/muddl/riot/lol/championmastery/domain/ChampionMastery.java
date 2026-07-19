@@ -13,13 +13,18 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ChampionMastery {
+    // Boxed types throughout: Riot returns null for fields tied to systems it has retired — notably
+    // chestGranted and tokensEarned after the 2024 mastery/chest revamp — and a primitive fails
+    // deserialization ("Cannot map null into type boolean/int"). The live eval caught chestGranted;
+    // the rest are boxed defensively so a future null on the revamped mastery shape can't recur. See
+    // gotchas.md.
     private String puuid;
-    private long championId;
-    private int championLevel;
-    private int championPoints;
-    private long lastPlayTime;
-    private long championPointsSinceLastLevel;
-    private long championPointsUntilNextLevel;
-    private boolean chestGranted;
-    private int tokensEarned;
+    private Long championId;
+    private Integer championLevel;
+    private Integer championPoints;
+    private Long lastPlayTime;
+    private Long championPointsSinceLastLevel;
+    private Long championPointsUntilNextLevel;
+    private Boolean chestGranted;
+    private Integer tokensEarned;
 }

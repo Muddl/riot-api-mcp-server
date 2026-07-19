@@ -22,9 +22,9 @@ class ChampionMasteryServiceTest {
     void getMasteryByPlayer_resolvesPlayer_thenReturnsAll() {
         when(resolver.resolvePuuid("Faker#KR1")).thenReturn("faker-puuid");
         ChampionMastery m1 =
-                ChampionMastery.builder().championId(157).championPoints(999).build();
+                ChampionMastery.builder().championId(157L).championPoints(999).build();
         ChampionMastery m2 =
-                ChampionMastery.builder().championId(64).championPoints(500).build();
+                ChampionMastery.builder().championId(64L).championPoints(500).build();
         port.put("faker-puuid", List.of(m1, m2));
 
         assertThat(service.getMasteryByPlayer(PLATFORM, "Faker#KR1", null)).containsExactly(m1, m2);
@@ -33,8 +33,8 @@ class ChampionMasteryServiceTest {
     @Test
     void getMasteryByPlayer_honoursCount() {
         when(resolver.resolvePuuid("puuid-raw")).thenReturn("puuid-raw");
-        ChampionMastery m1 = ChampionMastery.builder().championId(157).build();
-        ChampionMastery m2 = ChampionMastery.builder().championId(64).build();
+        ChampionMastery m1 = ChampionMastery.builder().championId(157L).build();
+        ChampionMastery m2 = ChampionMastery.builder().championId(64L).build();
         port.put("puuid-raw", List.of(m1, m2));
 
         assertThat(service.getMasteryByPlayer(PLATFORM, "puuid-raw", 1)).containsExactly(m1);

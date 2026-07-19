@@ -97,6 +97,28 @@ class RiotChampionMasteryAdapterTest {
     }
 
     @Test
+    void getMasteryByPuuid_nullRetiredPrimitives_parseWithoutError() {
+        // Regression for the live-eval failure: Riot's 2024 mastery/chest revamp returns chestGranted
+        // (and other retired-system fields) as null; a primitive boolean/int threw "Cannot map null
+        // into type ...". The boxed fields must tolerate null while the core fields still parse.
+        stubFor(get(urlEqualTo(ALL_URL))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("[{\"puuid\":\"" + PUUID + "\",\"championId\":157,\"championLevel\":7,"
+                                + "\"championPoints\":123456,\"lastPlayTime\":1609459200000,"
+                                + "\"championPointsSinceLastLevel\":null,\"championPointsUntilNextLevel\":null,"
+                                + "\"chestGranted\":null,\"tokensEarned\":null}]")));
+
+        List<ChampionMastery> masteries = adapter.getMasteryByPuuid(PLATFORM, PUUID, null);
+
+        assertThat(masteries).hasSize(1);
+        assertThat(masteries.get(0).getChestGranted()).isNull();
+        assertThat(masteries.get(0).getTokensEarned()).isNull();
+        assertThat(masteries.get(0).getChampionPoints()).isEqualTo(123456);
+    }
+
+    @Test
     void nonSuccessResponse_mapsToRiotApiException_withStatusPreserved() {
         stubFor(get(urlEqualTo(ALL_URL)).willReturn(aResponse().withStatus(404).withBody("not found")));
 
