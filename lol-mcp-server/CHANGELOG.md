@@ -6,7 +6,7 @@ Scoped to this module. Repo-wide changes live in the [root CHANGELOG](../CHANGEL
 libraries keep their own. Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/);
 versioning: [SemVer](https://semver.org/spec/v2.0.0.html), pre-1.0 (breaking → minor).
 
-## [0.2.0] - unreleased
+## [0.2.0] - 2026-07-19
 
 Sub-project 1b — LoL parity: breadth. Five new contexts plus the match context's first inbound
 tools, built against the `league` template. See
