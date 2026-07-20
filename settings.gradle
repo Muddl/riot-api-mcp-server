@@ -3,5 +3,15 @@ rootProject.name = 'riot-api-mcp-server'
 include 'riot-api-core'
 
 include 'riot-account-core'
-include 'lol-mcp-server'
-include 'tft-mcp-server'
+
+// Server modules are packaged one-per-image: the Dockerfile copies ONLY the target server
+// module into the build context (see Dockerfile's ${SERVER_MODULE}), so a slim image build
+// sees just one of them on disk. Including a server module whose directory is absent fails
+// Gradle configuration ("Configuring project ':x' without an existing directory is not
+// allowed"). Include only the server modules that are actually present — a full checkout has
+// all of them, an image build has one. Add new server modules to this list.
+['lol-mcp-server', 'tft-mcp-server'].each { serverModule ->
+    if (file(serverModule).isDirectory()) {
+        include serverModule
+    }
+}
