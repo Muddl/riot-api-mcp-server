@@ -158,7 +158,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: mcpeval-reports-${{ matrix.transport }}
-          path: eval/test-reports/
+          # Include the SSE server logs (sse leg only): when a live eval fails on a
+          # server-side exception, Spring AI's MCP layer only surfaces a generic
+          # "Error invoking method" to the client, so the real cause (e.g. a Riot
+          # HTTP status) lives in the server log, not the eval report.
+          path: |
+            eval/test-reports/
+            *-sse-server.log
           if-no-files-found: warn
 
       - name: Stop SSE servers
