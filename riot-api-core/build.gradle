@@ -21,7 +21,7 @@ dependencies {
 
 	// testFixturesApi (not testFixturesImplementation): HexagonRules exposes ArchRule in its
 	// public signatures, so consumers need ArchUnit on their compile classpath.
-	testFixturesApi 'com.tngtech.archunit:archunit-junit5:1.3.0'
+	testFixturesApi 'com.tngtech.archunit:archunit-junit5:1.4.2'
 
 	testImplementation 'org.wiremock:wiremock-standalone:3.9.2'
 	// No testFixtures(project(':riot-api-core')) here: the java-test-fixtures plugin already
