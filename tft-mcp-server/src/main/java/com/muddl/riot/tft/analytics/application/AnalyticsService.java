@@ -14,6 +14,7 @@ import com.muddl.riot.tft.summoner.domain.Summoner;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -59,23 +60,41 @@ public class AnalyticsService {
         if (total == 0) {
             return PlayerMatchAnalytics.builder()
                     .riotId(player)
-                    .summonerLevel(summoner == null ? 0 : summoner.getSummonerLevel())
+                    .summonerLevel(
+                            summoner == null || summoner.getSummonerLevel() == null ? 0L : summoner.getSummonerLevel())
                     .matchCount(0)
                     .build();
         }
 
-        double avgPlacement =
-                parts.stream().mapToInt(Participant::getPlacement).average().orElse(0);
-        long top4 = parts.stream().filter(p -> p.getPlacement() <= 4).count();
-        long firsts = parts.stream().filter(p -> p.getPlacement() == 1).count();
-        double avgLevel =
-                parts.stream().mapToInt(Participant::getLevel).average().orElse(0);
-        double avgGoldLeft =
-                parts.stream().mapToInt(Participant::getGoldLeft).average().orElse(0);
+        double avgPlacement = parts.stream()
+                .map(Participant::getPlacement)
+                .filter(Objects::nonNull)
+                .mapToInt(Integer::intValue)
+                .average()
+                .orElse(0);
+        long top4 = parts.stream()
+                .filter(p -> p.getPlacement() != null && p.getPlacement() <= 4)
+                .count();
+        long firsts = parts.stream()
+                .filter(p -> p.getPlacement() != null && p.getPlacement() == 1)
+                .count();
+        double avgLevel = parts.stream()
+                .map(Participant::getLevel)
+                .filter(Objects::nonNull)
+                .mapToInt(Integer::intValue)
+                .average()
+                .orElse(0);
+        double avgGoldLeft = parts.stream()
+                .map(Participant::getGoldLeft)
+                .filter(Objects::nonNull)
+                .mapToInt(Integer::intValue)
+                .average()
+                .orElse(0);
 
         return PlayerMatchAnalytics.builder()
                 .riotId(player)
-                .summonerLevel(summoner == null ? 0 : summoner.getSummonerLevel())
+                .summonerLevel(
+                        summoner == null || summoner.getSummonerLevel() == null ? 0L : summoner.getSummonerLevel())
                 .matchCount(total)
                 .avgPlacement(String.format("%.2f", avgPlacement))
                 .top4Rate(String.format("%.2f%%", (double) top4 / total * 100))
@@ -91,7 +110,7 @@ public class AnalyticsService {
     private List<String> topThreeTraits(List<Participant> parts) {
         Map<String, Long> counts = parts.stream()
                 .flatMap(p -> p.getTraits() == null ? java.util.stream.Stream.<Trait>empty() : p.getTraits().stream())
-                .filter(t -> t.getTierCurrent() > 0)
+                .filter(t -> t.getTierCurrent() != null && t.getTierCurrent() > 0)
                 .collect(Collectors.groupingBy(Trait::getName, Collectors.counting()));
         return topThree(counts);
     }

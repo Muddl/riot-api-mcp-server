@@ -83,6 +83,39 @@ class AnalyticsServiceTest {
     }
 
     @Test
+    void nullNumericFields_doNotThrow_andYieldSafeDefaults() {
+        // Riot can return null for boxed numeric fields; the boxed DTOs survive deserialization, and
+        // the analytics consumer must not re-introduce the NPE when it unboxes them.
+        when(resolver.resolvePuuid("Player#NA1")).thenReturn(PUUID);
+        when(summonerService.getSummonerByPuuid(PLATFORM, PUUID))
+                .thenReturn(Summoner.builder().build()); // summonerLevel null
+        when(matchService.getMatchIdsByPuuid(eq(REGION), eq(PUUID), anyInt(), any()))
+                .thenReturn(List.of("NA1_1"));
+        Participant p = Participant.builder()
+                .puuid(PUUID)
+                // placement / level / goldLeft left null
+                .traits(List.of(Trait.builder().name("Set10_Punk").build())) // tierCurrent null
+                .units(List.of(Unit.builder().characterId("TFT10_Jinx").build()))
+                .build();
+        when(matchService.getMatchById(REGION, "NA1_1"))
+                .thenReturn(TftMatch.builder()
+                        .info(MatchInfo.builder().participants(List.of(p)).build())
+                        .build());
+
+        PlayerMatchAnalytics a = service.getPlayerMatchAnalytics("Player#NA1", PLATFORM, REGION, 10);
+
+        assertThat(a.getMatchCount()).isEqualTo(1);
+        assertThat(a.getSummonerLevel()).isEqualTo(0);
+        assertThat(a.getAvgPlacement()).isEqualTo("0.00");
+        assertThat(a.getTop4Rate()).isEqualTo("0.00%");
+        assertThat(a.getFirstPlaceRate()).isEqualTo("0.00%");
+        assertThat(a.getAvgLevel()).isEqualTo("0.00");
+        assertThat(a.getAvgGoldLeft()).isEqualTo("0.00");
+        assertThat(a.getMostPlayedTraits()).isEmpty(); // tierCurrent null -> not an active trait
+        assertThat(a.getMostPlayedUnits()).hasSize(1); // characterId non-null -> still counted
+    }
+
+    @Test
     void singleGame_firstPlace_isAllTop4() {
         when(resolver.resolvePuuid("Player#NA1")).thenReturn(PUUID);
         when(summonerService.getSummonerByPuuid(PLATFORM, PUUID))
