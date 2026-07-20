@@ -15,6 +15,7 @@ public class InMemoryLeaguePort implements LeaguePort {
 
     private final Map<String, List<LeagueEntry>> entriesByPuuid = new HashMap<>();
     private final Map<ApexTier, LeagueList> apexByTier = new HashMap<>();
+    private final Map<String, List<LeagueEntry>> entriesByTierDivisionPage = new HashMap<>();
     private final Map<String, LeagueList> leagueById = new HashMap<>();
     private final Map<String, List<RatedLadderEntry>> ladderByQueue = new HashMap<>();
 
@@ -25,6 +26,11 @@ public class InMemoryLeaguePort implements LeaguePort {
 
     public InMemoryLeaguePort putApex(ApexTier tier, LeagueList list) {
         apexByTier.put(tier, list);
+        return this;
+    }
+
+    public InMemoryLeaguePort putEntriesByTier(String tier, String division, int page, List<LeagueEntry> entries) {
+        entriesByTierDivisionPage.put(tier + "|" + division + "|" + page, entries);
         return this;
     }
 
@@ -50,7 +56,7 @@ public class InMemoryLeaguePort implements LeaguePort {
 
     @Override
     public List<LeagueEntry> getEntriesByTier(RiotApiPlatformUri platform, String tier, String division, int page) {
-        return List.of();
+        return entriesByTierDivisionPage.getOrDefault(tier + "|" + division + "|" + page, List.of());
     }
 
     @Override

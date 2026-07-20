@@ -48,6 +48,16 @@ class LeagueServiceTest {
     }
 
     @Test
+    void getEntriesByTier_delegatesToPort() {
+        LeagueEntry entry =
+                LeagueEntry.builder().queueType("RANKED_TFT").tier("GOLD").build();
+        port.putEntriesByTier("GOLD", "II", 2, List.of(entry));
+
+        assertThat(service.getEntriesByTier(PLATFORM, "GOLD", "II", 2)).containsExactly(entry);
+        assertThat(service.getEntriesByTier(PLATFORM, "GOLD", "I", 2)).isEmpty();
+    }
+
+    @Test
     void getLeagueById_delegatesToPort() {
         LeagueList expected = LeagueList.builder().leagueId("league-uuid").build();
         port.putLeague("league-uuid", expected);
