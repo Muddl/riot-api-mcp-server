@@ -67,15 +67,17 @@ jobs:
         if: steps.preflight.outputs.run == 'true'
         uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
 
-      - name: Build server jar
+      - name: Build server jars
         if: steps.preflight.outputs.run == 'true'
-        run: ./gradlew :lol-mcp-server:bootJar
+        run: ./gradlew :lol-mcp-server:bootJar :tft-mcp-server:bootJar
 
-      - name: Resolve jar path
+      - name: Resolve jar paths
         if: steps.preflight.outputs.run == 'true'
         run: |
-          JAR="$(ls lol-mcp-server/build/libs/lol-mcp-server-*.jar | grep -v plain | head -n1)"
-          echo "LOL_MCP_JAR=$GITHUB_WORKSPACE/$JAR" >> "$GITHUB_ENV"
+          LOL_JAR="$(ls lol-mcp-server/build/libs/lol-mcp-server-*.jar | grep -v plain | head -n1)"
+          echo "LOL_MCP_JAR=$GITHUB_WORKSPACE/$LOL_JAR" >> "$GITHUB_ENV"
+          TFT_JAR="$(ls tft-mcp-server/build/libs/tft-mcp-server-*.jar | grep -v plain | head -n1)"
+          echo "TFT_MCP_JAR=$GITHUB_WORKSPACE/$TFT_JAR" >> "$GITHUB_ENV"
 
       - name: Set up uv
         if: steps.preflight.outputs.run == 'true'
@@ -88,18 +90,28 @@ jobs:
         working-directory: eval
         run: uv sync
 
-      - name: Start SSE server
+      - name: Start SSE servers
         if: steps.preflight.outputs.run == 'true' && matrix.transport == 'sse'
         env:
           RIOT_API_KEY: ${{ secrets.RIOT_DEV_REG_TEST_API_KEY }}
         run: |
-          java -jar "$LOL_MCP_JAR" --spring.profiles.active=sse > sse-server.log 2>&1 &
-          echo "SSE_PID=$!" >> "$GITHUB_ENV"
+          java -jar "$LOL_MCP_JAR" --spring.profiles.active=sse > lol-sse-server.log 2>&1 &
+          echo "LOL_SSE_PID=$!" >> "$GITHUB_ENV"
           echo "LOL_MCP_SSE_URL=http://localhost:8080/sse" >> "$GITHUB_ENV"
-          # Wait for the port to accept connections.
+          # TFT server on a separate port; both servers default to 8080.
+          SERVER_PORT=8081 java -jar "$TFT_MCP_JAR" --spring.profiles.active=sse > tft-sse-server.log 2>&1 &
+          echo "TFT_SSE_PID=$!" >> "$GITHUB_ENV"
+          echo "TFT_MCP_SSE_URL=http://localhost:8081/sse" >> "$GITHUB_ENV"
+          # Wait for both ports to accept connections.
           for i in $(seq 1 30); do
             if curl -s -o /dev/null http://localhost:8080/actuator/health; then
-              echo "server up"; break
+              echo "lol server up"; break
+            fi
+            sleep 2
+          done
+          for i in $(seq 1 30); do
+            if curl -s -o /dev/null http://localhost:8081/actuator/health; then
+              echo "tft server up"; break
             fi
             sleep 2
           done
@@ -113,8 +125,8 @@ jobs:
         run: |
           # mcp-eval does NOT expand ${VAR} placeholders in the config's
           # command/args/url/env fields, so we expand them here before it reads
-          # the file. Restricted to our three vars so nothing else is touched.
-          envsubst '${LOL_MCP_JAR} ${RIOT_API_KEY} ${LOL_MCP_SSE_URL}' \
+          # the file. Restricted to our vars so nothing else is touched.
+          envsubst '${LOL_MCP_JAR} ${TFT_MCP_JAR} ${RIOT_API_KEY} ${LOL_MCP_SSE_URL} ${TFT_MCP_SSE_URL}' \
             < "mcpeval.${{ matrix.transport }}.yaml" > mcpeval.yaml
           set +e
           uv run mcp-eval run tests/ -v \
@@ -149,9 +161,11 @@ jobs:
           path: eval/test-reports/
           if-no-files-found: warn
 
-      - name: Stop SSE server
-        if: always() && matrix.transport == 'sse' && env.SSE_PID != ''
-        run: kill "$SSE_PID" || true
+      - name: Stop SSE servers
+        if: always() && matrix.transport == 'sse'
+        run: |
+          [ -n "$LOL_SSE_PID" ] && kill "$LOL_SSE_PID" || true
+          [ -n "$TFT_SSE_PID" ] && kill "$TFT_SSE_PID" || true
 
       - name: Fail the job on eval failure
         if: steps.preflight.outputs.run == 'true'
