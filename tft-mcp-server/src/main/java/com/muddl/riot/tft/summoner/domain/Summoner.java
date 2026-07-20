@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Summoner {
     private String puuid;
-    private int profileIconId;
-    private long revisionDate;
-    private long summonerLevel;
+    private Integer profileIconId;
+    private Long revisionDate;
+    private Long summonerLevel;
 }

@@ -51,7 +51,7 @@ class AnalyticsServiceTest {
     void aggregatesPlacementTop4AndComps_overTwoMatches() {
         when(resolver.resolvePuuid("Player#NA1")).thenReturn(PUUID);
         when(summonerService.getSummonerByPuuid(PLATFORM, PUUID))
-                .thenReturn(Summoner.builder().summonerLevel(300).build());
+                .thenReturn(Summoner.builder().summonerLevel(300L).build());
         when(matchService.getMatchIdsByPuuid(eq(REGION), eq(PUUID), anyInt(), any()))
                 .thenReturn(List.of("NA1_1", "NA1_2"));
         when(matchService.getMatchById(REGION, "NA1_1")).thenReturn(matchWith(1, 9, 2, "Set10_Punk", "TFT10_Jinx"));
@@ -71,7 +71,7 @@ class AnalyticsServiceTest {
     void zeroGames_returnsEmptySummary_withoutDivideByZero() {
         when(resolver.resolvePuuid("Player#NA1")).thenReturn(PUUID);
         when(summonerService.getSummonerByPuuid(PLATFORM, PUUID))
-                .thenReturn(Summoner.builder().summonerLevel(10).build());
+                .thenReturn(Summoner.builder().summonerLevel(10L).build());
         when(matchService.getMatchIdsByPuuid(eq(REGION), eq(PUUID), anyInt(), any()))
                 .thenReturn(List.of());
 
@@ -86,7 +86,7 @@ class AnalyticsServiceTest {
     void singleGame_firstPlace_isAllTop4() {
         when(resolver.resolvePuuid("Player#NA1")).thenReturn(PUUID);
         when(summonerService.getSummonerByPuuid(PLATFORM, PUUID))
-                .thenReturn(Summoner.builder().summonerLevel(1).build());
+                .thenReturn(Summoner.builder().summonerLevel(1L).build());
         when(matchService.getMatchIdsByPuuid(eq(REGION), eq(PUUID), anyInt(), any()))
                 .thenReturn(List.of("NA1_1"));
         when(matchService.getMatchById(REGION, "NA1_1")).thenReturn(matchWith(1, 9, 4, "Set10_Punk", "TFT10_Jinx"));

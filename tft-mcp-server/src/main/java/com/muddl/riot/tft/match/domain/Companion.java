@@ -18,7 +18,7 @@ public class Companion {
     private String contentId;
 
     @JsonProperty("skin_ID")
-    private int skinId;
+    private Integer skinId;
 
     private String species;
 }

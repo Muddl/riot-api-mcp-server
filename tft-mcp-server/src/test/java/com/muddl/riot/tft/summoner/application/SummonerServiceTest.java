@@ -21,7 +21,7 @@ class SummonerServiceTest {
     void getSummonerByPlayer_resolvesPlayer_thenReturnsSummoner() {
         when(resolver.resolvePuuid("Player#NA1")).thenReturn("puuid-1");
         Summoner expected =
-                Summoner.builder().puuid("puuid-1").summonerLevel(200).build();
+                Summoner.builder().puuid("puuid-1").summonerLevel(200L).build();
         port.put("puuid-1", expected);
 
         assertThat(service.getSummonerByPlayer(PLATFORM, "Player#NA1")).isSameAs(expected);

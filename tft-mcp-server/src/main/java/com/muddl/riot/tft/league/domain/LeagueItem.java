@@ -14,12 +14,12 @@ import lombok.NoArgsConstructor;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class LeagueItem {
     private String puuid;
-    private int leaguePoints;
+    private Integer leaguePoints;
     private String rank;
-    private int wins;
-    private int losses;
-    private boolean veteran;
-    private boolean inactive;
-    private boolean freshBlood;
-    private boolean hotStreak;
+    private Integer wins;
+    private Integer losses;
+    private Boolean veteran;
+    private Boolean inactive;
+    private Boolean freshBlood;
+    private Boolean hotStreak;
 }

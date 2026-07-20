@@ -17,13 +17,13 @@ public class Trait {
     private String name;
 
     @JsonProperty("num_units")
-    private int numUnits;
+    private Integer numUnits;
 
-    private int style;
+    private Integer style;
 
     @JsonProperty("tier_current")
-    private int tierCurrent;
+    private Integer tierCurrent;
 
     @JsonProperty("tier_total")
-    private int tierTotal;
+    private Integer tierTotal;
 }

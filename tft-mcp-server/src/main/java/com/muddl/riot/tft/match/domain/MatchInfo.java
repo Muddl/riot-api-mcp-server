@@ -16,19 +16,19 @@ import lombok.NoArgsConstructor;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class MatchInfo {
     @JsonProperty("game_datetime")
-    private long gameDatetime;
+    private Long gameDatetime;
 
     @JsonProperty("game_length")
-    private double gameLength;
+    private Double gameLength;
 
     @JsonProperty("game_version")
     private String gameVersion;
 
     @JsonProperty("queue_id")
-    private int queueId;
+    private Integer queueId;
 
     @JsonProperty("tft_set_number")
-    private int tftSetNumber;
+    private Integer tftSetNumber;
 
     @JsonProperty("tft_game_type")
     private String tftGameType;

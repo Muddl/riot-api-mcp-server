@@ -18,7 +18,7 @@ public class Unit {
     @JsonProperty("character_id")
     private String characterId;
 
-    private int tier;
-    private int rarity;
+    private Integer tier;
+    private Integer rarity;
     private List<String> itemNames;
 }

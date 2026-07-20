@@ -16,23 +16,23 @@ import lombok.NoArgsConstructor;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Participant {
     private String puuid;
-    private int placement;
-    private int level;
+    private Integer placement;
+    private Integer level;
 
     @JsonProperty("gold_left")
-    private int goldLeft;
+    private Integer goldLeft;
 
     @JsonProperty("last_round")
-    private int lastRound;
+    private Integer lastRound;
 
     @JsonProperty("players_eliminated")
-    private int playersEliminated;
+    private Integer playersEliminated;
 
     @JsonProperty("time_eliminated")
-    private double timeEliminated;
+    private Double timeEliminated;
 
     @JsonProperty("total_damage_to_players")
-    private int totalDamageToPlayers;
+    private Integer totalDamageToPlayers;
 
     private Companion companion;
     private List<Trait> traits;

@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 public class RatedLadderEntry {
     private String puuid;
     private String ratedTier;
-    private int ratedRating;
-    private int wins;
-    private int previousUpdateLadderPosition;
+    private Integer ratedRating;
+    private Integer wins;
+    private Integer previousUpdateLadderPosition;
 }
