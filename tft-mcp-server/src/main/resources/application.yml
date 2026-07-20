@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: tft-mcp-server
+  profiles:
+    default: stdio
+  ai:
+    mcp:
+      server:
+        name: tft-mcp-server
+        version: 1.0.0
+        type: SYNC
+        sse-message-endpoint: /mcp/messages
+        annotation-scanner:
+          enabled: true
+
+riot:
+  apiKey: ${RIOT_API_KEY} # refreshes every day until you register your product
+  region: americas

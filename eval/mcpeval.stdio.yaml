@@ -1,5 +1,5 @@
 $schema: https://raw.githubusercontent.com/lastmile-ai/mcp-eval/main/schema/mcpeval.config.schema.json
-name: "lol-mcp-server live evals (stdio)"
+name: "riot-api-mcp-server live evals (stdio)"
 
 provider: anthropic
 model: claude-haiku-4-5-20251001
@@ -10,6 +10,12 @@ mcp:
       transport: stdio
       command: java
       args: ["-jar", "${LOL_MCP_JAR}", "--spring.profiles.active=stdio"]
+      env:
+        RIOT_API_KEY: "${RIOT_API_KEY}"
+    tft_server:
+      transport: stdio
+      command: java
+      args: ["-jar", "${TFT_MCP_JAR}", "--spring.profiles.active=stdio"]
       env:
         RIOT_API_KEY: "${RIOT_API_KEY}"
 
@@ -23,6 +29,15 @@ agents:
         an error, do NOT retry it — report the failure plainly and stop,
         rather than inventing data or calling it repeatedly.
       server_names: ["lol_server"]
+      max_iterations: 4
+    - name: tft_tester
+      instruction: |
+        You are a precise QA agent for a Teamfight Tactics MCP server.
+        Use the provided tools to answer. Prefer NA1 as the platform and
+        AMERICAS as the region unless told otherwise. If a tool call returns
+        an error, do NOT retry it — report the failure plainly and stop,
+        rather than inventing data or calling it repeatedly.
+      server_names: ["tft_server"]
       max_iterations: 4
 default_agent: riot_tester
 

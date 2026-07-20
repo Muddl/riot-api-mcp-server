@@ -7,10 +7,11 @@
 
 A Gradle monorepo of [Model Context Protocol](https://modelcontextprotocol.io) (MCP) servers that
 expose the [Riot Games API](https://developer.riotgames.com/) to AI models as small, typed toolsets —
-two shared libraries plus one Spring Boot server per Riot game (currently League of Legends). It is a
-**portfolio piece**: the point is the engineering — a clean bounded-context hexagonal architecture, a
-single shared HTTP client, HTTP-mocked tests that run in CI with no API key, and architecture rules
-enforced at build time (some by ArchUnit, some by Gradle's module graph itself).
+two shared libraries plus one Spring Boot server per Riot game (currently League of Legends and
+Teamfight Tactics). It is a **portfolio piece**: the point is the engineering — a clean
+bounded-context hexagonal architecture, a single shared HTTP client, HTTP-mocked tests that run in CI
+with no API key, and architecture rules enforced at build time (some by ArchUnit, some by Gradle's
+module graph itself).
 
 ## Modules
 
@@ -19,14 +20,17 @@ enforced at build time (some by ArchUnit, some by Gradle's module graph itself).
 | [`riot-api-core`](riot-api-core/README.md) | Shared Riot HTTP kernel — `RiotApiClient`, routing enums, `RiotApiException`, config | [README](riot-api-core/README.md) · [ARCHITECTURE](riot-api-core/ARCHITECTURE.md) |
 | [`riot-account-core`](riot-account-core/README.md) | Cross-game account context + the player-identity resolver | [README](riot-account-core/README.md) · [ARCHITECTURE](riot-account-core/ARCHITECTURE.md) |
 | [`lol-mcp-server`](lol-mcp-server/README.md) | The League of Legends MCP server (13 tools; stdio + sse) | [README](lol-mcp-server/README.md) · [ARCHITECTURE](lol-mcp-server/ARCHITECTURE.md) |
+| [`tft-mcp-server`](tft-mcp-server/README.md) | The Teamfight Tactics MCP server (11 tools; stdio + sse) | [README](tft-mcp-server/README.md) · [ARCHITECTURE](tft-mcp-server/ARCHITECTURE.md) |
 
-**Dependency rule:** `lol-mcp-server` → `riot-account-core` → `riot-api-core`, never back — enforced
+**Dependency rule:** each game server → `riot-account-core` → `riot-api-core`, never back — enforced
 by Gradle at compile time (a library simply has no dependency on a game module). Each Riot context
 inside a server is a self-contained hexagon: an inbound MCP adapter calls an application service,
 which depends on an outbound **port** implemented by a Riot adapter; all HTTP, auth, retry, and error
-handling live in one place, `riot-api-core`'s `RiotApiClient`. See
-**[ARCHITECTURE.md](ARCHITECTURE.md)** for the full rationale and
-[ADR-0006](docs/knowledge/decisions/ADR-0006-monorepo-split.md) for why the monorepo split happened.
+handling live in one place, `riot-api-core`'s `RiotApiClient`. `tft-mcp-server` shipped on this shared
+core with **zero changes** to either library — the first proof it generalizes to a second game (see
+[roadmap #2](docs/knowledge/roadmap.md#2--tft-server-)). See **[ARCHITECTURE.md](ARCHITECTURE.md)**
+for the full rationale and [ADR-0006](docs/knowledge/decisions/ADR-0006-monorepo-split.md) for why the
+monorepo split happened.
 
 ## Quick start
 
@@ -63,7 +67,7 @@ post-merge only and never blocks a merge.
 | **[ARCHITECTURE.md](ARCHITECTURE.md)** | Shared hexagonal design, the dependency rule, routing, enforcement, testing strategy, transports |
 | **[CONTRIBUTING.md](CONTRIBUTING.md)** | Build/test/format commands, conventions, how to add a context or tool |
 | **[CLAUDE.md](CLAUDE.md)** | Guidance for AI coding agents working in this repo |
-| **Per-module READMEs** | [`riot-api-core`](riot-api-core/README.md) · [`riot-account-core`](riot-account-core/README.md) · [`lol-mcp-server`](lol-mcp-server/README.md) |
+| **Per-module READMEs** | [`riot-api-core`](riot-api-core/README.md) · [`riot-account-core`](riot-account-core/README.md) · [`lol-mcp-server`](lol-mcp-server/README.md) · [`tft-mcp-server`](tft-mcp-server/README.md) |
 | **[docs/knowledge/](docs/knowledge/)** | Committed knowledge base — ADRs, patterns, gotchas, glossary, roadmap |
 | **[CHANGELOG.md](CHANGELOG.md)** | Repo-wide changelog; each module keeps its own under its directory |
 

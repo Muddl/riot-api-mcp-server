@@ -1,0 +1,33 @@
+plugins {
+	id 'riot-java-conventions'
+	id 'org.springframework.boot'
+}
+
+// Independent of the other modules — see ADR-0010. First release of a new server.
+version = '0.1.0'
+
+dependencies {
+	implementation project(':riot-api-core')
+	implementation project(':riot-account-core')
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.ai:spring-ai-starter-mcp-server-webmvc'
+
+	testImplementation 'org.wiremock:wiremock-standalone:3.9.2'
+	testImplementation testFixtures(project(':riot-api-core'))
+	testImplementation testFixtures(project(':riot-account-core'))
+}
+
+// Provenance: record which library versions this jar embeds (see ADR-0010).
+def apiCoreVersion = providers.provider { project(':riot-api-core').version.toString() }
+def accountCoreVersion = providers.provider { project(':riot-account-core').version.toString() }
+
+tasks.named('bootJar') {
+	manifest {
+		attributes(
+			'Implementation-Title': project.name,
+			'Implementation-Version': project.version.toString(),
+			'Riot-Api-Core-Version': apiCoreVersion,
+			'Riot-Account-Core-Version': accountCoreVersion)
+	}
+}

@@ -1,13 +1,16 @@
 # Architecture
 
 This project is a **Gradle monorepo**: two libraries and one Spring Boot MCP server per Riot game
-(currently just League of Legends), each organized internally as a set of **bounded-context
-hexagons** (ports & adapters) rather than a traditional layered `controller/service/repository`
-stack. For a server whose whole job is to adapt one external API into MCP tools, the hexagon makes
-the important boundary — *our code vs. the Riot HTTP API* — explicit and testable, and keeps each
-Riot context independent. See [ADR-0006](docs/knowledge/decisions/ADR-0006-monorepo-split.md) for
-why the monorepo split happened; the hexagon rationale itself predates it and still stands
-([ADR-0001](docs/knowledge/decisions/ADR-0001-hexagonal.md)).
+(currently League of Legends and Teamfight Tactics), each organized internally as a set of
+**bounded-context hexagons** (ports & adapters) rather than a traditional layered
+`controller/service/repository` stack. For a server whose whole job is to adapt one external API into
+MCP tools, the hexagon makes the important boundary — *our code vs. the Riot HTTP API* — explicit and
+testable, and keeps each Riot context independent. See
+[ADR-0006](docs/knowledge/decisions/ADR-0006-monorepo-split.md) for why the monorepo split happened;
+the hexagon rationale itself predates it and still stands
+([ADR-0001](docs/knowledge/decisions/ADR-0001-hexagonal.md)). `tft-mcp-server` (sub-project 2) is the
+first proof that this shared core generalizes to a second game — it landed with **zero changes** to
+either library (see [roadmap #2](docs/knowledge/roadmap.md#2--tft-server-)).
 
 ## Module layout
 
@@ -30,11 +33,15 @@ riot-account-core/     library — com.muddl.riot.account
 lol-mcp-server/        Spring Boot app — com.muddl.riot.lol
   account/adapter/in/mcp/     RiotAccountTool (thin — delegates into riot-account-core)
   summoner/, match/, spectator/, analytics/, league/   full hexagons
+
+tft-mcp-server/        Spring Boot app — com.muddl.riot.tft
+  account/adapter/in/mcp/     RiotAccountTool (thin — delegates into riot-account-core)
+  summoner/, league/, match/, status/, analytics/      full hexagons
 ```
 
 Both libraries are consumed via `@AutoConfiguration` (`AutoConfiguration.imports`), never
 component-scanned — a server picks them up as ordinary dependencies, with no package-scanning
-coupling to know about. **Dependency rule at the module level:** `lol-mcp-server` →
+coupling to know about. **Dependency rule at the module level:** each game server →
 `riot-account-core` → `riot-api-core`, never back, and it is enforced by Gradle at compile time —
 `riot-api-core` simply has no dependency on a game module, so it structurally cannot reach into one.
 
@@ -154,16 +161,16 @@ compile-time decision at each adapter.
 Two different mechanisms enforce the two different rules in this repo, and the split is
 deliberate:
 
-- **The module dependency rule (`lol-mcp-server` → `riot-account-core` → `riot-api-core`) is
+- **The module dependency rule (each game server → `riot-account-core` → `riot-api-core`) is
   enforced by Gradle at compile time**, not by an ArchUnit test. `riot-api-core` has no dependency
   on `riot-account-core` or any game module, so it structurally cannot reach into one — there is
   nothing for a test to check.
 - **The intra-module hexagon rules are enforced by ArchUnit**, run under `./gradlew build`. They
   are defined once, in `HexagonRules` (`riot-api-core`'s test fixtures,
   `com.muddl.riot.core.testsupport`), and declared as `@ArchTest` fields by each module's own
-  architecture test — `HexagonalArchitectureTest` in `lol-mcp-server` (10 rules) and
-  `AccountArchitectureTest` in `riot-account-core` (7 rules) — so a new game server inherits the
-  architecture instead of copy-pasting it:
+  architecture test — `HexagonalArchitectureTest` in `lol-mcp-server` (10 rules) and in
+  `tft-mcp-server` (same shared rules), and `AccountArchitectureTest` in `riot-account-core`
+  (7 rules) — so a new game server inherits the architecture instead of copy-pasting it:
   - the layered dependency rule (`domain` ⇸ `application` ⇸ `adapter`, inward only);
   - `RestClient` is referenced only within `..adapter.out.riot..` (and the core HTTP client itself);
   - `@McpTool` appears only within `..adapter.in.mcp..`;

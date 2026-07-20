@@ -1,0 +1,10 @@
+{
+  "leagueId": "league-uuid-chal",
+  "tier": "CHALLENGER",
+  "name": "Zed's Assassins",
+  "queue": "RANKED_TFT",
+  "entries": [
+    { "puuid": "puuid-top", "leaguePoints": 1400, "rank": "I", "wins": 200, "losses": 150,
+      "veteran": true, "inactive": false, "freshBlood": false, "hotStreak": true }
+  ]
+}

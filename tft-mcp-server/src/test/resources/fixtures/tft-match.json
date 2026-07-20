@@ -1,0 +1,48 @@
+{
+  "metadata": {
+    "data_version": "5",
+    "match_id": "NA1_4600000001",
+    "participants": ["puuid-a", "puuid-b"]
+  },
+  "info": {
+    "game_datetime": 1699999999000,
+    "game_length": 2100.5,
+    "game_version": "Version 14.1",
+    "queue_id": 1100,
+    "tft_set_number": 10,
+    "tft_game_type": "standard",
+    "participants": [
+      {
+        "puuid": "puuid-a",
+        "placement": 1,
+        "level": 9,
+        "gold_left": 3,
+        "last_round": 35,
+        "players_eliminated": 4,
+        "time_eliminated": 2100.0,
+        "total_damage_to_players": 140,
+        "companion": { "content_ID": "abc", "skin_ID": 1, "species": "Silverwing" },
+        "traits": [
+          { "name": "Set10_Punk", "num_units": 4, "style": 2, "tier_current": 2, "tier_total": 3 }
+        ],
+        "units": [
+          { "character_id": "TFT10_Jinx", "tier": 3, "rarity": 4, "itemNames": ["TFT_Item_InfinityEdge"] }
+        ],
+        "augments": ["TFT9_Augment_Example"]
+      },
+      {
+        "puuid": "puuid-b",
+        "placement": 8,
+        "level": 7,
+        "gold_left": 0,
+        "last_round": 24,
+        "players_eliminated": 0,
+        "time_eliminated": 1400.0,
+        "total_damage_to_players": 20,
+        "companion": { "content_ID": "def", "skin_ID": 2, "species": "Choncc" },
+        "traits": [],
+        "units": []
+      }
+    ]
+  }
+}

@@ -204,6 +204,16 @@ it. **Lesson:** confirm field names against a real response (`curl` with a key),
 schema; when both shapes exist, accept them with `@JsonAlias`. This is the concrete case behind the
 standing "verify against the live developer portal, never assume" constraint.
 
+## New files on Windows land LF-only and fail `spotlessCheck`
+
+This checkout has `core.autocrlf=true`, which normalizes existing tracked files to CRLF on
+checkout, but a **new** file written by an editor/agent (not checked out by Git) is whatever
+line endings the tool wrote — usually LF-only. `palantirJavaFormat` under Spotless expects the
+repo's normalized line endings, so a fresh LF-only source file fails `spotlessCheck` even though
+its content is otherwise correctly formatted. Fix: run `./gradlew spotlessApply` before
+committing any new file — it rewrites line endings along with formatting, so the check passes
+on the next `./gradlew build`.
+
 ## PRs opened by `GITHUB_TOKEN` do not trigger other workflows
 
 GitHub deliberately does not fire `pull_request`/`push` workflow events for refs created or PRs
