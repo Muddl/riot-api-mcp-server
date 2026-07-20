@@ -3,10 +3,12 @@ package com.muddl.riot.tft.match.adapter.out.riot;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.muddl.riot.core.config.RiotApiProperties;
 import com.muddl.riot.core.enums.RiotApiRegionUri;
+import com.muddl.riot.core.exception.RiotApiException;
 import com.muddl.riot.core.http.RiotApiClient;
 import com.muddl.riot.core.testsupport.Fixtures;
 import com.muddl.riot.tft.match.application.port.MatchPort;
@@ -74,5 +76,20 @@ class RiotTftMatchAdapterTest {
         assertThat(match.getInfo().getParticipants().get(0).getGoldLeft()).isEqualTo(3);
         assertThat(match.getInfo().getParticipants().get(0).getUnits().get(0).getCharacterId())
                 .isEqualTo("TFT10_Jinx");
+        assertThat(match.getInfo().getParticipants().get(0).getCompanion().getContentId())
+                .isEqualTo("abc");
+        assertThat(match.getInfo().getParticipants().get(0).getTraits().get(0).getTierCurrent())
+                .isEqualTo(2);
+    }
+
+    @Test
+    void notFound_mapsToRiotApiException() {
+        String url = "/tft/match/v1/matches/" + MATCH_ID;
+        stubFor(get(urlEqualTo(url)).willReturn(aResponse().withStatus(404).withBody("not found")));
+
+        assertThatThrownBy(() -> adapter.getMatchById(REGION, MATCH_ID))
+                .isInstanceOf(RiotApiException.class)
+                .extracting(e -> ((RiotApiException) e).getStatusCode())
+                .isEqualTo(404);
     }
 }
