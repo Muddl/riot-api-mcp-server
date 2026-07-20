@@ -15,7 +15,7 @@ not edited retroactively. When scope moves, it moves here.
 | 0 | Monorepo restructure + extract `riot-api-core` | ✅ Done | [2026-07-15](../superpowers/specs/2026-07-15-monorepo-restructure-design.md) |
 | **1a** | **LoL parity — foundation** | ✅ Done | [2026-07-15](../superpowers/specs/2026-07-15-lol-parity-foundation-design.md) |
 | 1b | LoL parity — breadth | ✅ Done | [2026-07-18](../superpowers/specs/2026-07-18-lol-parity-breadth-design.md) |
-| 2 | TFT server | ⏳ Not started | — |
+| 2 | TFT server | ✅ Done | [2026-07-19](../superpowers/specs/2026-07-19-tft-server-design.md) |
 | 3 | Valorant server | ⏳ Not started | — |
 | 4 | LoR server | ⏳ Not started | — |
 
@@ -87,11 +87,33 @@ The handoff contract 1b works from is stated in
 five contexts and the match tools landed with no change to `riot-api-core` or `riot-account-core`.
 `lol-mcp-server` released as 0.2.0.
 
-### 2 — TFT server ⏳
+### 2 — TFT server ✅
 
 The first real test of whether the core generalizes to a second game. TFT reuses LoL's
 platform/region host schemes, so it exercises the module template and the shared libraries without
 forcing a routing abstraction.
+
+**Progress:** ✅ Complete. `tft-mcp-server` shipped with 6 bounded contexts (`account` tool-only,
+`summoner`, `league`, `match`, `status`, `analytics`) and **11** MCP tools, including a superset of
+LoL's league surface (paged tier entries, league-by-id, and the Hyper Roll rated ladder) and a
+TFT-native `tft_analytics_player_matches` (average placement, top-4 rate, most-played traits/units —
+no KDA, since TFT has none). Full offline suite green: WireMock adapter tests for summoner, league (all
+five endpoints), match, and status; port-fake service tests including `AnalyticsService`'s
+zero-games and single-game/all-top-4 edge cases; `HexagonalArchitectureTest` (reusing the shared
+`HexagonRules`) plus a negative control; `McpToolInventoryTest` asserting the 11-tool inventory.
+Released as `tft-mcp-server 0.1.0`.
+
+**The falsifiable criterion held.** `tft-mcp-server` shipped with **zero changes** to `riot-api-core`
+or `riot-account-core` — verified across every implementation task, including the dedicated Task 8
+ArchUnit/architecture review: no file under either library was modified to build the second server.
+The only non-Java changes were net-new Python tooling in `eval/` (generalizing the live-eval harness
+to N servers), which the spec explicitly carves out as not counting against this criterion. This is
+the program's first real evidence the sub-project-0/1a core generalizes, not just a repeated claim.
+
+Two standing gates remain **pending / user-owed**, carried forward rather than claimed passed, exactly
+as for 1a/1b: the live transport handshake (stdio + sse) and TFT-v1 endpoint-path verification against
+the live Riot developer portal (continuously re-verified post-merge by the live eval harness once its
+TFT generalization lands) — both require a live `RIOT_API_KEY` and a human in the loop.
 
 ### 3 — Valorant server ⏳
 
