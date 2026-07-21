@@ -14,7 +14,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.ai:spring-ai-starter-mcp-server-webmvc'
 
-	testImplementation 'org.wiremock:wiremock-standalone:3.9.2'
+	testImplementation 'org.wiremock:wiremock-standalone:3.13.2'
 	testImplementation testFixtures(project(':riot-api-core'))
 	testImplementation testFixtures(project(':riot-account-core'))
 }
