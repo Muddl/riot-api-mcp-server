@@ -4,7 +4,7 @@ Agent-driven [mcp-eval](https://mcp-eval.ai/) tests that drive the built `lol-mc
 `tft-mcp-server` jars against the **real Riot API** over stdio and sse. Both servers are evaluated
 from this one harness — `mcpeval.stdio.yaml` / `mcpeval.sse.yaml` each define a `lol_server` and a
 `tft_server` MCP server plus a matching `riot_tester` / `tft_tester` agent, and each test file pins
-itself to the right agent with `@with_agent(...)`. Post-merge only; never gates a merge. Full guide:
+itself to the right agent with `@with_agent(...)`. Run on demand (`workflow_dispatch`); never gates a merge. Full guide:
 [`docs/knowledge/patterns/live-eval-harness.md`](../docs/knowledge/patterns/live-eval-harness.md);
 rationale: [`ADR-0012`](../docs/knowledge/decisions/ADR-0012-live-eval-harness.md).
 

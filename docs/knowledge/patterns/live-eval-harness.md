@@ -1,8 +1,9 @@
 # Run and extend the live eval harness
 
 The live suite lives in [`eval/`](../../../eval/README.md): agent-driven mcp-eval tests that drive
-the built `lol-mcp-server` jar against the **real Riot API** over stdio and sse. It runs post-merge
-on CI (`.github/workflows/live-eval.yml`) and never gates a merge. See
+the built `lol-mcp-server` and `tft-mcp-server` jars against the **real Riot API** over stdio and
+sse. It runs on demand via `workflow_dispatch` (`.github/workflows/live-eval.yml`) — Actions tab or
+`gh workflow run live-eval.yml [--ref <branch>]` — and never gates a merge. See
 [ADR-0012](../decisions/ADR-0012-live-eval-harness.md) for why.
 
 ## Run locally

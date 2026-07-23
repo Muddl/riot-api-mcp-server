@@ -22,8 +22,11 @@ run post-merge on CI over both transports against the real Riot API.
 - **Behavior canaries.** Negative tests assert that Riot's error/edge behaviors our adapters depend
   on (unknown-PUUID not-found, account-not-found, spectator `404 → null`) still hold. These are the
   only tests that catch undocumented Riot drift.
-- **Post-merge, non-blocking.** Live + LLM variance belongs on an informational signal, not a
-  blocking pre-merge gate. `ci.yml` remains the pre-merge gate and stays offline.
+- **On-demand, non-blocking.** Live + LLM variance belongs on an informational signal, not a
+  blocking pre-merge gate. `ci.yml` remains the pre-merge gate and stays offline. Run via
+  `workflow_dispatch` (Actions tab or `gh workflow run`) rather than on every master push — real
+  Riot calls (rate limits, transient 5xx) and per-run Anthropic spend make automatic runs wasteful;
+  dispatch after a server/eval change or when validating a branch.
 - **Token isolation.** The workflow reads only `ANTHROPIC_API_KEY` for the LLM; it never references
   `CLAUDE_CODE_OAUTH_TOKEN` (a separate bucket for `claude-code-action`). Absent key ⇒ green skip.
 - **One Riot dev key per server (multi-game).** Each Riot game is a separate developer product with

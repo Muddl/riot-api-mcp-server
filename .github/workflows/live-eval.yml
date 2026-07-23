@@ -1,15 +1,10 @@
 name: Live Eval
 
 on:
-  push:
-    branches: [ "master" ]
-    # Docs / KB / skills / agents don't change server behavior — skip the metered
-    # eval for those merges (e.g. the weekly housekeeping PR). Code, build files,
-    # the eval harness, and workflow changes still trigger a full run on both transports.
-    paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
-      - '.claude/**'
+  # Manual only. Live evals hit the real Riot API (rate limits + transient 5xx) and
+  # spend Anthropic tokens on every run, so they are dispatched on demand rather than
+  # automatically on each master push. Run from the Actions tab or with
+  # `gh workflow run live-eval.yml` (add `--ref <branch>` to eval a branch pre-merge).
   workflow_dispatch:
 
 # Least-privilege; this workflow only reads the repo and writes its own artifacts.
