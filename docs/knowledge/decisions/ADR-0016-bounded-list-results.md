@@ -43,9 +43,11 @@ domain`) hold.
 
 **Ordering:** Riot does not guarantee entry order, so entries are sorted before slicing —
 `leaguePoints` descending for the two league tools, challenge `percentile` ascending (rarer first)
-for challenges — with a null-safe comparator in both cases (TFT's `leaguePoints` is a boxed
-`Integer` and Riot may omit it; challenge `percentile` is absent on challenges a player has not
-progressed on). Without sorting first, "top N" is meaningless and a discovered eval subject would
+for challenges. Two of the three sorts need a **null-safe** comparator and one does not, and the
+difference is the field's declared type: TFT's `leaguePoints` is a boxed `Integer` that Riot may
+omit, and challenge `percentile` is absent on challenges a player has not progressed on, so both
+sort nulls last; LoL's `leaguePoints` is a primitive `int`, so `comparingInt` is safe there and no
+null handling is needed. Without sorting first, "top N" is meaningless and a discovered eval subject would
 change between runs of the same test.
 
 ## Consequences
