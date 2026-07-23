@@ -93,6 +93,17 @@ class LeagueServiceTest {
     }
 
     @Test
+    void getApexLeague_nullEntries_yieldsEmptyListAndZeroTotal() {
+        port.putApex(
+                ApexTier.CHALLENGER, LeagueList.builder().tier("CHALLENGER").build());
+
+        LeagueList result = service.getApexLeague(PLATFORM, ApexTier.CHALLENGER, null);
+
+        assertThat(result.getEntries()).isEmpty();
+        assertThat(result.getTotalEntries()).isZero();
+    }
+
+    @Test
     void getApexLeague_nullLeaguePoints_sortLastWithoutThrowing() {
         // TFT's LeagueItem.leaguePoints is a boxed Integer and Riot may omit it —
         // a comparingInt comparator would NPE here.
@@ -134,6 +145,16 @@ class LeagueServiceTest {
         assertThat(result.getTotalEntries()).isEqualTo(300);
         // Original ascending order is preserved — league-by-id is out of scope for the bound.
         assertThat(result.getEntries().get(0).getLeaguePoints()).isZero();
+    }
+
+    @Test
+    void getLeagueById_nullEntries_stampsZeroTotal() {
+        port.putLeague("league-uuid", LeagueList.builder().tier("CHALLENGER").build());
+
+        LeagueList result = service.getLeagueById(PLATFORM, "league-uuid");
+
+        assertThat(result.getEntries()).isNull();
+        assertThat(result.getTotalEntries()).isZero();
     }
 
     @Test
