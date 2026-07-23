@@ -20,7 +20,7 @@ public class ChallengesTool {
     @McpTool(
             name = "lol_challenges_by_player",
             description =
-                    "Get a League of Legends player's challenge standing: total and per-category points, and per-challenge progress. Per-challenge progress returns the 10 strongest challenges unless a larger count is requested; totals and category points are always complete.")
+                    "Get a League of Legends player's challenge standing: total and per-category points, and per-challenge progress. Per-challenge progress returns the lowest-percentile challenges first, capped at 10 unless a larger count is requested; totals and category points are always complete.")
     public ChallengesPlayerData getChallengesByPlayer(
             @McpToolParam(description = "The Riot platform, e.g. NA1, EUW1", required = true) String platformStr,
             @McpToolParam(description = "The player as a Riot ID (GameName#TAG) or a raw PUUID", required = true)

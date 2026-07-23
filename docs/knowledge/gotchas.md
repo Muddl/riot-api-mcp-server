@@ -296,3 +296,16 @@ dependency, not as "install Rust." This cost two subagents time on this project 
 found. If the venv is already built (e.g. by CI, or by a prior successful `uv sync` elsewhere), use
 `uv run --no-sync` against it instead of re-resolving; only run a full `uv sync` on a box that either
 already has a Rust toolchain or reliably resolves to prebuilt wheels.
+
+## Open question: does a lower challenge `percentile` mean rarer/stronger, or the opposite?
+
+`ChallengesService.boundChallenges` sorts `lol_challenges_by_player`'s per-challenge list by
+`percentile` **ascending**, on the assumption that a lower percentile is a rarer, more impressive
+achievement — so the capped top-10 view is framed as the player's "strongest" challenges. This
+assumption has **not been verified** against a live Riot response or the developer portal. The unit
+tests only prove the comparator sorts ascending as coded; nothing in the suite establishes which
+direction actually corresponds to "rarer" in Riot's data. If the semantics are inverted, the tool
+silently returns the player's ten *weakest* challenges instead, and every existing test still passes
+— this is not something offline tests can catch, only a live response or the portal docs can settle
+it. If you resolve this, the fix (if needed) is a one-line comparator direction change plus updating
+`ChallengesTool`'s description; no architectural change. See ADR-0016's ordering section.
