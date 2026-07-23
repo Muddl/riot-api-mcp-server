@@ -150,7 +150,17 @@ jobs:
               echo "::error::eval/smoke.txt has no runnable specs — refusing to fall through to the full suite."
               exit 1
             fi
-            echo "EVAL_SCOPE=transport smoke set (${#SPECS[@]} tasks)" >> "$GITHUB_ENV"
+            # Fail loudly on a *stale* spec too: a renamed test function, a moved file, or
+            # smoke.txt recommitted with CRLF (stripped by .gitattributes going forward, but
+            # guard anyway) would leave the array non-empty while mcp-eval silently skips the
+            # unresolvable paths — the leg would run ~zero tasks, exit green, and the summary
+            # would still claim full smoke coverage.
+            for s in "${SPECS[@]}"; do
+              f="${s%%::*}"; fn="${s##*::}"
+              [ -f "$f" ] || { echo "::error::stale smoke spec, no such file: $s"; exit 1; }
+              grep -q "def ${fn}(" "$f" || { echo "::error::stale smoke spec, no such function: $s"; exit 1; }
+            done
+            echo "EVAL_SCOPE=transport smoke set (${#SPECS[@]} specs)" >> "$GITHUB_ENV"
           else
             SPECS=(tests/)
             echo "EVAL_SCOPE=full suite" >> "$GITHUB_ENV"
@@ -172,7 +182,7 @@ jobs:
             if [ "${EVAL_EXIT:-1}" = "0" ]; then
               echo "✅ All live evals passed."
             else
-              echo "❌ Live evals reported failures (exit ${EVAL_EXIT})."
+              echo "❌ Live evals reported failures (exit ${EVAL_EXIT:-unset — guard failed before mcp-eval ran})."
               echo ""
               echo "Triage: a **CANARY** failure means Riot's live behavior may have changed — investigate the adapter's assumption before editing the test. A non-canary failure is a regression. Rate-limit / network / Riot 5xx errors are infra flakes — re-run the workflow."
             fi
