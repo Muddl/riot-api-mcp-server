@@ -8,8 +8,10 @@ import com.muddl.riot.account.identity.PlayerIdentityResolver;
 import com.muddl.riot.core.enums.RiotApiPlatformUri;
 import com.muddl.riot.lol.league.domain.ApexTier;
 import com.muddl.riot.lol.league.domain.LeagueEntry;
+import com.muddl.riot.lol.league.domain.LeagueItem;
 import com.muddl.riot.lol.league.domain.LeagueList;
 import java.util.List;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.Test;
 
 class LeagueServiceTest {
@@ -43,12 +45,91 @@ class LeagueServiceTest {
                 .isEmpty();
     }
 
-    @Test
-    void getApexLeague_delegatesToPort() {
-        LeagueList expected = LeagueList.builder().tier("CHALLENGER").build();
-        leaguePort.putApex(ApexTier.CHALLENGER, "RANKED_SOLO_5x5", expected);
+    private static LeagueList ladderOf(int size) {
+        // leaguePoints ascending with index, so the *last* entries are the top ones —
+        // a service that slices without sorting will fail these tests.
+        return LeagueList.builder()
+                .tier("CHALLENGER")
+                .queue("RANKED_SOLO_5x5")
+                .entries(IntStream.range(0, size)
+                        .mapToObj(i -> LeagueItem.builder()
+                                .puuid("puuid-" + i)
+                                .leaguePoints(i)
+                                .build())
+                        .toList())
+                .build();
+    }
 
-        assertThat(leagueService.getApexLeague(PLATFORM, ApexTier.CHALLENGER, "RANKED_SOLO_5x5"))
-                .isSameAs(expected);
+    @Test
+    void getApexLeague_capsAtTen_whenCountIsNull() {
+        leaguePort.putApex(ApexTier.CHALLENGER, "RANKED_SOLO_5x5", ladderOf(300));
+
+        LeagueList result = leagueService.getApexLeague(PLATFORM, ApexTier.CHALLENGER, "RANKED_SOLO_5x5", null);
+
+        assertThat(result.getEntries()).hasSize(10);
+        assertThat(result.getTotalEntries()).isEqualTo(300);
+        assertThat(result.getTier()).isEqualTo("CHALLENGER");
+    }
+
+    @Test
+    void getApexLeague_sortsByLeaguePointsDescending() {
+        leaguePort.putApex(ApexTier.CHALLENGER, "RANKED_SOLO_5x5", ladderOf(300));
+
+        LeagueList result = leagueService.getApexLeague(PLATFORM, ApexTier.CHALLENGER, "RANKED_SOLO_5x5", 3);
+
+        assertThat(result.getEntries()).extracting(LeagueItem::getLeaguePoints).containsExactly(299, 298, 297);
+    }
+
+    @Test
+    void getApexLeague_honoursExplicitCount() {
+        leaguePort.putApex(ApexTier.CHALLENGER, "RANKED_SOLO_5x5", ladderOf(300));
+
+        assertThat(leagueService
+                        .getApexLeague(PLATFORM, ApexTier.CHALLENGER, "RANKED_SOLO_5x5", 50)
+                        .getEntries())
+                .hasSize(50);
+    }
+
+    @Test
+    void getApexLeague_countExceedingSize_returnsEverything() {
+        leaguePort.putApex(ApexTier.CHALLENGER, "RANKED_SOLO_5x5", ladderOf(7));
+
+        LeagueList result = leagueService.getApexLeague(PLATFORM, ApexTier.CHALLENGER, "RANKED_SOLO_5x5", 5000);
+
+        assertThat(result.getEntries()).hasSize(7);
+        assertThat(result.getTotalEntries()).isEqualTo(7);
+    }
+
+    @Test
+    void getApexLeague_zeroOrNegativeCount_clampsToDefault() {
+        leaguePort.putApex(ApexTier.CHALLENGER, "RANKED_SOLO_5x5", ladderOf(300));
+
+        assertThat(leagueService
+                        .getApexLeague(PLATFORM, ApexTier.CHALLENGER, "RANKED_SOLO_5x5", 0)
+                        .getEntries())
+                .hasSize(10);
+        assertThat(leagueService
+                        .getApexLeague(PLATFORM, ApexTier.CHALLENGER, "RANKED_SOLO_5x5", -4)
+                        .getEntries())
+                .hasSize(10);
+    }
+
+    @Test
+    void getApexLeague_nullEntries_yieldsEmptyListAndZeroTotal() {
+        leaguePort.putApex(
+                ApexTier.CHALLENGER,
+                "RANKED_SOLO_5x5",
+                LeagueList.builder().tier("CHALLENGER").build());
+
+        LeagueList result = leagueService.getApexLeague(PLATFORM, ApexTier.CHALLENGER, "RANKED_SOLO_5x5", null);
+
+        assertThat(result.getEntries()).isEmpty();
+        assertThat(result.getTotalEntries()).isZero();
+    }
+
+    @Test
+    void getApexLeague_nullLeague_returnsNull() {
+        assertThat(leagueService.getApexLeague(PLATFORM, ApexTier.MASTER, "RANKED_SOLO_5x5", null))
+                .isNull();
     }
 }

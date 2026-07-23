@@ -40,7 +40,7 @@ public class LeagueTool {
     @McpTool(
             name = "lol_league_apex_by_tier",
             description =
-                    "Get a League of Legends apex league (CHALLENGER, GRANDMASTER, or MASTER) for a ranked queue.")
+                    "Get a League of Legends apex league (CHALLENGER, GRANDMASTER, or MASTER) for a ranked queue. Returns the top 10 entries by league points unless a larger count is requested.")
     public LeagueList getApexLeague(
             @McpToolParam(description = "The Riot platform, e.g. NA1, EUW1", required = true) String platformStr,
             @McpToolParam(description = "The apex tier: CHALLENGER, GRANDMASTER, or MASTER", required = true)
@@ -48,11 +48,15 @@ public class LeagueTool {
             @McpToolParam(
                             description = "The ranked queue, e.g. RANKED_SOLO_5x5 (default) or RANKED_FLEX_SR",
                             required = false)
-                    String queueStr) {
+                    String queueStr,
+            @McpToolParam(
+                            description = "Optional: return only the top N entries by league points; defaults to 10",
+                            required = false)
+                    Integer count) {
         RiotApiPlatformUri platform = RiotApiPlatformUri.valueOf(platformStr.toUpperCase());
         ApexTier tier = ApexTier.valueOf(tierStr.toUpperCase());
         String queue = (queueStr == null || queueStr.isBlank()) ? DEFAULT_QUEUE : queueStr;
         log.info("MCP Tool - Getting {} apex league for queue {} on platform: {}", tier, queue, platform);
-        return leagueService.getApexLeague(platform, tier, queue);
+        return leagueService.getApexLeague(platform, tier, queue, count);
     }
 }

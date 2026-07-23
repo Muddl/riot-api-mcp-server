@@ -41,26 +41,37 @@ class LeagueToolTest {
     @Test
     void getApexLeague_defaultsQueue_whenNull() {
         LeagueList league = LeagueList.builder().tier("CHALLENGER").build();
-        when(mockLeagueService.getApexLeague(PLATFORM, ApexTier.CHALLENGER, "RANKED_SOLO_5x5"))
+        when(mockLeagueService.getApexLeague(PLATFORM, ApexTier.CHALLENGER, "RANKED_SOLO_5x5", null))
                 .thenReturn(league);
 
-        assertThat(leagueTool.getApexLeague("NA1", "CHALLENGER", null)).isSameAs(league);
-        verify(mockLeagueService).getApexLeague(PLATFORM, ApexTier.CHALLENGER, "RANKED_SOLO_5x5");
+        assertThat(leagueTool.getApexLeague("NA1", "CHALLENGER", null, null)).isSameAs(league);
+        verify(mockLeagueService).getApexLeague(PLATFORM, ApexTier.CHALLENGER, "RANKED_SOLO_5x5", null);
     }
 
     @Test
     void getApexLeague_honoursExplicitQueue() {
         LeagueList league = LeagueList.builder().tier("MASTER").build();
-        when(mockLeagueService.getApexLeague(PLATFORM, ApexTier.MASTER, "RANKED_FLEX_SR"))
+        when(mockLeagueService.getApexLeague(PLATFORM, ApexTier.MASTER, "RANKED_FLEX_SR", null))
                 .thenReturn(league);
 
-        assertThat(leagueTool.getApexLeague("NA1", "master", "RANKED_FLEX_SR")).isSameAs(league);
-        verify(mockLeagueService).getApexLeague(PLATFORM, ApexTier.MASTER, "RANKED_FLEX_SR");
+        assertThat(leagueTool.getApexLeague("NA1", "master", "RANKED_FLEX_SR", null))
+                .isSameAs(league);
+        verify(mockLeagueService).getApexLeague(PLATFORM, ApexTier.MASTER, "RANKED_FLEX_SR", null);
+    }
+
+    @Test
+    void getApexLeague_passesCountThrough() {
+        LeagueList league = LeagueList.builder().tier("CHALLENGER").build();
+        when(mockLeagueService.getApexLeague(PLATFORM, ApexTier.CHALLENGER, "RANKED_SOLO_5x5", 3))
+                .thenReturn(league);
+
+        assertThat(leagueTool.getApexLeague("NA1", "CHALLENGER", null, 3)).isSameAs(league);
+        verify(mockLeagueService).getApexLeague(PLATFORM, ApexTier.CHALLENGER, "RANKED_SOLO_5x5", 3);
     }
 
     @Test
     void getApexLeague_invalidTier_throws() {
-        assertThatThrownBy(() -> leagueTool.getApexLeague("NA1", "DIAMOND", null))
+        assertThatThrownBy(() -> leagueTool.getApexLeague("NA1", "DIAMOND", null, null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("No enum constant");
     }
