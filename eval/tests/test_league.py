@@ -8,7 +8,9 @@ from mcp_eval import task, Expect
 async def test_apex_challenger(agent, session):
     response = await agent.generate_str(
         "Get the CHALLENGER apex league for the RANKED_SOLO_5x5 queue on NA1. "
-        "How many entries does it contain, and name one player in it?"
+        "The tool caps the entries it returns, so report the total number of "
+        "players in the league (the totalEntries field), and name one player "
+        "from the entries you received."
     )
     await session.assert_that(
         Expect.tools.was_called("lol_league_apex_by_tier"),
@@ -17,17 +19,20 @@ async def test_apex_challenger(agent, session):
     await session.assert_that(
         Expect.judge.llm(
             rubric=(
-                "The answer reports a CHALLENGER league with a non-zero number "
-                "of entries and identifies at least one entry in it. A PUUID, "
-                "summoner id, or LP/rank is sufficient identification — Riot no "
-                "longer exposes human-readable summoner names in league entries, "
+                "The answer reports a CHALLENGER league whose total size is well "
+                "above the number of entries actually returned — a real ladder has "
+                "on the order of hundreds of players, so a reported total of only "
+                "about ten means the truncated list was mistaken for the whole "
+                "league and must fail. It also identifies at least one entry. A "
+                "PUUID, summoner id, or LP/rank is sufficient identification — Riot "
+                "no longer exposes human-readable summoner names in league entries, "
                 "so do not require a display name. It does not report an error or "
                 "an empty league."
             ),
             min_score=0.7,
         ),
         response=response,
-        name="apex_populated",
+        name="apex_reports_true_ladder_size",
     )
 
 
