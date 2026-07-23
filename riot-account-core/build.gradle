@@ -15,6 +15,6 @@ dependencies {
 	// appears in it. Version is managed by the Spring Boot BOM. See ADR-0008.
 	implementation 'com.github.ben-manes.caffeine:caffeine'
 
-	testImplementation 'org.wiremock:wiremock-standalone:3.9.2'
+	testImplementation 'org.wiremock:wiremock-standalone:3.13.2'
 	testImplementation testFixtures(project(':riot-api-core'))
 }
