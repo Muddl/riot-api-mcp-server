@@ -1,0 +1,19 @@
+# Transport smoke set — run on the sse leg instead of the full suite.
+#
+# These four tasks prove the *transport wiring*, not the tool logic: the stdio
+# leg runs the full suite against the same jars, so anything below the transport
+# layer is already covered there. Keep this list small — every entry is paid for
+# on every dispatch. See ADR-0017.
+#
+# One "file.py::function" spec per line; blank lines and # comments are ignored.
+
+# sse handshake and tool discovery
+tests/test_handshake.py::test_lists_tools
+
+# a tool round-trip on each server (the two run on different ports)
+tests/test_status.py::test_status_platform
+tests/test_tft_status.py::test_tft_status_platform
+
+# errors must surface through the transport — Spring AI's MCP layer only reports
+# a generic "Error invoking method" over sse, so this is the leg's weak spot
+tests/test_canaries.py::test_invalid_platform

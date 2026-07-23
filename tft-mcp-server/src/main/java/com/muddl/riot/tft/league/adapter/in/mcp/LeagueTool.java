@@ -37,15 +37,20 @@ public class LeagueTool {
 
     @McpTool(
             name = "tft_league_apex_by_tier",
-            description = "Get a Teamfight Tactics apex league: CHALLENGER, GRANDMASTER, or MASTER.")
+            description =
+                    "Get a Teamfight Tactics apex league: CHALLENGER, GRANDMASTER, or MASTER. Returns the top 10 entries by league points unless a larger count is requested.")
     public LeagueList getApexLeague(
             @McpToolParam(description = "The Riot platform, e.g. NA1, EUW1", required = true) String platformStr,
             @McpToolParam(description = "The apex tier: CHALLENGER, GRANDMASTER, or MASTER", required = true)
-                    String tierStr) {
+                    String tierStr,
+            @McpToolParam(
+                            description = "Optional: return only the top N entries by league points; defaults to 10",
+                            required = false)
+                    Integer count) {
         RiotApiPlatformUri platform = RiotApiPlatformUri.valueOf(platformStr.toUpperCase());
         ApexTier tier = ApexTier.valueOf(tierStr.toUpperCase());
         log.info("MCP Tool - Getting TFT {} apex league on platform: {}", tier, platform);
-        return leagueService.getApexLeague(platform, tier);
+        return leagueService.getApexLeague(platform, tier, count);
     }
 
     @McpTool(

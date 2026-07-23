@@ -6,6 +6,11 @@ sse. It runs on demand via `workflow_dispatch` (`.github/workflows/live-eval.yml
 `gh workflow run live-eval.yml [--ref <branch>]` — and never gates a merge. See
 [ADR-0012](../decisions/ADR-0012-live-eval-harness.md) for why.
 
+The two legs are not scoped the same: `stdio` runs the **full suite** (`eval/tests/`); `sse` runs
+only the four-task transport smoke set in `eval/smoke.txt` (handshake/discovery, one round-trip per
+server, error propagation). See [ADR-0017](../decisions/ADR-0017-transport-scoped-live-eval.md) for
+why, and add to `smoke.txt` only when a new scenario proves something transport-specific.
+
 ## Run locally
 
 Prerequisites: `uv`, an `ANTHROPIC_API_KEY`, and **one Riot dev key per server** — each game's Riot
@@ -45,6 +50,22 @@ failing run by outcome class:
 | infra-flake | rate-limit / network / Riot 5xx | re-run the workflow |
 | regression | non-canary assertion failed | a change broke a tool — fix it |
 | canary-drift | a `CANARY:` task failed | investigate a Riot behavior change *before* editing the test |
+| stale smoke set | a spec in `eval/smoke.txt` no longer resolves (renamed test/function) — `mcp-eval` prints `Skipping missing path` and the `sse` leg silently runs fewer tasks | fix or remove the stale spec in `smoke.txt` |
+
+## Measure the cost
+
+Report `cost_estimate` is unreliable — see
+[the gotcha](../gotchas.md#mcp-evals-cost_estimate-understates-the-bill-by-2-and-omits-judge-tokens).
+Get the real per-run token spend and pricing from the raw report instead:
+
+```bash
+cd eval && uv run python tools/report-cost.py test-reports/stdio.json
+# or both legs together:
+cd eval && uv run python tools/report-cost.py test-reports/stdio.json test-reports/sse.json
+```
+
+This prints per-test and per-tool token tables plus a total priced at Claude Haiku 4.5's real rates
+($1.00/MTok input, $5.00/MTok output) — the figures behind [ADR-0016](../decisions/ADR-0016-bounded-list-results.md).
 
 ## Add coverage
 

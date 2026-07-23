@@ -28,15 +28,24 @@ class ChallengesToolTest {
     @Test
     void getChallengesByPlayer_passesPlatformAndPlayerThrough() {
         ChallengesPlayerData data = ChallengesPlayerData.builder().build();
-        when(mockService.getChallengesByPlayer(PLATFORM, "Faker#KR1")).thenReturn(data);
+        when(mockService.getChallengesByPlayer(PLATFORM, "Faker#KR1", null)).thenReturn(data);
 
-        assertThat(tool.getChallengesByPlayer("NA1", "Faker#KR1")).isSameAs(data);
-        verify(mockService).getChallengesByPlayer(PLATFORM, "Faker#KR1");
+        assertThat(tool.getChallengesByPlayer("NA1", "Faker#KR1", null)).isSameAs(data);
+        verify(mockService).getChallengesByPlayer(PLATFORM, "Faker#KR1", null);
+    }
+
+    @Test
+    void getChallengesByPlayer_passesCountThrough() {
+        ChallengesPlayerData data = ChallengesPlayerData.builder().build();
+        when(mockService.getChallengesByPlayer(PLATFORM, "Faker#KR1", 5)).thenReturn(data);
+
+        assertThat(tool.getChallengesByPlayer("NA1", "Faker#KR1", 5)).isSameAs(data);
+        verify(mockService).getChallengesByPlayer(PLATFORM, "Faker#KR1", 5);
     }
 
     @Test
     void getChallengesByPlayer_invalidPlatform_throws() {
-        assertThatThrownBy(() -> tool.getChallengesByPlayer("INVALID", "Faker#KR1"))
+        assertThatThrownBy(() -> tool.getChallengesByPlayer("INVALID", "Faker#KR1", null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("No enum constant");
     }

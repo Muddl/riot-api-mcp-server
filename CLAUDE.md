@@ -74,7 +74,10 @@ touching stdio logging. Full detail and diagrams: [ARCHITECTURE.md](ARCHITECTURE
 
 - **DTOs:** `@Data @Builder @NoArgsConstructor @AllArgsConstructor` + `@JsonIgnoreProperties(ignoreUnknown = true)`.
   Nested `@Builder` static classes also need `@NoArgsConstructor @AllArgsConstructor` (see
-  `gotchas.md`).
+  `gotchas.md`). Adding a new primitive field to an existing Riot-mapped DTO needs
+  `@NoArgsConstructor(onConstructor_ = @JsonCreator)` instead, or deserialization breaks on payloads
+  missing that field — see the gotcha "Adding a primitive field to an existing Riot-mapped DTO breaks
+  its adapter test".
 - **Ports:** interfaces in `<context>.application.port`, named `<Context>Port`. Services depend on
   the port, never on a `RestClient`.
 - **Tools:** `@McpTool` methods in `<context>.adapter.in.mcp` with stable snake_case names; delegate

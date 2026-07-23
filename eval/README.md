@@ -36,3 +36,28 @@ each server with its own key on its own port, and use `mcpeval.sse.yaml` — see
 
 `ANTHROPIC_API_KEY` is required (agent + judge). It is **separate** from `CLAUDE_CODE_OAUTH_TOKEN`,
 which this harness never uses. Reports land in `test-reports/`.
+
+## Transport scope: `smoke.txt`
+
+CI does not run the same coverage on both legs. `stdio` runs the full suite (`tests/`); `sse` runs
+only the four-task set listed in [`smoke.txt`](smoke.txt) — one spec per line
+(`file.py::function_name`), `#` comments and blank lines ignored. The `sse` leg proves the transport
+wiring (handshake/discovery, one tool round-trip per server, error propagation); tool-logic coverage
+comes entirely from `stdio`. See
+[ADR-0017](../docs/knowledge/decisions/ADR-0017-transport-scoped-live-eval.md).
+
+Add a test to `smoke.txt` only if it proves something transport-specific — a new server's handshake,
+a new round-trip, error propagation. A tool-logic scenario belongs only in `tests/`; every line in
+`smoke.txt` is paid for on every `sse` dispatch.
+
+## Measure the cost
+
+`eval/tools/report-cost.py` summarises a report's token spend and cost, priced at Claude Haiku 4.5's
+actual rates rather than the report's own (understated) `cost_estimate` field. That fixes the rate
+only — both `cost_estimate` and this script read agent-loop metrics that omit separate LLM-judge
+token spend, which remains unmeasured either way:
+
+```bash
+uv run python tools/report-cost.py test-reports/stdio.json
+uv run python tools/report-cost.py test-reports/stdio.json test-reports/sse.json
+```

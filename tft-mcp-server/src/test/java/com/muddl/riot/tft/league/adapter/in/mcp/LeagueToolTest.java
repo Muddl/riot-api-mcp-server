@@ -62,33 +62,43 @@ class LeagueToolTest {
     @Test
     void getApexLeague_passesPlatformAndTierThrough() {
         LeagueList list = LeagueList.builder().tier("CHALLENGER").build();
-        when(mockLeagueService.getApexLeague(RiotApiPlatformUri.NA1, ApexTier.CHALLENGER))
+        when(mockLeagueService.getApexLeague(RiotApiPlatformUri.NA1, ApexTier.CHALLENGER, null))
                 .thenReturn(list);
 
-        assertThat(leagueTool.getApexLeague("NA1", "CHALLENGER")).isSameAs(list);
-        verify(mockLeagueService).getApexLeague(RiotApiPlatformUri.NA1, ApexTier.CHALLENGER);
+        assertThat(leagueTool.getApexLeague("NA1", "CHALLENGER", null)).isSameAs(list);
+        verify(mockLeagueService).getApexLeague(RiotApiPlatformUri.NA1, ApexTier.CHALLENGER, null);
     }
 
     @Test
     void getApexLeague_normalizesCaseForPlatformAndTier() {
         LeagueList list = LeagueList.builder().tier("MASTER").build();
-        when(mockLeagueService.getApexLeague(RiotApiPlatformUri.NA1, ApexTier.MASTER))
+        when(mockLeagueService.getApexLeague(RiotApiPlatformUri.NA1, ApexTier.MASTER, null))
                 .thenReturn(list);
 
-        assertThat(leagueTool.getApexLeague("na1", "master")).isSameAs(list);
-        verify(mockLeagueService).getApexLeague(RiotApiPlatformUri.NA1, ApexTier.MASTER);
+        assertThat(leagueTool.getApexLeague("na1", "master", null)).isSameAs(list);
+        verify(mockLeagueService).getApexLeague(RiotApiPlatformUri.NA1, ApexTier.MASTER, null);
+    }
+
+    @Test
+    void getApexLeague_passesCountThrough() {
+        LeagueList list = LeagueList.builder().tier("CHALLENGER").build();
+        when(mockLeagueService.getApexLeague(RiotApiPlatformUri.NA1, ApexTier.CHALLENGER, 3))
+                .thenReturn(list);
+
+        assertThat(leagueTool.getApexLeague("NA1", "CHALLENGER", 3)).isSameAs(list);
+        verify(mockLeagueService).getApexLeague(RiotApiPlatformUri.NA1, ApexTier.CHALLENGER, 3);
     }
 
     @Test
     void getApexLeague_invalidPlatform_throws() {
-        assertThatThrownBy(() -> leagueTool.getApexLeague("INVALID", "CHALLENGER"))
+        assertThatThrownBy(() -> leagueTool.getApexLeague("INVALID", "CHALLENGER", null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("No enum constant");
     }
 
     @Test
     void getApexLeague_invalidTier_throws() {
-        assertThatThrownBy(() -> leagueTool.getApexLeague("NA1", "BRONZE"))
+        assertThatThrownBy(() -> leagueTool.getApexLeague("NA1", "BRONZE", null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("No enum constant");
     }

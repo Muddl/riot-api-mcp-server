@@ -6,6 +6,20 @@ Scoped to this module. Repo-wide changes live in the [root CHANGELOG](../CHANGEL
 libraries keep their own. Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/);
 versioning: [SemVer](https://semver.org/spec/v2.0.0.html), pre-1.0 (breaking → minor).
 
+## [0.2.0] - unreleased
+
+Live-eval token cost reduction, mirroring the `lol-mcp-server` change. See
+[the design spec](../docs/superpowers/specs/2026-07-23-live-eval-token-cost-design.md) and
+[ADR-0016](../docs/knowledge/decisions/ADR-0016-bounded-list-results.md).
+
+### Changed
+- **Breaking:** `tft_league_apex_by_tier` now returns only the **top 10 entries by league points**
+  by default (previously the entire apex ladder). An optional `count` param requests more; the
+  response now stamps `totalEntries` with the pre-truncation ladder size.
+- `tft_league_by_id` now stamps `totalEntries` with its entry count, for response-shape consistency
+  with the apex tools. It remains deliberately **unbounded and unsorted** — no `count` param, no
+  reordering.
+
 ## [0.1.0] - 2026-07-20
 
 Sub-project 2 — the first `tft-mcp-server` release, and the program's first proof that

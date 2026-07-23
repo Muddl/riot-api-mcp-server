@@ -138,8 +138,35 @@ jobs:
           # the file. Restricted to our vars so nothing else is touched.
           envsubst '${LOL_MCP_JAR} ${TFT_MCP_JAR} ${LOL_DEV_API_KEY} ${TFT_DEV_API_KEY} ${LOL_MCP_SSE_URL} ${TFT_MCP_SSE_URL}' \
             < "mcpeval.${{ matrix.transport }}.yaml" > mcpeval.yaml
+          # stdio carries the full suite; sse runs only the transport smoke set,
+          # since both legs otherwise pay for an identical result (ADR-0017).
+          # mcp-eval has no -k/marker selection, so the subset is explicit paths.
+          if [ "${{ matrix.transport }}" = "sse" ]; then
+            mapfile -t SPECS < <(grep -vE '^\s*(#|$)' smoke.txt)
+            # Fail loudly on an empty smoke set: mcp-eval's test_dir argument defaults
+            # to "tests", so passing no specs would silently run the FULL suite on this
+            # leg while the summary still claimed a 0-task smoke run.
+            if [ "${#SPECS[@]}" -eq 0 ]; then
+              echo "::error::eval/smoke.txt has no runnable specs — refusing to fall through to the full suite."
+              exit 1
+            fi
+            # Fail loudly on a *stale* spec too: a renamed test function, a moved file, or
+            # smoke.txt recommitted with CRLF (stripped by .gitattributes going forward, but
+            # guard anyway) would leave the array non-empty while mcp-eval silently skips the
+            # unresolvable paths — the leg would run ~zero tasks, exit green, and the summary
+            # would still claim full smoke coverage.
+            for s in "${SPECS[@]}"; do
+              f="${s%%::*}"; fn="${s##*::}"
+              [ -f "$f" ] || { echo "::error::stale smoke spec, no such file: $s"; exit 1; }
+              grep -q "def ${fn}(" "$f" || { echo "::error::stale smoke spec, no such function: $s"; exit 1; }
+            done
+            echo "EVAL_SCOPE=transport smoke set (${#SPECS[@]} specs)" >> "$GITHUB_ENV"
+          else
+            SPECS=(tests/)
+            echo "EVAL_SCOPE=full suite" >> "$GITHUB_ENV"
+          fi
           set +e
-          uv run mcp-eval run tests/ -v \
+          uv run mcp-eval run "${SPECS[@]}" -v \
             --json "test-reports/${{ matrix.transport }}.json" \
             --html "test-reports/${{ matrix.transport }}.html" \
             --markdown "test-reports/${{ matrix.transport }}.md"
@@ -151,13 +178,17 @@ jobs:
         working-directory: eval
         run: |
           {
-            echo "## Live eval — ${{ matrix.transport }}"
+            echo "## Live eval — ${{ matrix.transport }} (${EVAL_SCOPE:-unknown scope})"
             if [ "${EVAL_EXIT:-1}" = "0" ]; then
               echo "✅ All live evals passed."
             else
-              echo "❌ Live evals reported failures (exit ${EVAL_EXIT})."
+              echo "❌ Live evals reported failures (exit ${EVAL_EXIT:-unset — guard failed before mcp-eval ran})."
               echo ""
               echo "Triage: a **CANARY** failure means Riot's live behavior may have changed — investigate the adapter's assumption before editing the test. A non-canary failure is a regression. Rate-limit / network / Riot 5xx errors are infra flakes — re-run the workflow."
+            fi
+            if [ "${{ matrix.transport }}" = "sse" ]; then
+              echo ""
+              echo "> This leg runs the **transport smoke set** (\`eval/smoke.txt\`), not the full suite. Tool-logic coverage comes from the stdio leg."
             fi
             echo ""
             echo "See the uploaded \`mcpeval-reports-${{ matrix.transport }}\` artifact (Markdown/HTML/JSON) for per-test detail."

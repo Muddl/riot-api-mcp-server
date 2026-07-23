@@ -20,13 +20,18 @@ public class ChallengesTool {
     @McpTool(
             name = "lol_challenges_by_player",
             description =
-                    "Get a League of Legends player's challenge standing: total and per-category points, and per-challenge progress.")
+                    "Get a League of Legends player's challenge standing: total and per-category points, and per-challenge progress. Per-challenge progress returns the lowest-percentile challenges first, capped at 10 unless a larger count is requested; totals and category points are always complete.")
     public ChallengesPlayerData getChallengesByPlayer(
             @McpToolParam(description = "The Riot platform, e.g. NA1, EUW1", required = true) String platformStr,
             @McpToolParam(description = "The player as a Riot ID (GameName#TAG) or a raw PUUID", required = true)
-                    String player) {
+                    String player,
+            @McpToolParam(
+                            description =
+                                    "Optional: return only the top N individual challenges by percentile; defaults to 10",
+                            required = false)
+                    Integer count) {
         RiotApiPlatformUri platform = RiotApiPlatformUri.valueOf(platformStr.toUpperCase());
         log.info("MCP Tool - Getting challenge data for a player on platform: {}", platform);
-        return challengesService.getChallengesByPlayer(platform, player);
+        return challengesService.getChallengesByPlayer(platform, player, count);
     }
 }

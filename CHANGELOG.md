@@ -3,7 +3,8 @@
 Repo-wide changes only: build tooling, CI, the module graph, and root documentation.
 
 **Per-module history lives with the module** — [`riot-api-core`](riot-api-core/CHANGELOG.md),
-[`riot-account-core`](riot-account-core/CHANGELOG.md), [`lol-mcp-server`](lol-mcp-server/CHANGELOG.md).
+[`riot-account-core`](riot-account-core/CHANGELOG.md), [`lol-mcp-server`](lol-mcp-server/CHANGELOG.md),
+[`tft-mcp-server`](tft-mcp-server/CHANGELOG.md).
 Each is independently versioned and tagged (`<module>/v<semver>`); see
 [ADR-0010](docs/knowledge/decisions/ADR-0010-versioning-and-coordinates.md).
 
@@ -13,6 +14,30 @@ covers only changes that bump no module.
 Entries below predate the per-module split and are kept as the repository's history to that point.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+
+## Live-eval token cost reduction
+
+Repo-wide changes only — the two MCP tool behavior changes that reduce per-call token cost are
+logged in [`lol-mcp-server`](lol-mcp-server/CHANGELOG.md)'s and
+[`tft-mcp-server`](tft-mcp-server/CHANGELOG.md)'s own changelogs (they bump those modules); see
+[ADR-0016](docs/knowledge/decisions/ADR-0016-bounded-list-results.md) for the rationale shared by
+both.
+
+### Added
+- **`eval/smoke.txt`** — an explicit, small transport smoke set that the `sse` leg of
+  `live-eval.yml` now runs instead of the full suite, since both legs previously exercised identical
+  tool logic for no added signal. The `stdio` leg is unchanged (full suite). See
+  [ADR-0017](docs/knowledge/decisions/ADR-0017-transport-scoped-live-eval.md).
+- **`eval/tools/report-cost.py`** — sums a live-eval JSON report's real token counts and prices them
+  at Claude Haiku 4.5's actual rates, since the report's own `cost_estimate` field prices at a
+  ~$0.50/MTok fallback rate that understates the bill by roughly 2×. It reads the same judge-blind
+  raw metrics `cost_estimate` does, so LLM-judge tokens remain unmeasured by either number (see
+  `docs/knowledge/gotchas.md`).
+
+### Changed
+- The `Summarize outcome` step of `live-eval.yml` now names each leg's coverage scope (`full suite`
+  vs `transport smoke set (N tasks)`) in the job summary, so a green `sse` run is never misread as
+  full tool-logic coverage.
 
 ## sub-project 1a Plan D — per-module docs and the monorepo sanity check
 

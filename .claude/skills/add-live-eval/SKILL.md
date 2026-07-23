@@ -28,6 +28,12 @@ Read `docs/knowledge/patterns/live-eval-harness.md` and
    `cd eval && cp mcpeval.stdio.yaml mcpeval.yaml && uv run mcp-eval run tests/<file>.py -v`
    (needs `ANTHROPIC_API_KEY`, `RIOT_API_KEY`, and `LOL_MCP_JAR` — see `eval/README.md`).
 5. **Keep it under budget.** `max_concurrency` stays 1; avoid adding many high-fanout tests.
+6. **Decide whether it belongs in `eval/smoke.txt`.** The `sse` leg runs only that small transport
+   smoke set, not the full suite (ADR-0017). Add your new scenario to `smoke.txt` **only** if it
+   proves something transport-specific — a handshake/discovery check, a round-trip on a newly added
+   server, or error propagation over the wire. A tool-logic scenario does not belong there: the
+   `stdio` leg already covers tool logic, and every entry in `smoke.txt` is paid for on every
+   dispatch of the `sse` leg.
 
 ## Rules
 
@@ -35,5 +41,6 @@ Read `docs/knowledge/patterns/live-eval-harness.md` and
 - A CANARY failure means "investigate a Riot behavior change" first, not "loosen the rubric".
 - Agent-driven only — no direct-call tests here; the WireMock suite owns the deterministic contract.
 
-See [`docs/knowledge/patterns/live-eval-harness.md`](../../../docs/knowledge/patterns/live-eval-harness.md)
-and [`ADR-0012`](../../../docs/knowledge/decisions/ADR-0012-live-eval-harness.md).
+See [`docs/knowledge/patterns/live-eval-harness.md`](../../../docs/knowledge/patterns/live-eval-harness.md),
+[`ADR-0012`](../../../docs/knowledge/decisions/ADR-0012-live-eval-harness.md), and
+[`ADR-0017`](../../../docs/knowledge/decisions/ADR-0017-transport-scoped-live-eval.md).
