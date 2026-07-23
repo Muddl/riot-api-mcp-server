@@ -264,3 +264,53 @@ Per the repo's hydrate/persist protocol:
   `smoke.txt`.
 - **CHANGELOG** — the three tool behavior changes, under the affected modules.
 - **CLAUDE.md** — only if the tool-surface description needs amending; tool count is unchanged.
+
+## Measured results
+
+Post-change dispatch: run [`30027872244`](https://github.com/Muddl/riot-api-mcp-server/actions/runs/30027872244)
+on `perf/live-eval-token-cost`, 2026-07-23. Baseline: run `30011353019`. Both priced with
+`eval/tools/report-cost.py` at Claude Haiku 4.5 list rates ($1.00/MTok in, $5.00/MTok out) — not the
+report's own `cost_estimate` field, which understates by roughly 2×.
+
+### Tokens and cost
+
+| Leg | Tasks | Input | Output | Cost |
+|---|---|---|---|---|
+| `stdio` baseline | 24 | 1,250,624 | 10,246 | $1.3019 |
+| `stdio` after | 24 | 252,266 | 10,037 | $0.3025 |
+| `sse` baseline | 24 | 1,250,796 | ~10,200 | ~$1.30 |
+| `sse` after | 4 | 20,825 | 648 | $0.0241 |
+| **Combined after** | — | **273,091** | **10,685** | **$0.3265** |
+
+Input tokens fell 80% on `stdio` and 98% on `sse`. The two levers are separable: the payload bounds
+account for the `stdio` drop, and the transport smoke set for the rest of the `sse` drop.
+
+### The tool that drove it
+
+| Tool | Calls | Avg tokens/call | Total |
+|---|---|---|---|
+| `lol_league_apex_by_tier` baseline | 11 | 17,932 | 197,252 |
+| `lol_league_apex_by_tier` after | 11 | 638 | 7,018 |
+
+A 96% drop per call. Because the tool lands on turn 1 of a 3–4 iteration agent chain and its result
+is re-sent on every subsequent iteration, the saving compounds well beyond the raw payload size.
+`tft_league_apex_by_tier` (5 calls) and `lol_challenges_by_player` (1 call) now average 636 and 465
+tokens respectively.
+
+### Success criteria
+
+| Criterion | Target | Measured | Result |
+|---|---|---|---|
+| `stdio` input tokens | ≤ 300,000 | 252,266 | ✅ |
+| `sse` input tokens | ≤ 30,000 | 20,825 | ✅ |
+| Combined real cost | ≤ $0.35 | $0.3265 | ✅ |
+| `test_champion_mastery_for_discovered_player` | passes | passes on `stdio` | ✅ |
+| Any other task | no **new** failures | none | ✅ |
+
+The `sse` leg was green on all four smoke tasks, and its job summary correctly reported
+`transport smoke set (4 tasks)` while `stdio` reported `full suite` — the scope wiring works.
+
+**One failure, excluded by the criteria above:** `test_champion_rotation` failed on `stdio` because
+Riot returned "The Riot API is temporarily unavailable". It failed in the baseline on both legs for
+the same reason, so it is an infra flake by the harness's own triage table, not a regression. It is
+not in the smoke set, so post-change it runs on `stdio` only.
