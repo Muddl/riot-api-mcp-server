@@ -143,6 +143,13 @@ jobs:
           # mcp-eval has no -k/marker selection, so the subset is explicit paths.
           if [ "${{ matrix.transport }}" = "sse" ]; then
             mapfile -t SPECS < <(grep -vE '^\s*(#|$)' smoke.txt)
+            # Fail loudly on an empty smoke set: mcp-eval's test_dir argument defaults
+            # to "tests", so passing no specs would silently run the FULL suite on this
+            # leg while the summary still claimed a 0-task smoke run.
+            if [ "${#SPECS[@]}" -eq 0 ]; then
+              echo "::error::eval/smoke.txt has no runnable specs — refusing to fall through to the full suite."
+              exit 1
+            fi
             echo "EVAL_SCOPE=transport smoke set (${#SPECS[@]} tasks)" >> "$GITHUB_ENV"
           else
             SPECS=(tests/)
