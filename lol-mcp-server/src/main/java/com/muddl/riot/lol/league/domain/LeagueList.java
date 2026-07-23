@@ -11,6 +11,9 @@ import lombok.NoArgsConstructor;
 /** An apex league (challenger/grandmaster/master) for one queue (Riot League-V4). */
 @Data
 @Builder(toBuilder = true)
+// Forces bean-style deserialization: without it Jackson picks the Lombok all-args constructor as a
+// properties-based creator and maps the absent totalEntries to null, failing on the primitive. See
+// gotchas.md, "Adding a primitive field to an existing Riot-mapped DTO".
 @NoArgsConstructor(onConstructor_ = @JsonCreator)
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)

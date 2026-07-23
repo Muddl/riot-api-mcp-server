@@ -192,6 +192,25 @@ that feeds `null` for the nullable-looking fields and asserts it parses — that
 of failure offline instead of waiting for the post-merge live eval. Boxing `boolean`→`Boolean` also
 renames the Lombok getter (`isX()` → `getX()`); update call sites.
 
+## Adding a primitive field to an existing Riot-mapped DTO breaks its adapter test
+
+The boxing rule above covers Riot fields that come back explicitly `null`. There is a second, more
+surprising trigger: adding a **new primitive field that is not on the wire at all**. Once a DTO has
+both `@NoArgsConstructor` and `@AllArgsConstructor`, Jackson treats the all-args constructor as an
+implicit properties-based creator; a field missing from the JSON is then passed as `null`, and a
+primitive rejects it — `Cannot map null into type int`. The symptom is an **existing, previously
+passing WireMock adapter test failing on a commit that never touched the adapter**, which reads like
+the change went into the wrong layer when it did not.
+
+Hit in sub-project 3 adding the domain-computed `totalEntries` to `league`'s `LeagueList`.
+
+**Fix:** annotate the no-args constructor as the creator —
+`@NoArgsConstructor(onConstructor_ = @JsonCreator)` — which forces bean-style deserialization for the
+whole class, so absent fields simply keep their default. Boxing works too, but a count that is always
+computed by us reads better as an `int`. **First, though, ask whether the derived field belongs on a
+wire-format DTO at all**; here it does, because the truncating service and the tool response share one
+type.
+
 ## Riot's live JSON field names can differ from the developer-portal docs
 
 Champion-V3 `/lol/platform/v3/champion-rotations` is documented as returning `freeChampionIds`,
