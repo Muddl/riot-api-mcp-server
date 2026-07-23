@@ -6,6 +6,22 @@ Scoped to this module. Repo-wide changes live in the [root CHANGELOG](../CHANGEL
 libraries keep their own. Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/);
 versioning: [SemVer](https://semver.org/spec/v2.0.0.html), pre-1.0 (breaking → minor).
 
+## [0.3.0] - unreleased
+
+Live-eval token cost reduction — bounds two list-returning tools whose default response size was
+driving up per-call token cost for any MCP consumer, not only the eval harness. See
+[the design spec](../docs/superpowers/specs/2026-07-23-live-eval-token-cost-design.md) and
+[ADR-0016](../docs/knowledge/decisions/ADR-0016-bounded-list-results.md).
+
+### Changed
+- **Breaking:** `lol_league_apex_by_tier` now returns only the **top 10 entries by league points**
+  by default (previously the entire apex ladder — ~300 entries for CHALLENGER). An optional `count`
+  param requests more; the response now stamps `totalEntries` with the pre-truncation ladder size.
+- **Breaking:** `lol_challenges_by_player`'s per-challenge list is bounded the same way: the top 10
+  challenges by `percentile` ascending (rarer first) by default, an optional `count` param, and
+  `totalChallenges` stamped with the pre-truncation count. `totalPoints` and `categoryPoints` are
+  unaffected — they were always returned in full.
+
 ## [0.2.0] - 2026-07-19
 
 Sub-project 1b — LoL parity: breadth. Five new contexts plus the match context's first inbound

@@ -202,7 +202,10 @@ primitive rejects it — `Cannot map null into type int`. The symptom is an **ex
 passing WireMock adapter test failing on a commit that never touched the adapter**, which reads like
 the change went into the wrong layer when it did not.
 
-Hit in sub-project 3 adding the domain-computed `totalEntries` to `league`'s `LeagueList`.
+Hit in sub-project 3 adding the domain-computed `totalEntries` to `league`'s `LeagueList`, and again
+in the live-eval token cost work adding `totalEntries` to TFT's `LeagueList` and `totalChallenges` to
+`challenges`' `ChallengesPlayerData` — same fix, three DTOs, same otherwise-unrelated-looking test
+failure each time.
 
 **Fix:** annotate the no-args constructor as the creator —
 `@NoArgsConstructor(onConstructor_ = @JsonCreator)` — which forces bean-style deserialization for the
@@ -253,3 +256,37 @@ any trivial follow-up commit to `master` (or merge a one-line PR) to generate a 
 that re-triggers the missing runs and registers the new workflow. Don't debug repo settings first;
 confirm with `gh api "repos/<owner>/<repo>/actions/runs?head_sha=<sha>" --jq '.total_count'` (0 = the
 event was dropped) and check <https://www.githubstatus.com> before assuming a config problem.
+
+## mcp-eval's `cost_estimate` understates the bill by ~2× and omits judge tokens
+
+The report's own `cost_estimate` field prices at a ~$0.50/MTok fallback rate; the harness actually
+runs on Claude Haiku 4.5, which is $1.00/MTok input and $5.00/MTok output — roughly double the
+fallback on input alone. It also counts only agent-loop spans, not the separate LLM-judge call each
+`Expect.judge.llm(...)` assertion makes: verified by arithmetic, `test_status_platform`'s 5,975
+input tokens are exactly accounted for by the agent's two tool-calling iterations, with nothing left
+over for a judge call. Read token counts from the report's raw `metrics` via
+`eval/tools/report-cost.py` (see [the harness guide](patterns/live-eval-harness.md#measure-the-cost)),
+not the `cost_estimate` field, when you actually need to know what a run cost.
+
+## Never ask an LLM judge to verify something the prompt did not request
+
+`test_champion_mastery_for_discovered_player` asked the agent for *"the top champion"* (singular)
+while its rubric graded *"reports at most 3 champion mastery entries"* — a mismatch between what
+the prompt asked for and what the rubric checked. The judge sees only the rubric and the response,
+never the original prompt, so it penalised the agent for correctly obeying the singular instruction
+— failing on `stdio` and passing on `sse` purely on judge variance, with nothing in the code having
+changed. Two lessons: assert tool arguments **structurally** with `Expect.tools.called_with(...)`
+(subset matching, zero judge tokens, deterministic) wherever the thing you actually want to check is
+"did the tool get called with the right args", and keep judge rubrics scoped to exactly what the
+prompt asked for — nothing broader.
+
+## `uv sync` cannot build `litellm`'s Rust-backed dependencies on a bare Windows box
+
+`eval/`'s `uv.lock` pins `litellm`, which pulls in `tokenizers` (HuggingFace's Rust-backed tokenizer
+library). PyPI ships prebuilt wheels for common platforms, but if the resolved set falls back to a
+source build for any of them, `uv sync` needs a Rust toolchain (`cargo`) to compile it — one is not
+present on a stock Windows dev box, and the failure surfaces as a build error deep in a transitive
+dependency, not as "install Rust." This cost two subagents time on this project before the cause was
+found. If the venv is already built (e.g. by CI, or by a prior successful `uv sync` elsewhere), use
+`uv run --no-sync` against it instead of re-resolving; only run a full `uv sync` on a box that either
+already has a Rust toolchain or reliably resolves to prebuilt wheels.
