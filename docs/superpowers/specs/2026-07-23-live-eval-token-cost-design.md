@@ -282,6 +282,15 @@ report's own `cost_estimate` field, which understates by roughly 2×.
 | `sse` after | 4 | 20,825 | 648 | $0.0241 |
 | **Combined after** | — | **273,091** | **10,685** | **$0.3265** |
 
+**Caveat:** these figures are agent-loop token counts read from the report's raw `metrics` and
+repriced at Haiku 4.5's real rates — `report-cost.py` fixes the *rate* `cost_estimate` gets wrong, not
+the fact that both it and the raw metrics it reads are judge-blind. Separate LLM-judge token spend
+(each `Expect.judge.llm(...)` assertion makes its own call) is not captured here, so "Combined [real]
+cost $0.3265" is the measured agent-loop cost, not the full dispatch cost including judge calls. The
+80%/98% reductions and the conclusion are unaffected — they are dominated by input tokens on the
+agent side, which is exactly what shrank — but the absolute dollar figures understate the true total
+by whatever the judge calls cost.
+
 Input tokens fell 80% on `stdio` and 98% on `sse`. The two levers are separable: the payload bounds
 account for the `stdio` drop, and the transport smoke set for the rest of the `sse` drop.
 

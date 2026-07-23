@@ -5,9 +5,15 @@ Reads an mcp-eval JSON report and prints per-test and per-tool token tables plus
 a priced total.
 
 Deliberately ignores the report's own ``cost_estimate`` field: it prices at a
-~$0.50/MTok fallback rate (understating Claude Haiku 4.5 by roughly 2x) and
-excludes LLM-judge calls entirely. We price from raw token counts instead, so
-the number moves for the same reason the bill does.
+~$0.50/MTok fallback rate, understating Claude Haiku 4.5 by roughly 2x. We
+price from the report's raw token counts at Haiku 4.5's real rates instead,
+so the number moves for the same reason the bill does.
+
+That fixes the *rate* error only. The raw metrics this script reads are
+judge-blind: they cover the agent loop, not the separate LLM-judge call each
+``Expect.judge.llm(...)`` assertion makes. Judge token spend is therefore
+unmeasured by both ``cost_estimate`` and this script's totals — a remaining
+limitation, not something this tool solves.
 
 Usage:
     cd eval && uv run python tools/report-cost.py test-reports/stdio.json
@@ -70,8 +76,10 @@ def report(path: Path) -> tuple[int, int]:
             )
         )
         for call in calls:
-            # Approximate the emitted result size in tokens. ~4 chars per token is
-            # close enough to rank tools by payload weight.
+            # Approximate the emitted result size in tokens (chars/4). This is a rough
+            # proxy computed from the call's JSON result, not a metered token count like
+            # the priced totals above — close enough to rank tools by payload weight, but
+            # not directly comparable to the llm_metrics-based numbers in the tables above.
             tool_sizes[call.get("name", "?")].append(len(json.dumps(call.get("result", {}))) // 4)
 
     print(f"\n=== {path.name} ===")
@@ -88,9 +96,11 @@ def report(path: Path) -> tuple[int, int]:
         )
 
     if tool_sizes:
-        print(f"\n{'tool':<42} {'n':>3}  {'avg tok':>8}  {'total tok':>10}")
+        print(f"\n{'tool':<42} {'n':>3}  {'approx tok/call (chars/4)':>26}  {'approx total (chars/4)':>22}")
         for name, sizes in sorted(tool_sizes.items(), key=lambda kv: -sum(kv[1])):
-            print(f"{name:<42} {len(sizes):>3}  {sum(sizes) // len(sizes):>8,}  {sum(sizes):>10,}")
+            print(
+                f"{name:<42} {len(sizes):>3}  {sum(sizes) // len(sizes):>26,}  {sum(sizes):>22,}"
+            )
 
     return total_in, total_out
 

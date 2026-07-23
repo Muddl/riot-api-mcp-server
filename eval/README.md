@@ -52,9 +52,10 @@ a new round-trip, error propagation. A tool-logic scenario belongs only in `test
 
 ## Measure the cost
 
-`eval/tools/report-cost.py` summarises a report's real token spend and cost, priced at Claude Haiku
-4.5's actual rates rather than the report's own (understated, judge-blind)
-`cost_estimate` field:
+`eval/tools/report-cost.py` summarises a report's token spend and cost, priced at Claude Haiku 4.5's
+actual rates rather than the report's own (understated) `cost_estimate` field. That fixes the rate
+only — both `cost_estimate` and this script read agent-loop metrics that omit separate LLM-judge
+token spend, which remains unmeasured either way:
 
 ```bash
 uv run python tools/report-cost.py test-reports/stdio.json

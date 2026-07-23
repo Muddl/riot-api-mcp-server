@@ -29,8 +29,10 @@ both.
   tool logic for no added signal. The `stdio` leg is unchanged (full suite). See
   [ADR-0017](docs/knowledge/decisions/ADR-0017-transport-scoped-live-eval.md).
 - **`eval/tools/report-cost.py`** — sums a live-eval JSON report's real token counts and prices them
-  at Claude Haiku 4.5's actual rates, since the report's own `cost_estimate` field understates the
-  bill and omits LLM-judge tokens (see `docs/knowledge/gotchas.md`).
+  at Claude Haiku 4.5's actual rates, since the report's own `cost_estimate` field prices at a
+  ~$0.50/MTok fallback rate that understates the bill by roughly 2×. It reads the same judge-blind
+  raw metrics `cost_estimate` does, so LLM-judge tokens remain unmeasured by either number (see
+  `docs/knowledge/gotchas.md`).
 
 ### Changed
 - The `Summarize outcome` step of `live-eval.yml` now names each leg's coverage scope (`full suite`

@@ -257,16 +257,22 @@ that re-triggers the missing runs and registers the new workflow. Don't debug re
 confirm with `gh api "repos/<owner>/<repo>/actions/runs?head_sha=<sha>" --jq '.total_count'` (0 = the
 event was dropped) and check <https://www.githubstatus.com> before assuming a config problem.
 
-## mcp-eval's `cost_estimate` understates the bill by ~2× and omits judge tokens
+## mcp-eval's `cost_estimate` understates the bill by ~2× — and neither it nor `report-cost.py` sees judge tokens
 
 The report's own `cost_estimate` field prices at a ~$0.50/MTok fallback rate; the harness actually
 runs on Claude Haiku 4.5, which is $1.00/MTok input and $5.00/MTok output — roughly double the
-fallback on input alone. It also counts only agent-loop spans, not the separate LLM-judge call each
-`Expect.judge.llm(...)` assertion makes: verified by arithmetic, `test_status_platform`'s 5,975
-input tokens are exactly accounted for by the agent's two tool-calling iterations, with nothing left
-over for a judge call. Read token counts from the report's raw `metrics` via
-`eval/tools/report-cost.py` (see [the harness guide](patterns/live-eval-harness.md#measure-the-cost)),
-not the `cost_estimate` field, when you actually need to know what a run cost.
+fallback on input alone. `eval/tools/report-cost.py` fixes that *rate* error by repricing the
+report's raw token counts at Haiku 4.5's real rates.
+
+It does not fix a separate problem: those raw metrics count only agent-loop spans, not the separate
+LLM-judge call each `Expect.judge.llm(...)` assertion makes — verified by arithmetic,
+`test_status_platform`'s 5,975 input tokens are exactly accounted for by the agent's two
+tool-calling iterations, with nothing left over for a judge call. Judge token spend is therefore
+**unmeasured by both numbers**, `cost_estimate` and `report-cost.py` alike — an open omission, not
+something the rate fix solves. Read token counts from the report's raw `metrics` via
+`eval/tools/report-cost.py` (see [the harness guide](patterns/live-eval-harness.md#measure-the-cost))
+for an accurate rate; know that it still excludes judge spend when you need the true total cost of a
+run.
 
 ## Never ask an LLM judge to verify something the prompt did not request
 
