@@ -11,13 +11,15 @@ mcp:
       command: java
       args: ["-jar", "${LOL_MCP_JAR}", "--spring.profiles.active=stdio"]
       env:
-        RIOT_API_KEY: "${RIOT_API_KEY}"
+        # Per-server Riot key: each MCP server gets its own scoped dev key as we scale
+        # to multiple games (a single key is not authorized across every Riot game API).
+        RIOT_API_KEY: "${LOL_DEV_API_KEY}"
     tft_server:
       transport: stdio
       command: java
       args: ["-jar", "${TFT_MCP_JAR}", "--spring.profiles.active=stdio"]
       env:
-        RIOT_API_KEY: "${RIOT_API_KEY}"
+        RIOT_API_KEY: "${TFT_DEV_API_KEY}"
 
 agents:
   definitions:

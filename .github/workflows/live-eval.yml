@@ -1,6 +1,10 @@
 name: Live Eval
 
 on:
+  # Manual only. Live evals hit the real Riot API (rate limits + transient 5xx) and
+  # spend Anthropic tokens on every run, so they are dispatched on demand rather than
+  # automatically on each master push. Run from the Actions tab or with
+  # `gh workflow run live-eval.yml` (add `--ref <branch>` to eval a branch pre-merge).
   workflow_dispatch:
 
 # Least-privilege; this workflow only reads the repo and writes its own artifacts.
@@ -29,22 +33,33 @@ jobs:
         id: preflight
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          RIOT_API_KEY: ${{ secrets.RIOT_DEV_REG_TEST_API_KEY }}
+          LOL_DEV_API_KEY: ${{ secrets.LOL_DEV_API_KEY }}
+          TFT_DEV_API_KEY: ${{ secrets.TFT_DEV_API_KEY }}
         run: |
           if [ -z "$ANTHROPIC_API_KEY" ]; then
             echo "::notice title=Live evals skipped::ANTHROPIC_API_KEY is not set. Add it as a repository secret to enable the live mcp-eval suite. (This is separate from CLAUDE_CODE_OAUTH_TOKEN, which is not used here.)"
             echo "run=false" >> "$GITHUB_OUTPUT"; exit 0
           fi
-          # Probe Riot key validity with a cheap, parameter-free status call. Riot dev
-          # keys expire every 24h; an expired key makes every live-data test fail on auth.
-          code="$(curl -s -o /dev/null -w '%{http_code}' -H "X-Riot-Token: $RIOT_API_KEY" https://na1.api.riotgames.com/lol/status/v4/platform-data || echo 000)"
-          if [ "$code" = "401" ] || [ "$code" = "403" ]; then
-            echo "::notice title=Live evals skipped::Riot API key is invalid or expired (HTTP $code). Regenerate the dev key on the Riot developer portal and update the RIOT_DEV_REG_TEST_API_KEY secret — dev keys expire every 24 hours."
-            echo "run=false" >> "$GITHUB_OUTPUT"; exit 0
-          fi
-          if [ "$code" != "200" ]; then
-            echo "::warning title=Riot key probe inconclusive::status probe returned HTTP $code; proceeding with the eval run anyway."
-          fi
+          # Per-server Riot keys: each game's dev key is scoped to that game's API, so a
+          # single key is not authorized across every game (a LoL key gets 403 on tft/*).
+          # Probe each key against its own game's status endpoint. Riot dev keys expire
+          # every 24h; an expired/missing/mis-scoped key makes every live-data test fail
+          # on auth, so skip green with an actionable notice rather than a red run.
+          probe() {
+            curl -s -o /dev/null -w '%{http_code}' -H "X-Riot-Token: $2" "$1" || echo 000
+          }
+          lol_code="$(probe https://na1.api.riotgames.com/lol/status/v4/platform-data "$LOL_DEV_API_KEY")"
+          tft_code="$(probe https://na1.api.riotgames.com/tft/status/v1/platform-data "$TFT_DEV_API_KEY")"
+          for pair in "LOL_DEV_API_KEY:$lol_code" "TFT_DEV_API_KEY:$tft_code"; do
+            name="${pair%%:*}"; code="${pair##*:}"
+            if [ "$code" = "401" ] || [ "$code" = "403" ]; then
+              echo "::notice title=Live evals skipped::$name is invalid, expired, or not authorized for its game's API (HTTP $code). Regenerate the dev key on the Riot developer portal (ensure the product is approved for that game) and update the $name secret — dev keys expire every 24 hours."
+              echo "run=false" >> "$GITHUB_OUTPUT"; exit 0
+            fi
+            if [ "$code" != "200" ]; then
+              echo "::warning title=Riot key probe inconclusive::$name status probe returned HTTP $code; proceeding with the eval run anyway."
+            fi
+          done
           echo "run=true" >> "$GITHUB_OUTPUT"
 
       - name: Set up JDK 21
@@ -84,13 +99,15 @@ jobs:
       - name: Start SSE servers
         if: steps.preflight.outputs.run == 'true' && matrix.transport == 'sse'
         env:
-          RIOT_API_KEY: ${{ secrets.RIOT_DEV_REG_TEST_API_KEY }}
+          # Per-server Riot keys — each server process gets only its own game's key.
+          LOL_DEV_API_KEY: ${{ secrets.LOL_DEV_API_KEY }}
+          TFT_DEV_API_KEY: ${{ secrets.TFT_DEV_API_KEY }}
         run: |
-          java -jar "$LOL_MCP_JAR" --spring.profiles.active=sse > lol-sse-server.log 2>&1 &
+          RIOT_API_KEY="$LOL_DEV_API_KEY" java -jar "$LOL_MCP_JAR" --spring.profiles.active=sse > lol-sse-server.log 2>&1 &
           echo "LOL_SSE_PID=$!" >> "$GITHUB_ENV"
           echo "LOL_MCP_SSE_URL=http://localhost:8080/sse" >> "$GITHUB_ENV"
           # TFT server on a separate port; both servers default to 8080.
-          SERVER_PORT=8081 java -jar "$TFT_MCP_JAR" --spring.profiles.active=sse > tft-sse-server.log 2>&1 &
+          RIOT_API_KEY="$TFT_DEV_API_KEY" SERVER_PORT=8081 java -jar "$TFT_MCP_JAR" --spring.profiles.active=sse > tft-sse-server.log 2>&1 &
           echo "TFT_SSE_PID=$!" >> "$GITHUB_ENV"
           echo "TFT_MCP_SSE_URL=http://localhost:8081/sse" >> "$GITHUB_ENV"
           # Wait for both ports to accept connections.
@@ -112,12 +129,14 @@ jobs:
         working-directory: eval
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          RIOT_API_KEY: ${{ secrets.RIOT_DEV_REG_TEST_API_KEY }}
+          # Per-server Riot keys, substituted into each server's stdio env block.
+          LOL_DEV_API_KEY: ${{ secrets.LOL_DEV_API_KEY }}
+          TFT_DEV_API_KEY: ${{ secrets.TFT_DEV_API_KEY }}
         run: |
           # mcp-eval does NOT expand ${VAR} placeholders in the config's
           # command/args/url/env fields, so we expand them here before it reads
           # the file. Restricted to our vars so nothing else is touched.
-          envsubst '${LOL_MCP_JAR} ${TFT_MCP_JAR} ${RIOT_API_KEY} ${LOL_MCP_SSE_URL} ${TFT_MCP_SSE_URL}' \
+          envsubst '${LOL_MCP_JAR} ${TFT_MCP_JAR} ${LOL_DEV_API_KEY} ${TFT_DEV_API_KEY} ${LOL_MCP_SSE_URL} ${TFT_MCP_SSE_URL}' \
             < "mcpeval.${{ matrix.transport }}.yaml" > mcpeval.yaml
           set +e
           uv run mcp-eval run tests/ -v \
@@ -149,7 +168,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: mcpeval-reports-${{ matrix.transport }}
-          path: eval/test-reports/
+          # Include the SSE server logs (sse leg only): when a live eval fails on a
+          # server-side exception, Spring AI's MCP layer only surfaces a generic
+          # "Error invoking method" to the client, so the real cause (e.g. a Riot
+          # HTTP status) lives in the server log, not the eval report.
+          path: |
+            eval/test-reports/
+            *-sse-server.log
           if-no-files-found: warn
 
       - name: Stop SSE servers

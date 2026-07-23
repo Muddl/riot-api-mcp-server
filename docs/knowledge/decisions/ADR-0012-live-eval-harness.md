@@ -22,10 +22,20 @@ run post-merge on CI over both transports against the real Riot API.
 - **Behavior canaries.** Negative tests assert that Riot's error/edge behaviors our adapters depend
   on (unknown-PUUID not-found, account-not-found, spectator `404 → null`) still hold. These are the
   only tests that catch undocumented Riot drift.
-- **Post-merge, non-blocking.** Live + LLM variance belongs on an informational signal, not a
-  blocking pre-merge gate. `ci.yml` remains the pre-merge gate and stays offline.
-- **Token isolation.** The workflow reads only `ANTHROPIC_API_KEY`; it never references
+- **On-demand, non-blocking.** Live + LLM variance belongs on an informational signal, not a
+  blocking pre-merge gate. `ci.yml` remains the pre-merge gate and stays offline. Run via
+  `workflow_dispatch` (Actions tab or `gh workflow run`) rather than on every master push — real
+  Riot calls (rate limits, transient 5xx) and per-run Anthropic spend make automatic runs wasteful;
+  dispatch after a server/eval change or when validating a branch.
+- **Token isolation.** The workflow reads only `ANTHROPIC_API_KEY` for the LLM; it never references
   `CLAUDE_CODE_OAUTH_TOKEN` (a separate bucket for `claude-code-action`). Absent key ⇒ green skip.
+- **One Riot dev key per server (multi-game).** Each Riot game is a separate developer product with
+  its own key, and a key is authorized only for its game's API (a LoL key ⇒ `403` on `tft/*`). Every
+  MCP server therefore gets its own scoped key — repo secrets `LOL_DEV_API_KEY`, `TFT_DEV_API_KEY`,
+  one per server as games are added. The preflight probes each key against its game's status endpoint
+  and skips green with a per-secret notice if any is missing/expired/mis-scoped; each server still
+  reads `RIOT_API_KEY` at run time, mapped from its per-game secret. (Superseded the single shared
+  `RIOT_DEV_REG_TEST_API_KEY` when `tft-mcp-server` was added.)
 - **Dynamic discovery.** Subjects are found at runtime from the apex-league ladder inside the agent
   conversation — nothing hardcoded to rot. (Live-game coverage is the "not in a game" invariant:
   there is no featured-games endpoint to force a guaranteed in-game subject — see ADR-0013.)
