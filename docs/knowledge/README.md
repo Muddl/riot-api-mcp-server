@@ -37,6 +37,7 @@ This README is the **single source of truth** for the hydrate/persist protocol.
 - [ADR-0015 — Repository maintenance automation](decisions/ADR-0015-repo-maintenance-automation.md)
 - [ADR-0016 — Bounded list results for MCP tools](decisions/ADR-0016-bounded-list-results.md)
 - [ADR-0017 — Transport-scoped live eval coverage](decisions/ADR-0017-transport-scoped-live-eval.md)
+- [ADR-0018 — Automated PRs are authored by a non-Actions identity so the review gate applies](decisions/ADR-0018-housekeeping-pr-review-gate.md)
 
 ### Patterns
 

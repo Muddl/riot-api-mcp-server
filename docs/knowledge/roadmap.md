@@ -127,6 +127,78 @@ key.
 Smallest surface. **Verify LoR is not in maintenance before investing.** Parts of it need a
 production key, and deck endpoints need Bearer/RSO auth, which `RiotApiClient` does not support.
 
+## Cross-cutting: the software factory ⏳
+
+A second track, orthogonal to the per-game sub-projects above. Those grow *what the repo does*; this
+grows *how change reaches `master`*.
+
+The reference model is Cole Murray's [software factory](https://murraycole.com/posts/software-factory)
+— *"a repeatable system for turning defined work into production software through standardized
+inputs, shared tooling, automated quality gates, and measurable output"* — with agents planning,
+implementing, testing, and reviewing while humans set intent and acceptance criteria. Its loop is
+**signal → intake → context → plan → build → test and review → deploy → monitor → learn**, and the
+role shift is from being *in* the loop to *on* it. Stripe's
+[minions](https://stripe.dev/blog/minions-stripes-one-shot-end-to-end-coding-agents.md)
+([part 2](https://stripe.dev/blog/minions-stripes-one-shot-end-to-end-coding-agents-part-2.md)) are
+the same shape at scale: unattended agents in isolated devboxes, an agent loop **interleaved with
+deterministic steps** for git, lint, and test, hard iteration limits, and human review before every
+merge.
+
+Local target loop: **GitHub Issue → superpowers-driven development → Claude Code Review → merge.**
+
+### The governing constraint
+
+*"Generation is cheap and getting cheaper, so your ceiling is set by how fast and how trustworthily
+you can verify output."* The bottleneck is verification, not authorship — a restatement of this
+repo's standing constraint that green tests do not prove the server serves. Every step below is
+judged on whether it strengthens verification, not on how much it automates.
+
+### Substrate already in place
+
+The factory is mostly assembled; what is missing is intake and the loop-back, not the gates.
+
+| Factory component | Here today |
+|---|---|
+| Automated quality gates | `./gradlew build` — tests, ArchUnit, JaCoCo, Spotless — plus the post-merge live eval harness ([ADR-0012](decisions/ADR-0012-live-eval-harness.md)) |
+| Shared tooling | Agents run the same Gradle build and the same project skills a human runs; there is no agent-only path |
+| Standardized inputs | KB hydrate/persist protocol, project skills, `CLAUDE.md` |
+| Back-pressure before review | ArchUnit, Spotless, and the negative-control tests fail locally, pre-PR — Stripe's "shift feedback left" |
+| Measurable output | JaCoCo coverage; eval token cost via `eval/tools/report-cost.py` |
+| Replayability | ADRs + immutable `docs/superpowers/specs|plans/` record why a change looks the way it does |
+
+### Sequencing
+
+Incremental; each step is useful alone, and none is scheduled against a game sub-project.
+
+| Step | State | Notes |
+|---|---|---|
+| Reviewer posts real, reviewable feedback | ✅ Shipped | [ADR-0015](decisions/ADR-0015-repo-maintenance-automation.md). Was green-but-silent before. |
+| Scheduled agent work opens a PR rather than committing | ✅ Shipped | `housekeeping.yml` ([ADR-0015](decisions/ADR-0015-repo-maintenance-automation.md)). |
+| Agent-authored PRs actually receive CI + review | ✅ Shipped | [ADR-0018](decisions/ADR-0018-housekeeping-pr-review-gate.md). The `GITHUB_TOKEN` form opened PRs no workflow ever saw — the gate was intent, not mechanism. |
+| Issue → spec/plan → implementation, agent-driven | ⏳ Not started | The superpowers brainstorm → write-plan → execute-plan cycle from a labelled Issue. Spec quality is the control surface: vague inputs yield confident, wrong output. Needs a decision on where the plan artifact lives, since `docs/superpowers/plans/` is immutable history. |
+| Review findings loop back as commits on the same PR | ⏳ Not started | Closes the cycle. Needs a **hard iteration cap** (minions allow two CI rounds); an agent revising until the reviewer goes quiet optimizes for reviewer silence, not correctness. |
+| Branch protection encoding the gate | ⏳ Not started | Makes the loop enforceable rather than conventional: required checks, no self-approval. |
+| Tiered autonomy by blast radius | ⏳ Not started | Docs/KB changes need less ceremony than a change to `RiotApiClient` or a tool contract. Progressive autonomy, earned per area. |
+
+### Failure modes to design against
+
+Named in the sources, and **two are already evidenced in this repo** — which is the argument for
+treating them as design constraints rather than hypotheticals:
+
+- **Generation outpacing verification.** The reason the governing constraint above is first.
+- **Agents as lenient self-graders.** Observed 2026-08-01: a workflow validation run reported
+  `conclusion: success` while the step under test had silently skipped itself, and the "passing" run
+  proved nothing. See `gotchas.md`.
+- **Silent failure that looks like success.** Observed twice in the same incident — the 2026-07-19
+  housekeeping run went green only because the pass produced no diff and the broken push was never
+  reached ([ADR-0018](decisions/ADR-0018-housekeeping-pr-review-gate.md)).
+- **Velocity theater.** Throughput is not a goal here; this repo's value is the discipline, so
+  cycle-time metrics stay subordinate to the gates.
+
+**Standing constraint for this track:** automation may *propose* but never *approve*. The repo-level
+"Allow GitHub Actions to create and approve pull requests" setting stays off, and no workflow holds
+an identity that can approve its own work ([ADR-0018](decisions/ADR-0018-housekeeping-pr-review-gate.md)).
+
 ## Deferred, with a home
 
 Real and wanted, deliberately not scheduled. Recorded so they are not re-derived:

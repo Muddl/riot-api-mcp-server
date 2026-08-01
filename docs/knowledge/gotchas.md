@@ -244,12 +244,18 @@ opened using the automatic `GITHUB_TOKEN` (to prevent recursive runs). So the we
 `claude-code-review.yml` run. That is expected, not a bug. If auto-review on those PRs is ever
 wanted, open them with a PAT or GitHub App token instead of `GITHUB_TOKEN`.
 
-Separately, `GITHUB_TOKEN` cannot open a PR at all unless the repo-level **"Allow GitHub Actions to
-create and approve pull requests"** setting is on — `pull-requests: write` in the workflow is
+Separately, `GITHUB_TOKEN` cannot open a PR **at all** unless the repo-level **"Allow GitHub Actions
+to create and approve pull requests"** setting is on — `pull-requests: write` in the workflow is
 necessary but not sufficient. With it off, `gh pr create` fails with `GraphQL: GitHub Actions is not
-permitted to create or approve pull requests (createPullRequest)`. It was enabled for this repo on
-2026-08-01 so `housekeeping.yml` could open its PR. Check it with
+permitted to create or approve pull requests (createPullRequest)`. Check it with
 `gh api repos/<owner>/<repo>/actions/permissions/workflow` (`can_approve_pull_request_reviews`).
+
+**Do not reach for that setting to fix a blocked `gh pr create`.** It was briefly enabled here on
+2026-08-01 and then reverted: it makes the PR creatable but does nothing about the missing
+`pull_request` event, so the resulting PR still gets no CI and no review — it buys a PR that merely
+*looks* reviewable. It also grants every workflow in the repo the ability to approve PRs, which
+undercuts the review gate it was meant to serve. `housekeeping.yml` uses a PAT instead
+(`HOUSEKEEPING_TOKEN`); see [ADR-0018](decisions/ADR-0018-housekeeping-pr-review-gate.md).
 
 ## A merge to `master` can occasionally trigger no Actions runs (dropped push event)
 
