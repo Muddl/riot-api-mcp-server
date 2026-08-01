@@ -29,6 +29,7 @@ jobs:
     permissions:
       contents: write        # create the housekeeping branch
       pull-requests: write   # open the PR
+      issues: write          # post the @Muddl failure alert (see the last step)
       id-token: write
     steps:
       - name: Checkout (full history for the commit gate)
@@ -129,3 +130,20 @@ jobs:
             --title "chore: weekly housekeeping ($STAMP)" \
             --body "Automated housekeeping pass (docs / KB / roadmap / skills / agents). Review the diff before merging." \
             --base master --head "$BRANCH"
+
+      # This is the only unattended cron in the factory: it fires at 09:00 UTC Monday with
+      # nobody watching. There is no issue or PR context here, so the alert goes to the
+      # long-lived tracking issue in vars.FACTORY_ALERT_ISSUE. If that variable is unset the
+      # step fails loudly rather than swallowing the alert — a silent alerter is worse than none.
+      - name: Alert on failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ALERT_ISSUE: ${{ vars.FACTORY_ALERT_ISSUE }}
+        run: |
+          if [ -z "$ALERT_ISSUE" ]; then
+            echo "::error title=Alerting::FACTORY_ALERT_ISSUE is unset; the failure alert had nowhere to go."
+            exit 1
+          fi
+          gh issue comment "$ALERT_ISSUE" --body \
+            "@Muddl \`Weekly Housekeeping\` failed. Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

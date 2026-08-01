@@ -55,3 +55,15 @@ jobs:
           # or https://code.claude.com/docs/en/cli-reference for available options
           # claude_args: '--allowed-tools Bash(gh pr *)'
 
+      # Comments back on whichever issue or PR triggered the run. `gh issue comment` works on a
+      # PR number too (PRs are issues); this job already holds issues: write and
+      # pull-requests: write. The @-mention is the phone-notification channel.
+      - name: Alert on failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TARGET: ${{ github.event.issue.number || github.event.pull_request.number }}
+        run: |
+          gh issue comment "$TARGET" --body \
+            "@Muddl \`Claude Code\` failed here. Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
