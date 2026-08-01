@@ -72,6 +72,18 @@ jobs:
           BRANCH="chore/housekeeping-$STAMP"
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # claude-code-action takes ownership of this repo's git credentials during its step: it
+          # deletes the `http.https://github.com/.extraheader` credential actions/checkout persisted,
+          # repoints `origin` at a URL embedding its own OIDC-derived GitHub App installation token,
+          # and then revokes that token (DELETE /installation/token) as the step ends. So by the time
+          # this step runs, `origin` carries a dead credential and checkout's fallback is gone —
+          # every push here died with "Invalid username or token" (exit 128). GH_TOKEN below only
+          # authenticates `gh`, never `git`. Re-point origin at this job's own GITHUB_TOKEN, which is
+          # valid for the life of the job and already has the `contents: write` scope the push needs.
+          git remote set-url origin \
+            "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+
           git checkout -b "$BRANCH"
           git add -A
           git commit -m "chore: weekly housekeeping ($STAMP)" -m "Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
