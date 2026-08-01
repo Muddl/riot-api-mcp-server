@@ -83,7 +83,15 @@ jobs:
           fi
 
           STAMP="$(date -u +%Y-W%V)"
+          # Keyed to the ISO week only. A second run in the same week — workflow_dispatch bypasses
+          # the commit gate and always proceeds — collides with the existing branch and fails at
+          # `git push` or `gh pr create`. Deliberately left to fail loudly rather than silently
+          # opening a second PR for the same week; see gotchas.md.
           BRANCH="chore/housekeeping-$STAMP"
+
+          # The commit is authored by github-actions[bot] while the push and `gh pr create` below
+          # run as the PAT's identity, so the commit author and the PR's "opened by" differ on
+          # purpose: event delivery keys off the credential, not the commit trailer (ADR-0018).
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
@@ -93,15 +101,21 @@ jobs:
           # and then revokes that token (DELETE /installation/token) as the step ends. So by the time
           # this step runs, `origin` carries a dead credential and checkout's fallback is gone —
           # every push here died with "Invalid username or token" (exit 128). Setting GH_TOKEN does
-          # not help on its own: it authenticates `gh`, never `git`. Re-point origin at the PAT so
-          # both the push and the `gh pr create` below run as the same non-Actions identity.
-          git remote set-url origin \
-            "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          # not help on its own: it authenticates `gh`, never `git`.
+          #
+          # Restore a clean origin, then pass the PAT as a one-shot header on the push itself. An
+          # embedded `https://x-access-token:$TOKEN@...` remote would work too, but persists the
+          # token in .git/config for the rest of the job; `actions/checkout` avoids exactly that by
+          # using an extraheader, and this step — which exists to route around a credential footgun
+          # — should hold the same bar. The URL must be credential-free or its dead inline token
+          # would still be preferred over the header.
+          git remote set-url origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          AUTH_HEADER="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
 
           git checkout -b "$BRANCH"
           git add -A
           git commit -m "chore: weekly housekeeping ($STAMP)" -m "Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
-          git push -u origin "$BRANCH"
+          git -c http.https://github.com/.extraheader="$AUTH_HEADER" push -u origin "$BRANCH"
           gh pr create \
             --title "chore: weekly housekeeping ($STAMP)" \
             --body "Automated housekeeping pass (docs / KB / roadmap / skills / agents). Review the diff before merging." \

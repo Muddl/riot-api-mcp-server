@@ -356,3 +356,16 @@ that replays the state it leaves behind — unset the extraheader and point `ori
 — then run the real steps against it. That reproduces the post-action condition exactly, costs no
 Claude tokens, and finishes in seconds. Always confirm the step you meant to test actually ran;
 `conclusion: success` on a workflow gated by `if:` and early `exit 0`s proves very little.
+
+## The housekeeping branch name is keyed to the ISO week, so a second run in one week collides
+
+`housekeeping.yml` derives its branch from `date -u +%Y-W%V` (`chore/housekeeping-2026-W31`), and
+`workflow_dispatch` deliberately bypasses the commit gate and always proceeds. So a manual dispatch
+in the same week as the scheduled Monday run — or two manual dispatches — targets a branch that
+already exists on the remote: `git push` fails non-fast-forward, or `gh pr create` fails with "a
+pull request already exists". This was unreachable while the push was broken (see the
+credential-handover gotcha above) and became reachable the moment it was fixed.
+
+Left to fail loudly on purpose. The alternative — a run-id suffix — would silently open a second PR
+proposing the same week's maintenance, and two competing housekeeping PRs is a worse failure than a
+red run. If you need to re-run a week, delete the existing branch and its PR first.
