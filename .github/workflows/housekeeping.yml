@@ -117,10 +117,19 @@ jobs:
           # using an extraheader, and this step — which exists to route around a credential footgun
           # — should hold the same bar. The URL must be credential-free or its dead inline token
           # would still be preferred over the header.
-          # GITHUB_SERVER_URL rather than a literal github.com, and the extraheader config key is
-          # derived from the same value so host and key cannot drift apart.
+          #
+          # The host comes from GITHUB_SERVER_URL rather than a literal github.com, and the
+          # extraheader config key below is derived from that same value, so the host and the
+          # config key cannot drift apart.
           git remote set-url origin "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git"
+
+          # GitHub's automatic log redaction matches the LITERAL registered secret, not transforms
+          # of it, so the base64 of "x-access-token:$GH_TOKEN" is NOT masked by default. Register
+          # it explicitly: nothing here prints it today, but ACTIONS_STEP_DEBUG tracing would show
+          # it in the clear. Defence in depth on a step whose credential handling has already
+          # broken twice. (#71)
           AUTH_HEADER="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          echo "::add-mask::$AUTH_HEADER"
 
           git checkout -b "$BRANCH"
           git add -A
