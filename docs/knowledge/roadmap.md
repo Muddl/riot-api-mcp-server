@@ -201,12 +201,38 @@ Incremental; each step is useful alone, and none is scheduled against a game sub
 | Reviewer posts real, reviewable feedback | ✅ Shipped | [ADR-0015](decisions/ADR-0015-repo-maintenance-automation.md). Was green-but-silent before. |
 | Scheduled agent work opens a PR rather than committing | ✅ Shipped | `housekeeping.yml` ([ADR-0015](decisions/ADR-0015-repo-maintenance-automation.md)). |
 | Agent-authored PRs actually receive CI + review | ✅ Shipped | [ADR-0018](decisions/ADR-0018-housekeeping-pr-review-gate.md). The `GITHUB_TOKEN` form opened PRs no workflow ever saw — the gate was intent, not mechanism. |
-| Issue → spec/plan → implementation, agent-driven | ⏳ Not started | The superpowers brainstorm → write-plan → execute-plan cycle from a labelled Issue. Spec quality is the control surface: vague inputs yield confident, wrong output. Needs a decision on where the plan artifact lives, since `docs/superpowers/plans/` is immutable history. |
-| Full run traces retained and inspectable | ⏳ Not started | The event-stream primitive. Start cheap: `show_full_output` on the housekeeping action, then somewhere durable to put run records. Prerequisite for improving agents rather than just re-running them. |
-| Review findings loop back as commits on the same PR | ⏳ Not started | Closes the cycle, and needs **suspend/resume** — an agent that pauses for CI or for reviewer feedback and then continues, rather than one-shotting and exiting. Named as the notable gap in current implementations. Also needs a **hard iteration cap** (minions allow two CI rounds); an agent revising until the reviewer goes quiet optimizes for reviewer silence, not correctness. |
-| Distinct machine identity for automated PRs | ⏳ Not started | **Prerequisite for the row below.** See "Attribution" under the constraints. |
-| Branch protection encoding the gate | ⏳ Not started | Makes the loop enforceable rather than conventional: required checks, no self-approval. Blocked on the row above. |
-| Tiered autonomy by blast radius | ⏳ Not started | Docs/KB changes need less ceremony than a change to `RiotApiClient` or a tool contract. Progressive autonomy, earned per area. |
+
+The remaining work is decomposed into six sub-projects by the
+[2026-08-01 decomposition spec](../superpowers/specs/2026-08-01-software-factory-decomposition-design.md),
+which also **corrects three claims this section previously made** (see below).
+
+| # | Sub-project | State | Notes |
+|---|---|---|---|
+| **F0** | Harden the gate | ⏳ Not started | Ruleset surgery, the fork-PR fix that must precede any required check, bounds/kill-switch/alerting, #71, and the stale-doc sweep. Ships **no new agent behaviour**, so it is the only sub-project fully verifiable before it is depended on. |
+| **F1** | Machine identity (GitHub App) | ⏳ Not started | Retires the PAT. Desk-only — a private key is not a phone artifact. |
+| **F2** | Issue intake, two-phase | ⏳ Not started | `agent:plan` commits a plan and posts its SHA; `agent:go` implements *that SHA*, checked by a deterministic `git diff --exit-code`. The work-queue primitive. |
+| **F3** | Machine-emitted run traces | ⏳ Not started | The event stream, restricted to facts non-agent steps emit. Blocked on #71. |
+| **F4** | Review loop-back | ⏳ Not started | `agent:revise` label; two-round cap counted from the append-only issue timeline; enforced by a tool-less `gate` job. |
+| **F5** | Tiered autonomy by blast radius | ⏳ Not started | Docs/KB changes need less ceremony than a change to `RiotApiClient` or a tool contract. A CI check verifies changed paths against the declared tier; `file_path_restriction` push rules are org-only. |
+
+**Three corrections this section previously got wrong**, all found by designing against it:
+
+- **Branch protection was never "not started."** Ruleset `8769144` has been active since 2025-10-09
+  with `pull_request{1 approval}`, `deletion`, and `non_fast_forward` — but **no required status
+  checks**, scoped to `~ALL` branches rather than the default branch, and with the repository admin
+  as an `exempt` bypass actor. So the sole human is invisibly exempt from the only rule that exists,
+  the merge button is live on a red PR, and every feature branch is PR-gated in a way that will
+  break the first non-exempt identity to push a second commit to one.
+- **Review loop-back is not blocked on suspend/resume.** Session state dies with the ephemeral
+  runner and nothing restores it, but the action's tag mode already re-derives context each run from
+  the issue/PR body, every comment, and the diff. Re-derivation is the mechanism, not a workaround;
+  the "notable gap" does not apply here. What loop-back actually needs is a trigger that is not
+  `pull_request_review: submitted` — PR #67 received **nine** submitted reviews from `claude`, since
+  each inline comment posts as its own review.
+- **`show_full_output` is withdrawn as the cheap starting point.** It dumps every tool result,
+  secrets included, into the Actions log and auto-enables under `ACTIONS_STEP_DEBUG`. This
+  repository, its logs, and its artifacts are **public**. Uploading the `execution_file` artifact is
+  the same content class in a different container and is rejected on the same grounds.
 
 ### Failure modes to design against
 
