@@ -247,6 +247,21 @@ expiry.
 by the reviewer unless the App is added to `allowed_bots`** — silently, with a green run, which is
 precisely the failure class ADR-0018 exists to prevent. Change both files in the same commit.
 
+### Review-cycle cap: two revision rounds per PR
+
+A PR in this flow gets **at most two rounds of acting on reviewer findings**. After the second
+round, it merges as long as what remains is non-blocking; leftover suggestions are filed as
+follow-up issues rather than fixed in place. Mirrors the two-CI-round limit minions uses.
+
+- **Blocking findings are exempt.** Correctness, security, and "this would break on merge" are fixed
+  regardless of round count. The cap bounds polish, never soundness.
+- **Why:** reviewer findings have sharply diminishing returns — round one catches real defects, round
+  three suggests comment rewording. An unbounded revise-until-the-reviewer-is-silent loop spends
+  usage chasing asymptotic perfection, and optimizes for reviewer silence rather than correctness.
+  Each round also costs a full review run.
+- This is the same stop condition the automated loop-back step above will need; applying it to
+  human-triggered PRs now means the rule is established before it is automated.
+
 **Standing constraint for this track:** automation may *propose* but never *approve*. The repo-level
 "Allow GitHub Actions to create and approve pull requests" setting stays off, and no workflow holds
 an identity that can approve its own work ([ADR-0018](decisions/ADR-0018-housekeeping-pr-review-gate.md)).
