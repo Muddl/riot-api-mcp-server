@@ -65,6 +65,25 @@ repository — there is no "try it safely" middle setting. Disabled or active.
 Re-enable by re-running `scripts/rulesets/apply-rulesets.sh` from a desk, which restores the
 committed JSON exactly and is then confirmed by `ruleset-drift.yml`.
 
+## Known limitation: `ruleset-drift.yml`'s schedule goes silent after 60 days of inactivity
+
+GitHub disables `on.schedule` triggers on a repository with no activity for 60 days, and does so
+without failing anything — the workflow simply stops being invoked, with no error, no red run, no
+notification. "Factory switched off" (Rung 1 or 2 above) is strongly correlated with "repo goes
+quiet", which is exactly the condition that trips this. The result is a green-by-absence safety
+net: no runs, no red, no signal that branch protection has drifted.
+
+This is a platform behavior, not a bug in `ruleset-drift.yml` or `check-drift.sh` — there is no
+code fix for it in this repository. Mitigation is manual: after any extended quiet period (or
+before relying on the schedule again), confirm it still fires —
+`https://github.com/Muddl/riot-api-mcp-server/actions/workflows/ruleset-drift.yml` → **Run
+workflow** (`workflow_dispatch`) — and re-enable it from `···` → **Enable workflow** if GitHub has
+disabled it. Any commit to the repository also counts as activity and resets the 60-day clock.
+
+A cross-job freshness assertion (e.g. a separate check that alerts if `ruleset-drift.yml` has not
+run in N days) would close this gap in software rather than relying on a human to remember, but
+that is out of scope for this task and is tracked as a follow-up.
+
 ## After using any rung
 
 Say so on the alert thread (`vars.FACTORY_ALERT_ISSUE`) — an unexplained silent factory is

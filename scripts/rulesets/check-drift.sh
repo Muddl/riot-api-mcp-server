@@ -18,12 +18,19 @@ STRIP='del(.id, .node_id, ._links, .created_at, .updated_at, .source, .source_ty
 
 for file in R1-all-branches.json R2-default-branch.json; do
   name="$(jq -r .name "$DIR/$file")"
-  id="$(gh api "repos/$REPO/rulesets" --jq ".[] | select(.name == \"$name\") | .id" | head -n1)"
-  if [ -z "$id" ]; then
+  ids="$(gh api "repos/$REPO/rulesets" --jq ".[] | select(.name == \"$name\") | .id")"
+  if [ -z "$ids" ]; then
     echo "::error title=Ruleset drift::No live ruleset named \"$name\". Expected from $file."
     status=1
     continue
   fi
+  count="$(printf '%s\n' "$ids" | wc -l)"
+  if [ "$count" -ne 1 ]; then
+    echo "::error title=Ruleset drift::Found $count live rulesets named \"$name\" (ambiguous, expected exactly one). IDs: $(printf '%s ' $ids)"
+    status=1
+    continue
+  fi
+  id="$ids"
   gh api "repos/$REPO/rulesets/$id" | jq -S "$STRIP" > "$TMP/live.json"
   jq -S . "$DIR/$file" > "$TMP/want.json"
   if diff -u "$TMP/want.json" "$TMP/live.json" > "$TMP/diff.txt"; then
@@ -34,6 +41,25 @@ for file in R1-all-branches.json R2-default-branch.json; do
     status=1
   fi
 done
+
+# The loop above only confirms the two tracked rulesets match; it says nothing about whether a
+# third, untracked ruleset also exists live. GitHub documents nothing about how bypass_actors are
+# evaluated when multiple rulesets apply to the same ref, so an extra ruleset — added by hand, or
+# left behind live after a committed JSON was renamed (which makes the applier POST a new one
+# instead of updating the old) — is a route to weakening the exact property this repo relies on,
+# invisibly to the loop above. Assert the live set of ruleset names is exactly {R1, R2}, no more.
+expected_names="$(printf '%s\n' "$(jq -r .name "$DIR/R1-all-branches.json")" "$(jq -r .name "$DIR/R2-default-branch.json")" | sort)"
+live_names="$(gh api "repos/$REPO/rulesets" --jq '.[].name' | sort)"
+if [ -n "$live_names" ]; then
+  extra_names="$(comm -23 <(printf '%s\n' "$live_names") <(printf '%s\n' "$expected_names"))"
+else
+  extra_names=""
+fi
+if [ -n "$extra_names" ]; then
+  echo "::error title=Ruleset drift::Unexpected live ruleset(s) not tracked by any committed JSON:"
+  printf '%s\n' "$extra_names" | sed 's/^/  - /'
+  status=1
+fi
 
 if [ "$status" -ne 0 ]; then
   echo
