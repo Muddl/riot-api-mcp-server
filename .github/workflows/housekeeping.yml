@@ -46,18 +46,15 @@ jobs:
             echo "::notice title=Housekeeping skipped::No commits in the last week."
           fi
 
-      - name: Run housekeeping skill (apply mode, edits only)
+      # SCRATCH — stands in for claude-code-action, which skips itself when the workflow file
+      # differs from the default branch's copy. Replays the credential state it leaves behind.
+      - name: SCRATCH simulate claude-code-action credential handover
         if: steps.gate.outputs.proceed == 'true'
-        uses: anthropics/claude-code-action@v1
-        with:
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          prompt: |
-            Run the housekeeping skill to audit and fix drift in this repo's docs, knowledge base,
-            roadmap, skills, and agents. Apply the fixes to the working tree. Do NOT commit, push,
-            or open a pull request — a later workflow step owns all git operations. Never edit
-            anything under docs/superpowers/specs/ or docs/superpowers/plans/ (immutable history).
-          claude_args: |
-            --allowedTools "Read,Edit,Write,Grep,Glob,Bash(grep:*),Bash(ls:*),Bash(comm:*),Bash(sort:*),Bash(wc:*),Bash(sed:*),Bash(xargs:*),Bash(basename:*),Bash(git status:*),Bash(git diff:*)"
+        run: |
+          echo "scratch" > VALIDATION-SCRATCH.txt
+          git config --local --unset-all http.https://github.com/.extraheader
+          git remote set-url origin \
+            "https://x-access-token:ghs_000000000000000000000000000000000000@github.com/${GITHUB_REPOSITORY}.git"
 
       - name: Open a PR if the pass changed anything
         if: steps.gate.outputs.proceed == 'true'
