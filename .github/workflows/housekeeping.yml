@@ -19,6 +19,9 @@ permissions:
 jobs:
   housekeeping:
     runs-on: ubuntu-latest
+    # claude-code-action exposes no timeout of its own; its message loop runs until the job's.
+    # This job runs unattended on a Monday cron — an unbounded hang is the worst case.
+    timeout-minutes: 30
     permissions:
       contents: write        # create the housekeeping branch
       pull-requests: write   # open the PR

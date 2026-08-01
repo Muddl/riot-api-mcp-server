@@ -4,11 +4,20 @@ on:
   pull_request:
     types: [opened, synchronize, ready_for_review, reopened]
 
+# Opposite of ci.yml on purpose: a review of an older commit is waste, not signal, and this
+# workflow produces no required check, so cancelling it blocks nothing.
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   claude-review:
     # Skip drafts — they aren't ready for review and would waste subscription usage.
     if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
+    # claude-code-action exposes no timeout of its own; its message loop runs until the job's.
+    # Without this the default is 360 minutes of flat-rate seat on a wedged review.
+    timeout-minutes: 20
     permissions:
       contents: read
       pull-requests: write   # REQUIRED to post reviews/comments (was `read` — the no-op cause)

@@ -6,6 +6,14 @@ on:
   pull_request:
     branches: [ "master" ]
 
+# Queue, never cancel. `Build & verify` is a REQUIRED status check on master
+# (.github/rulesets/R2-default-branch.json), and a *cancelled* check run does not satisfy a
+# required check — it is neither success nor a pending state the merge box waits on. Cancelling
+# a superseded run would leave the PR blocked behind a grey check with no visible cause.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
 # Least-privilege default for the whole workflow. Individual jobs elevate only
 # the scopes their actions need (see each job's `permissions:` block).
 permissions:
@@ -57,6 +65,10 @@ jobs:
           annotate_only: true
           require_tests: true
 
+      # Comment a JaCoCo coverage summary on the PR. The glob picks up every module's report.
+      # Threshold is 0 here (the build already owns the soft coverage gate); this step is
+      # signal, not a blocker.
+      #
       # Skipped on fork PRs: the read-only fork GITHUB_TOKEN cannot post a PR comment, so this
       # can only 403. continue-on-error covers the residual case (e.g. a comment-locked PR).
       - name: Publish coverage summary
