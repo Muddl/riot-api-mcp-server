@@ -55,10 +55,10 @@ Architecture, coverage, and formatting are checked in the same run.
 ./gradlew spotlessApply  # auto-format sources (run before committing)
 ```
 
-Beyond the offline CI gate, a post-merge [live eval harness](eval/README.md) drives the server
-against the real Riot API over stdio and sse using [mcp-eval](https://mcp-eval.ai/), verifying the
-transports handshake, endpoint paths resolve, and Riot's error behaviours have not drifted. It runs
-post-merge only and never blocks a merge.
+Beyond the offline CI gate, a [live eval harness](eval/README.md) drives the server against the
+real Riot API over stdio and sse using [mcp-eval](https://mcp-eval.ai/), verifying the transports
+handshake, endpoint paths resolve, and Riot's error behaviours have not drifted. It is **dispatched
+on demand** (Actions tab or `gh workflow run live-eval.yml`) and never blocks a merge.
 
 ## Documentation
 

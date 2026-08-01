@@ -4,11 +4,26 @@ on:
   pull_request:
     types: [opened, synchronize, ready_for_review, reopened]
 
+# Opposite of ci.yml on purpose: a review of an older commit is waste, not signal, and this
+# workflow produces no required check, so cancelling it blocks nothing.
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   claude-review:
     # Skip drafts — they aren't ready for review and would waste subscription usage.
-    if: ${{ !github.event.pull_request.draft }}
+    # vars.FACTORY_ENABLED is the kill switch; absent/mistyped means OFF (fail-safe).
+    # Skip fork PRs — secrets (including CLAUDE_CODE_OAUTH_TOKEN) are unavailable to a
+    # pull_request run from a fork, so the action step would fail and the failure() alert below
+    # would then 403 on gh pr comment with a read-only GITHUB_TOKEN: a red job whose own alert is
+    # swallowed, and nobody notified. A visibly skipped job is the honest outcome here.
+    # This job produces no required check, so a skipped run blocks no merge.
+    if: ${{ !github.event.pull_request.draft && vars.FACTORY_ENABLED == 'true' && github.event.pull_request.head.repo.fork == false }}
     runs-on: ubuntu-latest
+    # claude-code-action exposes no timeout of its own; its message loop runs until the job's.
+    # Without this the default is 360 minutes of flat-rate seat on a wedged review.
+    timeout-minutes: 20
     permissions:
       contents: read
       pull-requests: write   # REQUIRED to post reviews/comments (was `read` — the no-op cause)
@@ -44,3 +59,15 @@ jobs:
           claude_args: |
             --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
           allowed_bots: 'dependabot'
+
+      # An unattended failure nobody sees is the same as no gate at all. `gh pr comment` uses
+      # this job's `pull-requests: write`; the @-mention is what makes GitHub Mobile push a
+      # notification (schedule-failure email does not cover pull_request-triggered runs).
+      # failure() deliberately excludes cancelled() — a cancellation is a human act.
+      - name: Alert on failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr comment "${{ github.event.pull_request.number }}" --body \
+            "@Muddl \`Claude Code Review\` failed on this PR. Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

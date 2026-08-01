@@ -1,0 +1,65 @@
+name: Ruleset Drift
+
+on:
+  schedule:
+    - cron: '17 7 * * *'   # daily 07:17 UTC — offset off the hour to dodge cron congestion
+  workflow_dispatch:
+
+# READ ONLY, deliberately. GITHUB_TOKEN has no `administration` scope at all — the permissions
+# key does not offer one — so ruleset reads use a dedicated fine-grained PAT whose ONLY grant is
+# Administration: read. No credential in this repository's Actions can write a ruleset; that is
+# the point (see ADR-0019).
+permissions:
+  contents: read
+
+# NOT gated on vars.FACTORY_ENABLED. This is the safety net that tells you the gate is still
+# there; it must keep running precisely when the factory has been switched off.
+concurrency:
+  group: ruleset-drift
+  cancel-in-progress: false
+
+jobs:
+  drift:
+    name: Ruleset drift check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write    # post the @Muddl alert on drift
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Compare live rulesets against committed JSON
+        id: compare
+        env:
+          GH_TOKEN: ${{ secrets.RULESET_READ_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "reason=missing-token" >> "$GITHUB_OUTPUT"
+            echo "::error title=Ruleset drift::RULESET_READ_TOKEN is not set. Refusing to skip green — an unverifiable gate is indistinguishable from an absent one. Create a fine-grained PAT scoped to this repo with Administration: read (and nothing else) and add it as the RULESET_READ_TOKEN secret."
+            exit 1
+          fi
+          bash scripts/rulesets/check-drift.sh
+
+      # Branches on the real cause: a missing RULESET_READ_TOKEN is a config gap, not drift, and
+      # the first alert this system ever sends would otherwise misreport the former as the latter.
+      # Both cases must still alert — never trade a wrong message for silence.
+      - name: Alert on drift
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ALERT_ISSUE: ${{ vars.FACTORY_ALERT_ISSUE }}
+          REASON: ${{ steps.compare.outputs.reason }}
+        run: |
+          if [ -z "$ALERT_ISSUE" ]; then
+            echo "::error title=Alerting::FACTORY_ALERT_ISSUE is unset; the drift alert had nowhere to go."
+            exit 1
+          fi
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          if [ "$REASON" = "missing-token" ]; then
+            BODY="@Muddl \`ruleset-drift.yml\` could not run: RULESET_READ_TOKEN secret is not set (this is a missing credential, not confirmed drift). Run: $RUN_URL"
+          else
+            BODY="@Muddl **Branch protection has drifted** from \`.github/rulesets/\`. Run: $RUN_URL"
+          fi
+          gh issue comment "$ALERT_ISSUE" --body "$BODY"

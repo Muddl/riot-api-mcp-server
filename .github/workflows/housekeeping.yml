@@ -18,10 +18,18 @@ permissions:
 
 jobs:
   housekeeping:
+    # Kill switch. This is the only unattended cron in the factory, so it is the job the switch
+    # exists for. Absent/mistyped variable means OFF. Gating the job (not the step) also skips
+    # the git/PR steps, so a disabled factory opens no branches.
+    if: vars.FACTORY_ENABLED == 'true'
     runs-on: ubuntu-latest
+    # claude-code-action exposes no timeout of its own; its message loop runs until the job's.
+    # This job runs unattended on a Monday cron — an unbounded hang is the worst case.
+    timeout-minutes: 30
     permissions:
       contents: write        # create the housekeeping branch
       pull-requests: write   # open the PR
+      issues: write          # post the @Muddl failure alert (see the last step)
       id-token: write
     steps:
       - name: Checkout (full history for the commit gate)
@@ -109,10 +117,22 @@ jobs:
           # using an extraheader, and this step — which exists to route around a credential footgun
           # — should hold the same bar. The URL must be credential-free or its dead inline token
           # would still be preferred over the header.
-          # GITHUB_SERVER_URL rather than a literal github.com, and the extraheader config key is
-          # derived from the same value so host and key cannot drift apart.
+          #
+          # The host comes from GITHUB_SERVER_URL rather than a literal github.com, and the
+          # extraheader config key below is derived from that same value, so the host and the
+          # config key cannot drift apart.
           git remote set-url origin "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git"
-          AUTH_HEADER="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+
+          # GitHub's automatic log redaction matches the LITERAL registered secret, not transforms
+          # of it, so the base64 of "x-access-token:$GH_TOKEN" is NOT masked by default. Mask the
+          # blob itself — a line containing only the base64, with no "AUTHORIZATION: basic "
+          # prefix, would not be caught by a mask registered on the full header string. Nothing
+          # here prints either today, but ACTIONS_STEP_DEBUG tracing would show them in the clear.
+          # Defence in depth on a step whose credential handling has already broken twice. (#71)
+          AUTH_B64="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          echo "::add-mask::$AUTH_B64"
+          AUTH_HEADER="AUTHORIZATION: basic $AUTH_B64"
+          echo "::add-mask::$AUTH_HEADER"
 
           git checkout -b "$BRANCH"
           git add -A
@@ -122,3 +142,20 @@ jobs:
             --title "chore: weekly housekeeping ($STAMP)" \
             --body "Automated housekeeping pass (docs / KB / roadmap / skills / agents). Review the diff before merging." \
             --base master --head "$BRANCH"
+
+      # This is the only unattended cron in the factory: it fires at 09:00 UTC Monday with
+      # nobody watching. There is no issue or PR context here, so the alert goes to the
+      # long-lived tracking issue in vars.FACTORY_ALERT_ISSUE. If that variable is unset the
+      # step fails loudly rather than swallowing the alert — a silent alerter is worse than none.
+      - name: Alert on failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ALERT_ISSUE: ${{ vars.FACTORY_ALERT_ISSUE }}
+        run: |
+          if [ -z "$ALERT_ISSUE" ]; then
+            echo "::error title=Alerting::FACTORY_ALERT_ISSUE is unset; the failure alert had nowhere to go."
+            exit 1
+          fi
+          gh issue comment "$ALERT_ISSUE" --body \
+            "@Muddl \`Weekly Housekeeping\` failed. Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

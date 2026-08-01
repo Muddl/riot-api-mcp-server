@@ -112,7 +112,7 @@ the program's first real evidence the sub-project-0/1a core generalizes, not jus
 
 Two standing gates remain **pending / user-owed**, carried forward rather than claimed passed, exactly
 as for 1a/1b: the live transport handshake (stdio + sse) and TFT-v1 endpoint-path verification against
-the live Riot developer portal (continuously re-verified post-merge by the live eval harness once its
+the live Riot developer portal (continuously re-verified by dispatched runs of the live eval harness once its
 TFT generalization lands) — both require a live `RIOT_API_KEY` and a human in the loop.
 
 ### 3 — Valorant server ⏳
@@ -185,7 +185,7 @@ Beyond the primitives, the quality gates the pattern depends on are largely buil
 
 | Factory component | Here today |
 |---|---|
-| Automated quality gates | `./gradlew build` — tests, ArchUnit, JaCoCo, Spotless — plus the post-merge live eval harness ([ADR-0012](decisions/ADR-0012-live-eval-harness.md)) |
+| Automated quality gates | `./gradlew build` — tests, ArchUnit, JaCoCo, Spotless — plus the dispatch-only live eval harness ([ADR-0012](decisions/ADR-0012-live-eval-harness.md)) |
 | Shared tooling | Agents run the same Gradle build and the same project skills a human runs; there is no agent-only path |
 | Standardized inputs | KB hydrate/persist protocol, project skills, `CLAUDE.md` |
 | Back-pressure before review | ArchUnit, Spotless, and the negative-control tests fail locally, pre-PR — Stripe's "shift feedback left" |
@@ -208,7 +208,7 @@ which also **corrects three claims this section previously made** (see below).
 
 | # | Sub-project | State | Notes |
 |---|---|---|---|
-| **F0** | Harden the gate | ⏳ Not started — [plan](../superpowers/plans/2026-08-01-factory-f0-harden-the-gate.md) | Ruleset surgery, the fork-PR fix that must precede any required check, bounds/kill-switch/alerting, #71, and the stale-doc sweep. Ships **no new agent behaviour**, so it is the only sub-project fully verifiable before it is depended on. |
+| **F0** | Harden the gate | ✅ Shipped (branch) — rulesets committed, applied separately | [ADR-0019](decisions/ADR-0019-gate-hardening-and-ruleset-topology.md). Ruleset `8769144` split into R1 (`~ALL`) + R2 (`~DEFAULT_BRANCH`, `Build & verify` required) is **committed but not yet applied**: `.github/rulesets/*.json` is the committed intent, and `scripts/rulesets/apply-rulesets.sh` must be run from a desk before the split is live. Also shipped: fork PRs unblocked first; timeouts, `FACTORY_ENABLED` kill switch, `@Muddl` failure alerts, the local-only apply script itself, and a daily drift check. #71 closed and the stale-doc sweep done. |
 | **F1** | Machine identity (GitHub App) | ⏳ Not started | Retires the PAT. Desk-only — a private key is not a phone artifact. |
 | **F2** | Issue intake, two-phase | ⏳ Not started — [plan](../superpowers/plans/2026-08-01-factory-f2-issue-intake.md) | `agent:plan` commits a plan and posts its SHA; `agent:go` implements *that SHA*, checked by a deterministic `git diff --exit-code`. The work-queue primitive. **Needs F0 first** — the current `~ALL` PR-required rule rejects `agent:go`'s second push to an existing branch. |
 | **F3** | Machine-emitted run traces | ⏳ Not started | The event stream, restricted to facts non-agent steps emit. Blocked on #71. |
@@ -233,15 +233,16 @@ which also **corrects three claims this section previously made** (see below).
   secrets included, into the Actions log and auto-enables under `ACTIONS_STEP_DEBUG`. This
   repository, its logs, and its artifacts are **public**. Uploading the `execution_file` artifact is
   the same content class in a different container and is rejected on the same grounds.
-- **The live eval does not run post-merge.** `live-eval.yml` is `workflow_dispatch:` only — the
-  `push` trigger was removed and never replaced. The stale claim is still live in this file (below,
-  under sub-projects 2 and 3 and in the deferred/standing-constraint tables), in `CLAUDE.md`, in
-  `README.md`, in `CONTRIBUTING.md`, and inside accepted **ADR-0012** and **ADR-0017**. It is flagged
-  here rather than fixed in place because ADRs are **amended, never edited**, so the sweep is a
-  single coherent change owned by F0 — but no reader should reach those sentences without knowing
-  they are wrong. The practical consequence is the one that matters: **merges get no live coverage
-  unless someone dispatches the workflow by hand**, and `gotchas.md` records three bug classes that
-  only the live eval has ever caught, every one of which passed the offline suite.
+- **The live eval never ran on merge.** `live-eval.yml` is `workflow_dispatch:` only — the `push`
+  trigger was removed and never replaced. The stale claim was live in this file (below, under
+  sub-projects 2 and 3 and in the deferred/standing-constraint tables), in `CLAUDE.md`, in
+  `README.md`, in `CONTRIBUTING.md`, and inside accepted **ADR-0012** and **ADR-0017**. F0's sweep
+  ([ADR-0019](decisions/ADR-0019-gate-hardening-and-ruleset-topology.md)) corrected the prose
+  everywhere outside immutable history; ADR-0012 and ADR-0017 got dated amendment blockquotes rather
+  than a silent edit. The practical consequence is the one that matters regardless of doc wording:
+  **merges get no live coverage unless someone dispatches the workflow by hand**, and `gotchas.md`
+  records three bug classes that only the live eval has ever caught, every one of which passed the
+  offline suite.
 
 ### Failure modes to design against
 
@@ -313,8 +314,8 @@ Real and wanted, deliberately not scheduled. Recorded so they are not re-derived
 | Publishing libraries as Maven artifacts | Not planned. Libraries are versioned for provenance and consumed by project reference — see ADR-0010. |
 | Aggregate coverage report | When more than one server exists. |
 | ~~Claude Code Actions integration rework~~ | **Shipped** ([ADR-0015](decisions/ADR-0015-repo-maintenance-automation.md)). The PR reviewer now posts real reviews, `@claude` can respond, and a weekly `/housekeeping` cron opens maintenance PRs — all on `CLAUDE_CODE_OAUTH_TOKEN`, separate from live-eval's `ANTHROPIC_API_KEY`. |
-| ~~Automated endpoint-path verification~~ | **Shipped** as part of the live eval harness (see [ADR-0012](decisions/ADR-0012-live-eval-harness.md)). Live agent-driven evals call every tool against the real Riot API post-merge; a wrong path returns 404 and fails the eval, so paths are verified continuously rather than by a human opening the portal. |
-| ~~Automated transport-handshake verification~~ | **Shipped** as part of the live eval harness (see [ADR-0012](decisions/ADR-0012-live-eval-harness.md)). The suite runs over both stdio and sse each post-merge run; a successful stdio session is the stdout-purity check. |
+| ~~Automated endpoint-path verification~~ | **Shipped** as part of the live eval harness (see [ADR-0012](decisions/ADR-0012-live-eval-harness.md)). Live agent-driven evals call every tool against the real Riot API on each dispatched run; a wrong path returns 404 and fails the eval, so paths are verified by running the harness rather than by a human opening the portal. |
+| ~~Automated transport-handshake verification~~ | **Shipped** as part of the live eval harness (see [ADR-0012](decisions/ADR-0012-live-eval-harness.md)). The suite runs over both stdio and sse each dispatched run; a successful stdio session is the stdout-purity check. |
 
 ## Standing constraints
 
@@ -325,11 +326,13 @@ These hold across every sub-project:
 - **Riot endpoint paths are verified against the live developer portal**, never assumed from
   Context7 or model knowledge. Sub-project 0 found Context7 returned mostly Data Dragon and
   Valorant/TFT material when asked for a structured LoL reference. *As of
-  [ADR-0012](decisions/ADR-0012-live-eval-harness.md) this is automated post-merge by the live eval
-  harness (`eval/`), over both transports; the offline suite remains the pre-merge gate.*
+  [ADR-0012](decisions/ADR-0012-live-eval-harness.md) this is automated by the live eval
+  harness (`eval/`), over both transports, on dispatch rather than on merge; the offline suite
+  remains the pre-merge gate.*
 - **Green tests do not prove the server serves.** Every cycle verifies both transports with a real
   MCP handshake, including stdio's stdout purity. *As of
-  [ADR-0012](decisions/ADR-0012-live-eval-harness.md) this is automated post-merge by the live eval
-  harness (`eval/`), over both transports; the offline suite remains the pre-merge gate.*
+  [ADR-0012](decisions/ADR-0012-live-eval-harness.md) this is automated by the live eval
+  harness (`eval/`), over both transports, on dispatch rather than on merge; the offline suite
+  remains the pre-merge gate.*
 - **The intended consumer is a third party** installing against their own Riot API key. That raises
   the bar on tool naming, error messages, and key-gating behaviour.
