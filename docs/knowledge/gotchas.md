@@ -414,3 +414,29 @@ repo. Rulesets are `active` or `disabled`. Rehearse risky bypass topologies on a
 repo, never on this one — and note that GitHub documents rule *aggregation* across rulesets ("the most
 restrictive version of the rule applies") while documenting **nothing** about how *bypass* is
 evaluated when several rulesets match a ref. That silence is why R1 and R2 carry identical bypass.
+
+## `mergeStateStatus` is computed per-viewer, so an exempt account cannot falsify its own gate
+
+The obvious acceptance test for a required status check — open a deliberately-red PR and assert
+`gh pr view --json mergeStateStatus` returns `BLOCKED` — **cannot pass when the querying account is
+a bypass actor**, however correctly the ruleset is configured. GitHub evaluates mergeability
+relative to the authenticated viewer, and rules are not evaluated at all for an `exempt` actor, so
+the PR reports `UNSTABLE` (checks failing, nothing requiring them) and `mergeable: MERGEABLE`.
+
+Observed 2026-08-01 on PR #84, with R2 live and active: `Build & verify` `FAILURE`,
+`mergeStateStatus: UNSTABLE`. The F0 plan read `UNSTABLE` as proof that "R2 did not take effect".
+It had taken effect. Two API calls distinguish the cases, and neither is viewer-relative:
+
+```bash
+# Does the rule apply to the branch at all? Lists rules regardless of the caller's bypass.
+gh api repos/OWNER/REPO/rules/branches/master --jq '.[].type'
+# Is the caller exempt? -> "exempt" means merge-state readings from this account prove nothing.
+gh api repos/OWNER/REPO/rulesets/<id> --jq .current_user_can_bypass
+```
+
+The deeper point: on a repo whose only credentials inherit the admin role, **"machine identities
+cannot merge red" is not merely unverified but unverifiable** — every available identity is exempt,
+including PATs minted under the admin account. Confirming it requires an identity that is not the
+admin role, which is what a GitHub App installation (`actor_type: Integration`) provides. Until
+then, record the configuration as verified and the property as untested, rather than reading a
+viewer-relative status as evidence either way.
