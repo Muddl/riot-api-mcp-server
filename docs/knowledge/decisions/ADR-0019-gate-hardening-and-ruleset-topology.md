@@ -52,11 +52,20 @@ with no `continue-on-error`. And no agent job had a timeout, a kill switch, or a
 
 ## Consequences
 
-- **Machine identities cannot merge red.** That is the property this buys, and it is bounded: the
-  maintainer remains `exempt` and can still merge red. This residual risk is **stated, not solved**;
-  closing it for the human is a post-trip item.
-- Branch protection now has a committed, diffable definition, and a hand-edit in the GitHub UI turns a
-  daily workflow red within 24 hours instead of going unnoticed indefinitely.
+- **Machine identities cannot merge red — except ones that inherit the admin role.** The bypass on
+  both rulesets is `{"actor_type": "RepositoryRole", "actor_id": 5, "bypass_mode": "exempt"}` — the
+  admin *role*, not a named human. Any credential that authenticates as that role inherits the same
+  exemption, including a fine-grained PAT minted under the admin account: `HOUSEKEEPING_TOKEN`
+  already holds `Pull requests: read/write`, which covers `PUT /pulls/{n}/merge`, so a machine
+  identity **can** merge red today. The property this buys therefore holds only for identities that
+  are **not** the admin role. **F1 (machine identity via GitHub App) is what actually closes this**:
+  an App installation authenticates as `actor_type: Integration`, not `RepositoryRole` 5, so it does
+  not inherit the bypass a PAT does. This residual risk is **stated, not solved** here; closing it —
+  for the human and for any admin-scoped credential alike — is future work, F1 chief among it.
+- Branch protection now has a committed, diffable definition, and the drift check exists to make a
+  hand-edit in the GitHub UI go red within a day instead of unnoticed indefinitely — **once the
+  rulesets are applied and `RULESET_READ_TOKEN` is in place**. Neither is true yet: this session made
+  no production mutations, so today a hand-edit in the UI still goes unnoticed exactly as before.
 - Three phone-reachable rungs exist for stopping the factory
   ([pattern guide](../patterns/factory-kill-switch.md)), and a ruleset lock-out is undone by one
   copy-pasteable `gh api --method PUT ... -f enforcement=disabled`.

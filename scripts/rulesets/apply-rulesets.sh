@@ -19,7 +19,13 @@ DRY_RUN=false
 # Argv validation comes first and is non-mutating, so it is safe to run before the GITHUB_ACTIONS
 # guard below — but that guard must still precede every gh api call and both apply() invocations.
 # An unrecognised flag (--dryrun, --dry_run, -n, --dry-run=true, ...) must never silently fall
-# through to a live apply.
+# through to a live apply. Nor may a stray second argument: "" --dry-run matches the empty-string
+# arm below and would otherwise perform a live apply while the operator believes it is a dry run.
+if [ "$#" -gt 1 ]; then
+  echo "too many arguments" >&2
+  exit 2
+fi
+
 case "${1:-}" in
   "") ;;
   --dry-run) DRY_RUN=true ;;

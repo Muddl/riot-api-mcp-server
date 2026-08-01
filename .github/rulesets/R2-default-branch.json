@@ -38,7 +38,8 @@
       "parameters": {
         "required_status_checks": [
           {
-            "context": "Build & verify"
+            "context": "Build & verify",
+            "integration_id": 15368
           }
         ],
         "strict_required_status_checks_policy": false

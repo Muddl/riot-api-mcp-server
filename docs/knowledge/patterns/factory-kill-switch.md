@@ -59,6 +59,13 @@ gh api --method PUT \
 Browser equivalent: `https://github.com/Muddl/riot-api-mcp-server/settings/rules` → the ruleset →
 Enforcement status → **Disabled** → Save.
 
+**This will turn `ruleset-drift.yml` red the next time it runs, on purpose.** `check-drift.sh`
+compares `enforcement` like any other field, so a disabled ruleset *is* drift by its definition —
+the daily job will go red and @-mention `FACTORY_ALERT_ISSUE` every morning until the ruleset is
+re-applied. That is correct behaviour, not a second incident: say so on the alert thread (see
+"After using any rung" below) so a deliberate rollback is not re-litigated as a fresh problem at
+07:17 UTC.
+
 `enforcement: "evaluate"` (dry-run) is **GitHub Enterprise only** and is not available on this
 repository — there is no "try it safely" middle setting. Disabled or active.
 

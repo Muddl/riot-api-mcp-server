@@ -208,7 +208,7 @@ which also **corrects three claims this section previously made** (see below).
 
 | # | Sub-project | State | Notes |
 |---|---|---|---|
-| **F0** | Harden the gate | ✅ Shipped | [ADR-0019](decisions/ADR-0019-gate-hardening-and-ruleset-topology.md). Ruleset `8769144` split into R1 (`~ALL`) + R2 (`~DEFAULT_BRANCH`, `Build & verify` required); fork PRs unblocked first; timeouts, `FACTORY_ENABLED` kill switch, `@Muddl` failure alerts, local-only apply script and a daily drift check. #71 closed and the stale-doc sweep done. |
+| **F0** | Harden the gate | ✅ Shipped (branch) — rulesets committed, applied separately | [ADR-0019](decisions/ADR-0019-gate-hardening-and-ruleset-topology.md). Ruleset `8769144` split into R1 (`~ALL`) + R2 (`~DEFAULT_BRANCH`, `Build & verify` required) is **committed but not yet applied**: `.github/rulesets/*.json` is the committed intent, and `scripts/rulesets/apply-rulesets.sh` must be run from a desk before the split is live. Also shipped: fork PRs unblocked first; timeouts, `FACTORY_ENABLED` kill switch, `@Muddl` failure alerts, the local-only apply script itself, and a daily drift check. #71 closed and the stale-doc sweep done. |
 | **F1** | Machine identity (GitHub App) | ⏳ Not started | Retires the PAT. Desk-only — a private key is not a phone artifact. |
 | **F2** | Issue intake, two-phase | ⏳ Not started — [plan](../superpowers/plans/2026-08-01-factory-f2-issue-intake.md) | `agent:plan` commits a plan and posts its SHA; `agent:go` implements *that SHA*, checked by a deterministic `git diff --exit-code`. The work-queue primitive. **Needs F0 first** — the current `~ALL` PR-required rule rejects `agent:go`'s second push to an existing branch. |
 | **F3** | Machine-emitted run traces | ⏳ Not started | The event stream, restricted to facts non-agent steps emit. Blocked on #71. |
@@ -327,10 +327,12 @@ These hold across every sub-project:
   Context7 or model knowledge. Sub-project 0 found Context7 returned mostly Data Dragon and
   Valorant/TFT material when asked for a structured LoL reference. *As of
   [ADR-0012](decisions/ADR-0012-live-eval-harness.md) this is automated by the live eval
-  harness (`eval/`), over both transports, on dispatch rather than on merge; the offline suite remains the pre-merge gate.*
+  harness (`eval/`), over both transports, on dispatch rather than on merge; the offline suite
+  remains the pre-merge gate.*
 - **Green tests do not prove the server serves.** Every cycle verifies both transports with a real
   MCP handshake, including stdio's stdout purity. *As of
   [ADR-0012](decisions/ADR-0012-live-eval-harness.md) this is automated by the live eval
-  harness (`eval/`), over both transports, on dispatch rather than on merge; the offline suite remains the pre-merge gate.*
+  harness (`eval/`), over both transports, on dispatch rather than on merge; the offline suite
+  remains the pre-merge gate.*
 - **The intended consumer is a third party** installing against their own Riot API key. That raises
   the bar on tool naming, error messages, and key-gating behaviour.

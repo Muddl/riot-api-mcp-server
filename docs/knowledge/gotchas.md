@@ -154,7 +154,8 @@ record it (Plan C deferred this to Plan D's arch audit). The honest exception li
 
 `eval/` is a `uv`-managed Python (`mcpevals`) project — never built by Gradle, never part of the
 offline `./gradlew build` gate. It drives the built server jar against the **live** Riot API on CI,
-on manual dispatch only (`.github/workflows/live-eval.yml` is `workflow_dispatch:`), and never blocks a merge. Consequences to know:
+on manual dispatch only (`.github/workflows/live-eval.yml` is `workflow_dispatch:`), and never
+blocks a merge. Consequences to know:
 
 - **Needs `ANTHROPIC_API_KEY`** (agent + LLM judge). This is a *separate credential bucket* from
   `CLAUDE_CODE_OAUTH_TOKEN` (which `claude.yml` uses); the live-eval workflow must never read the
@@ -400,9 +401,12 @@ ruleset?*
 Committing ruleset JSON under `.github/rulesets/` configures nothing — GitHub reads no such path.
 Without something that applies it and something that verifies it, the JSON is documentation cosplaying
 as configuration, which is ADR-0018's exact failure shape: artifact present, property absent. This
-repo applies it with `scripts/rulesets/apply-rulesets.sh` (local only — a workflow able to rewrite
-rulesets could delete the approval requirement) and verifies it daily with `ruleset-drift.yml`, which
-fails loudly rather than skipping green when its read-only credential is missing.
+repo's design closes that gap with two pieces: `scripts/rulesets/apply-rulesets.sh` (local only — a
+workflow able to rewrite rulesets could delete the approval requirement) applies the JSON, and
+`ruleset-drift.yml` is meant to verify it daily, failing loudly rather than skipping green when its
+read-only credential is missing. **Neither piece is load-bearing yet on this branch** — the rulesets
+have not been applied and `RULESET_READ_TOKEN` does not exist — which is itself a live instance of
+the lesson above: the committed JSON alone configures nothing until something applies and verifies it.
 
 There is also no safe middle setting to rehearse a ruleset change in: `enforcement: "evaluate"`, the
 dry-run mode, is **"only available with GitHub Enterprise"** and does not exist on a free personal

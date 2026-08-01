@@ -18,7 +18,9 @@ STRIP='del(.id, .node_id, ._links, .created_at, .updated_at, .source, .source_ty
 
 for file in R1-all-branches.json R2-default-branch.json; do
   name="$(jq -r .name "$DIR/$file")"
-  ids="$(gh api "repos/$REPO/rulesets" --jq ".[] | select(.name == \"$name\") | .id")"
+  # --paginate: the default 30-items-per-page listing would silently miss a ruleset past the
+  # first page, which is exactly the hole the completeness assertion below exists to close.
+  ids="$(gh api --paginate "repos/$REPO/rulesets" --jq ".[] | select(.name == \"$name\") | .id")"
   if [ -z "$ids" ]; then
     echo "::error title=Ruleset drift::No live ruleset named \"$name\". Expected from $file."
     status=1
@@ -49,7 +51,7 @@ done
 # instead of updating the old) — is a route to weakening the exact property this repo relies on,
 # invisibly to the loop above. Assert the live set of ruleset names is exactly {R1, R2}, no more.
 expected_names="$(printf '%s\n' "$(jq -r .name "$DIR/R1-all-branches.json")" "$(jq -r .name "$DIR/R2-default-branch.json")" | sort)"
-live_names="$(gh api "repos/$REPO/rulesets" --jq '.[].name' | sort)"
+live_names="$(gh api --paginate "repos/$REPO/rulesets" --jq '.[].name' | sort)"
 if [ -n "$live_names" ]; then
   extra_names="$(comm -23 <(printf '%s\n' "$live_names") <(printf '%s\n' "$expected_names"))"
 else
