@@ -18,6 +18,10 @@ permissions:
 
 jobs:
   housekeeping:
+    # Kill switch. This is the only unattended cron in the factory, so it is the job the switch
+    # exists for. Absent/mistyped variable means OFF. Gating the job (not the step) also skips
+    # the git/PR steps, so a disabled factory opens no branches.
+    if: vars.FACTORY_ENABLED == 'true'
     runs-on: ubuntu-latest
     # claude-code-action exposes no timeout of its own; its message loop runs until the job's.
     # This job runs unattended on a Monday cron — an unbounded hang is the worst case.

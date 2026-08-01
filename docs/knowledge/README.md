@@ -45,6 +45,7 @@ This README is the **single source of truth** for the hydrate/persist protocol.
 - [Add an MCP tool](patterns/add-an-mcp-tool.md)
 - [Add an adapter test](patterns/add-an-adapter-test.md)
 - [Run and extend the live eval harness](patterns/live-eval-harness.md)
+- [Stopping the factory (escalation ladder)](patterns/factory-kill-switch.md)
 
 ## Hydrate / Persist protocol
 

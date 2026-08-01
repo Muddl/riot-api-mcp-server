@@ -12,11 +12,16 @@ on:
 
 jobs:
   claude:
+    # Kill switch. vars.* is always a string, so an unset, deleted, or mistyped variable
+    # evaluates false — absent means OFF, which is the fail-safe direction. Flip it at
+    # /settings/variables/actions from any browser, phone included.
+    # See docs/knowledge/patterns/factory-kill-switch.md for the full escalation ladder.
     if: |
+      vars.FACTORY_ENABLED == 'true' && (
       (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
       (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
       (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
-      (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
+      (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude'))))
     runs-on: ubuntu-latest
     # claude-code-action exposes no timeout of its own; its message loop runs until the job's.
     timeout-minutes: 30

@@ -13,7 +13,9 @@ concurrency:
 jobs:
   claude-review:
     # Skip drafts — they aren't ready for review and would waste subscription usage.
-    if: ${{ !github.event.pull_request.draft }}
+    # vars.FACTORY_ENABLED is the kill switch; absent/mistyped means OFF (fail-safe).
+    # This job produces no required check, so a skipped run blocks no merge.
+    if: ${{ !github.event.pull_request.draft && vars.FACTORY_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     # claude-code-action exposes no timeout of its own; its message loop runs until the job's.
     # Without this the default is 360 minutes of flat-rate seat on a wedged review.
