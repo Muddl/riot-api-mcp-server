@@ -208,9 +208,9 @@ which also **corrects three claims this section previously made** (see below).
 
 | # | Sub-project | State | Notes |
 |---|---|---|---|
-| **F0** | Harden the gate | ⏳ Not started | Ruleset surgery, the fork-PR fix that must precede any required check, bounds/kill-switch/alerting, #71, and the stale-doc sweep. Ships **no new agent behaviour**, so it is the only sub-project fully verifiable before it is depended on. |
+| **F0** | Harden the gate | ⏳ Not started — [plan](../superpowers/plans/2026-08-01-factory-f0-harden-the-gate.md) | Ruleset surgery, the fork-PR fix that must precede any required check, bounds/kill-switch/alerting, #71, and the stale-doc sweep. Ships **no new agent behaviour**, so it is the only sub-project fully verifiable before it is depended on. |
 | **F1** | Machine identity (GitHub App) | ⏳ Not started | Retires the PAT. Desk-only — a private key is not a phone artifact. |
-| **F2** | Issue intake, two-phase | ⏳ Not started | `agent:plan` commits a plan and posts its SHA; `agent:go` implements *that SHA*, checked by a deterministic `git diff --exit-code`. The work-queue primitive. |
+| **F2** | Issue intake, two-phase | ⏳ Not started — [plan](../superpowers/plans/2026-08-01-factory-f2-issue-intake.md) | `agent:plan` commits a plan and posts its SHA; `agent:go` implements *that SHA*, checked by a deterministic `git diff --exit-code`. The work-queue primitive. **Needs F0 first** — the current `~ALL` PR-required rule rejects `agent:go`'s second push to an existing branch. |
 | **F3** | Machine-emitted run traces | ⏳ Not started | The event stream, restricted to facts non-agent steps emit. Blocked on #71. |
 | **F4** | Review loop-back | ⏳ Not started | `agent:revise` label; two-round cap counted from the append-only issue timeline; enforced by a tool-less `gate` job. |
 | **F5** | Tiered autonomy by blast radius | ⏳ Not started | Docs/KB changes need less ceremony than a change to `RiotApiClient` or a tool contract. A CI check verifies changed paths against the declared tier; `file_path_restriction` push rules are org-only. |
