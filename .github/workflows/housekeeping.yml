@@ -62,12 +62,26 @@ jobs:
       - name: Open a PR if the pass changed anything
         if: steps.gate.outputs.proceed == 'true'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # A PAT, deliberately not GITHUB_TOKEN. GitHub does not fire `pull_request` events for a
+          # PR opened with GITHUB_TOKEN (recursion guard), so such a PR gets NO ci.yml run and NO
+          # claude-code-review.yml run — it would sit there looking reviewable while nothing had
+          # reviewed it. ADR-0015 says this pass opens a PR "never merging unreviewed"; honouring
+          # that means the PR must be authored by a non-Actions identity. See ADR-0018.
+          GH_TOKEN: ${{ secrets.HOUSEKEEPING_TOKEN }}
         run: |
           if [ -z "$(git status --porcelain)" ]; then
             echo "::notice title=Housekeeping::No changes to propose."
             exit 0
           fi
+
+          # Fail loudly rather than falling back to GITHUB_TOKEN: a silent fallback would still open
+          # a PR, but one that CI and the reviewer never see — the exact failure this design exists
+          # to prevent, and invisible precisely because the PR looks normal.
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error title=Housekeeping::HOUSEKEEPING_TOKEN secret is not set. Refusing to open a PR with GITHUB_TOKEN, which would skip CI and Claude Code Review. Create a fine-grained PAT (Contents: read/write, Pull requests: read/write) and add it as the HOUSEKEEPING_TOKEN repository secret."
+            exit 1
+          fi
+
           STAMP="$(date -u +%Y-W%V)"
           BRANCH="chore/housekeeping-$STAMP"
           git config user.name  "github-actions[bot]"
@@ -78,9 +92,9 @@ jobs:
           # repoints `origin` at a URL embedding its own OIDC-derived GitHub App installation token,
           # and then revokes that token (DELETE /installation/token) as the step ends. So by the time
           # this step runs, `origin` carries a dead credential and checkout's fallback is gone —
-          # every push here died with "Invalid username or token" (exit 128). GH_TOKEN below only
-          # authenticates `gh`, never `git`. Re-point origin at this job's own GITHUB_TOKEN, which is
-          # valid for the life of the job and already has the `contents: write` scope the push needs.
+          # every push here died with "Invalid username or token" (exit 128). Setting GH_TOKEN does
+          # not help on its own: it authenticates `gh`, never `git`. Re-point origin at the PAT so
+          # both the push and the `gh pr create` below run as the same non-Actions identity.
           git remote set-url origin \
             "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
 
