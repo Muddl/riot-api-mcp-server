@@ -1,7 +1,14 @@
 # ADR-0017: Transport-scoped live eval coverage
 
-- **Status:** Accepted
+- **Status:** Accepted (amended 2026-08-01)
 - **Date:** 2026-07-23
+
+> **Amendment (2026-08-01):** "Relationship to ADR-0012" below describes the harness's purpose as
+> "agent-driven, live-Riot, post-merge, non-gating". Read **dispatch-only** for "post-merge":
+> `live-eval.yml` is `workflow_dispatch:` only and has never run on merge. Nothing else in this ADR
+> changes — the coverage narrowing it decides is independent of the trigger. See
+> [ADR-0012](ADR-0012-live-eval-harness.md)'s amendment and
+> [ADR-0019](ADR-0019-gate-hardening-and-ruleset-topology.md).
 
 ## Context
 

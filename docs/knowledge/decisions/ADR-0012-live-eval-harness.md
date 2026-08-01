@@ -1,7 +1,20 @@
 # ADR-0012: Live agent-driven eval harness (mcp-eval)
 
-- **Status:** Accepted
+- **Status:** Accepted (amended 2026-08-01)
 - **Date:** 2026-07-17
+
+> **Amendment (2026-08-01):** the Decision's opening line — "run post-merge on CI" — and the
+> Consequences' "automated post-merge" were never true of the shipped workflow, and contradict this
+> ADR's own "On-demand, non-blocking" bullet below, which is the accurate one.
+> `.github/workflows/live-eval.yml` is `workflow_dispatch:` only; the `push` trigger was removed and
+> never replaced. **Merges get no live coverage unless someone dispatches the workflow by hand** —
+> which matters because `gotchas.md` records three bug classes only the live eval has ever caught,
+> every one of which passed the offline suite. Scheduling it was considered and rejected in the
+> [software-factory decomposition spec](../../superpowers/specs/2026-08-01-software-factory-decomposition-design.md):
+> the preflight *skips green* on a 401/403 and Riot dev keys expire every 24 hours, so a weekly cron
+> would yield one real run followed by green no-ops — reintroducing "silent failure that looks like
+> success" as the mitigation for it. The coverage gap during unattended weeks is recorded honestly
+> instead. Swept from all prose by F0 ([ADR-0019](ADR-0019-gate-hardening-and-ruleset-topology.md)).
 
 ## Context
 

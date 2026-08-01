@@ -45,8 +45,9 @@ in CI.
 ## Live evals (optional, key-gated)
 
 The offline suite above is the gate and needs no keys. A separate live suite in [`eval/`](eval/README.md)
-drives the server against the real Riot API with [mcp-eval](https://mcp-eval.ai/). It runs post-merge
-on CI and never blocks a merge. To run it locally you need `uv`, a personal `RIOT_API_KEY`, and an
+drives the server against the real Riot API with [mcp-eval](https://mcp-eval.ai/). It is dispatched
+on demand on CI (`workflow_dispatch`, not on merge) and never blocks a merge. To run it locally you
+need `uv`, a personal `RIOT_API_KEY`, and an
 `ANTHROPIC_API_KEY` (separate from any Claude Code OAuth token):
 
 ```bash

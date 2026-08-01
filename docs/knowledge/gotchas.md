@@ -154,7 +154,7 @@ record it (Plan C deferred this to Plan D's arch audit). The honest exception li
 
 `eval/` is a `uv`-managed Python (`mcpevals`) project — never built by Gradle, never part of the
 offline `./gradlew build` gate. It drives the built server jar against the **live** Riot API on CI,
-post-merge only (`.github/workflows/live-eval.yml`), and never blocks a merge. Consequences to know:
+on manual dispatch only (`.github/workflows/live-eval.yml` is `workflow_dispatch:`), and never blocks a merge. Consequences to know:
 
 - **Needs `ANTHROPIC_API_KEY`** (agent + LLM judge). This is a *separate credential bucket* from
   `CLAUDE_CODE_OAUTH_TOKEN` (which `claude.yml` uses); the live-eval workflow must never read the
@@ -189,7 +189,7 @@ pass because our fixtures were fully populated; only live data has the nulls.
 **Rule:** declare Riot DTO number/boolean fields as boxed wrappers (`Integer`/`Long`/`Boolean`), not
 primitives. `String`s and `List`s are already null-safe. When you add a DTO, also add a WireMock case
 that feeds `null` for the nullable-looking fields and asserts it parses — that reproduces this class
-of failure offline instead of waiting for the post-merge live eval. Boxing `boolean`→`Boolean` also
+of failure offline instead of waiting for someone to dispatch the live eval. Boxing `boolean`→`Boolean` also
 renames the Lombok getter (`isX()` → `getX()`); update call sites.
 
 ## Adding a primitive field to an existing Riot-mapped DTO breaks its adapter test
@@ -369,3 +369,44 @@ credential-handover gotcha above) and became reachable the moment it was fixed.
 Left to fail loudly on purpose. The alternative — a run-id suffix — would silently open a second PR
 proposing the same week's maintenance, and two competing housekeeping PRs is a worse failure than a
 red run. If you need to re-run a week, delete the existing branch and its PR first.
+
+## `GITHUB_TOKEN` is read-only on fork PRs regardless of the `permissions:` block
+
+For a `pull_request` event from a **forked** repository, `GITHUB_TOKEN` is issued read-only. The
+workflow's `permissions:` key can only *reduce* a token's scopes, never raise them above what the
+event grants — so `checks: write` and `pull-requests: write` are silently ineffective there. Any
+step that writes (a check run, a PR comment, a label) gets `403` and, without `continue-on-error`,
+takes the whole job red. This made `Build & verify` fail on every outside contribution while nobody
+noticed, because no outside contribution had arrived.
+
+It matters far more once a job is a **required status check**: a reporter that cannot write then
+makes fork PRs permanently unmergeable. Keep reporting steps `continue-on-error: true` (or gate them
+on `github.event.pull_request.head.repo.fork == false`) so a job's conclusion reflects the build, not
+the reporter. The reverse is never acceptable — never put `continue-on-error` on the build step
+itself, which turns the required check into decoration.
+
+## A *cancelled* check run never satisfies a required status check
+
+`concurrency: cancel-in-progress: true` on a workflow that produces a required check is a trap. The
+superseded run reports `conclusion: cancelled`, which is neither a success nor a pending state the
+merge box waits on, so the PR sits blocked behind a grey check with no error anywhere to explain it.
+`ci.yml` therefore uses `cancel-in-progress: false` (queue, never cancel) while
+`claude-code-review.yml` — which produces no required check — uses `true`, where a superseded review
+is pure waste. Decide this per workflow by asking one question: *is this job's name pinned in a
+ruleset?*
+
+## `.github/rulesets/` is not a GitHub path, and `enforcement: "evaluate"` is Enterprise-only
+
+Committing ruleset JSON under `.github/rulesets/` configures nothing — GitHub reads no such path.
+Without something that applies it and something that verifies it, the JSON is documentation cosplaying
+as configuration, which is ADR-0018's exact failure shape: artifact present, property absent. This
+repo applies it with `scripts/rulesets/apply-rulesets.sh` (local only — a workflow able to rewrite
+rulesets could delete the approval requirement) and verifies it daily with `ruleset-drift.yml`, which
+fails loudly rather than skipping green when its read-only credential is missing.
+
+There is also no safe middle setting to rehearse a ruleset change in: `enforcement: "evaluate"`, the
+dry-run mode, is **"only available with GitHub Enterprise"** and does not exist on a free personal
+repo. Rulesets are `active` or `disabled`. Rehearse risky bypass topologies on a throwaway probe
+repo, never on this one — and note that GitHub documents rule *aggregation* across rulesets ("the most
+restrictive version of the rule applies") while documenting **nothing** about how *bypass* is
+evaluated when several rulesets match a ref. That silence is why R1 and R2 carry identical bypass.

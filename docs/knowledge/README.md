@@ -38,6 +38,7 @@ This README is the **single source of truth** for the hydrate/persist protocol.
 - [ADR-0016 — Bounded list results for MCP tools](decisions/ADR-0016-bounded-list-results.md)
 - [ADR-0017 — Transport-scoped live eval coverage](decisions/ADR-0017-transport-scoped-live-eval.md)
 - [ADR-0018 — Automated PRs are authored by a non-Actions identity so the review gate applies](decisions/ADR-0018-housekeeping-pr-review-gate.md)
+- [ADR-0019 — Gate hardening: ruleset topology, local-only application, and factory bounds](decisions/ADR-0019-gate-hardening-and-ruleset-topology.md)
 
 ### Patterns
 
