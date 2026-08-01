@@ -52,10 +52,8 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
-            Run the housekeeping skill to audit and fix drift in this repo's docs, knowledge base,
-            roadmap, skills, and agents. Apply the fixes to the working tree. Do NOT commit, push,
-            or open a pull request — a later workflow step owns all git operations. Never edit
-            anything under docs/superpowers/specs/ or docs/superpowers/plans/ (immutable history).
+            Write the single line "scratch" to a file named VALIDATION-SCRATCH.txt at the repo
+            root. Do nothing else at all. Do NOT commit, push, or open a pull request.
           claude_args: |
             --allowedTools "Read,Edit,Write,Grep,Glob,Bash(grep:*),Bash(ls:*),Bash(comm:*),Bash(sort:*),Bash(wc:*),Bash(sed:*),Bash(xargs:*),Bash(basename:*),Bash(git status:*),Bash(git diff:*)"
 
