@@ -41,8 +41,15 @@ jobs:
 
       # Publish JUnit results as a check run with inline annotations, even when
       # the build failed, so failing tests are visible on the PR.
+      #
+      # continue-on-error: for a `pull_request` from a FORK, GITHUB_TOKEN is read-only
+      # regardless of this workflow's `permissions:` block (the key can only reduce), so the
+      # checks-API write 403s. Reporting is signal, never the gate — `Build & verify` is a
+      # required status check (see .github/rulesets/R2-default-branch.json) and must not go
+      # red because a reporter could not write. The `./gradlew build` step above is the gate.
       - name: Publish test results
         if: always()
+        continue-on-error: true
         uses: mikepenz/action-junit-report@v5
         with:
           report_paths: '**/build/test-results/test/TEST-*.xml'
@@ -50,11 +57,11 @@ jobs:
           annotate_only: true
           require_tests: true
 
-      # Comment a JaCoCo coverage summary on the PR. The glob picks up every module's report.
-      # Threshold is 0 here (the build already owns the soft coverage gate); this step is
-      # signal, not a blocker.
+      # Skipped on fork PRs: the read-only fork GITHUB_TOKEN cannot post a PR comment, so this
+      # can only 403. continue-on-error covers the residual case (e.g. a comment-locked PR).
       - name: Publish coverage summary
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
+        continue-on-error: true
         uses: madrapps/jacoco-report@v1.7.1
         with:
           paths: ${{ github.workspace }}/**/build/reports/jacoco/test/jacocoTestReport.xml
