@@ -64,3 +64,10 @@ Supporting rules:
 - A GitHub App (via `actions/create-github-app-token`) would remove the expiry and narrow the
   blast radius further. Deferred, not rejected — it is the natural upgrade once more than one
   workflow needs an authoring identity.
+- **Known leftover scope, deliberately not trimmed.** The job still grants the ambient
+  `GITHUB_TOKEN` `contents: write` and `pull-requests: write`, which nothing uses any more: the push
+  and `gh pr create` both authenticate with the PAT, and `actions/checkout` needs only read. It is
+  left in place because `claude-code-action` refuses to run when the workflow file differs from the
+  default branch, so **no permissions change can be validated before merging it** — a wrong trim
+  would surface only on the next scheduled run, silently. Trim it in a standalone PR where a
+  post-merge dispatch can verify the pass still runs.

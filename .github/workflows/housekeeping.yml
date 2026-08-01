@@ -109,13 +109,15 @@ jobs:
           # using an extraheader, and this step — which exists to route around a credential footgun
           # — should hold the same bar. The URL must be credential-free or its dead inline token
           # would still be preferred over the header.
-          git remote set-url origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          # GITHUB_SERVER_URL rather than a literal github.com, and the extraheader config key is
+          # derived from the same value so host and key cannot drift apart.
+          git remote set-url origin "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git"
           AUTH_HEADER="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
 
           git checkout -b "$BRANCH"
           git add -A
           git commit -m "chore: weekly housekeeping ($STAMP)" -m "Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
-          git -c http.https://github.com/.extraheader="$AUTH_HEADER" push -u origin "$BRANCH"
+          git -c http."${GITHUB_SERVER_URL}/".extraheader="$AUTH_HEADER" push -u origin "$BRANCH"
           gh pr create \
             --title "chore: weekly housekeeping ($STAMP)" \
             --body "Automated housekeeping pass (docs / KB / roadmap / skills / agents). Review the diff before merging." \
