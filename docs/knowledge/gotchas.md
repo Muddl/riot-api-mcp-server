@@ -244,6 +244,13 @@ opened using the automatic `GITHUB_TOKEN` (to prevent recursive runs). So the we
 `claude-code-review.yml` run. That is expected, not a bug. If auto-review on those PRs is ever
 wanted, open them with a PAT or GitHub App token instead of `GITHUB_TOKEN`.
 
+Separately, `GITHUB_TOKEN` cannot open a PR at all unless the repo-level **"Allow GitHub Actions to
+create and approve pull requests"** setting is on — `pull-requests: write` in the workflow is
+necessary but not sufficient. With it off, `gh pr create` fails with `GraphQL: GitHub Actions is not
+permitted to create or approve pull requests (createPullRequest)`. It was enabled for this repo on
+2026-08-01 so `housekeeping.yml` could open its PR. Check it with
+`gh api repos/<owner>/<repo>/actions/permissions/workflow` (`can_approve_pull_request_reviews`).
+
 ## A merge to `master` can occasionally trigger no Actions runs (dropped push event)
 
 GitHub Actions very occasionally **drops the `push` event** for a merge to the default branch even
@@ -309,3 +316,37 @@ silently returns the player's ten *weakest* challenges instead, and every existi
 — this is not something offline tests can catch, only a live response or the portal docs can settle
 it. If you resolve this, the fix (if needed) is a one-line comparator direction change plus updating
 `ChallengesTool`'s description; no architectural change. See ADR-0016's ordering section.
+
+## `claude-code-action` revokes the git credentials any later step in the job needs
+
+The action takes ownership of the repo's git auth for the duration of its step: it deletes the
+`http.https://github.com/.extraheader` credential `actions/checkout` persisted, repoints `origin` at
+a URL embedding its own OIDC-derived GitHub App installation token — and then **revokes that token**
+(`DELETE /installation/token`) as the step ends. Any later step in the same job that runs `git push`
+therefore pushes with a dead credential and no fallback, failing with
+`remote: Invalid username or token` / `fatal: Authentication failed` / exit 128. Setting `GH_TOKEN`
+on that step does not help: it authenticates `gh`, never `git`. This broke every `housekeeping.yml`
+run that had changes to push. The fix is to re-establish a credential immediately before the push:
+
+```bash
+git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+```
+
+Any future workflow that runs `claude-code-action` and then does its own git write needs the same
+line — the action leaves the repo unauthenticated on the way out.
+
+## `claude-code-action` is silently skipped when the workflow file differs from the default branch
+
+The action hard-requires the workflow file to be **byte-identical to the copy on the default
+branch**; dispatched from a branch with any edit to that file, it skips itself with
+`Skipping action due to workflow validation: Workflow validation failed` — an *annotation*, not a
+failure. The job goes green having done nothing. This makes branch-based validation of any workflow
+containing the action vacuously green, and it is a trap in two directions: a run can also look
+"successful" merely because the pass produced no diff and the later steps short-circuited (the
+2026-07-19 housekeeping run passed for exactly that reason while the push path was fully broken).
+
+To validate the *non-Claude* steps of such a workflow from a branch, replace the action with a step
+that replays the state it leaves behind — unset the extraheader and point `origin` at a bogus token
+— then run the real steps against it. That reproduces the post-action condition exactly, costs no
+Claude tokens, and finishes in seconds. Always confirm the step you meant to test actually ran;
+`conclusion: success` on a workflow gated by `if:` and early `exit 0`s proves very little.
