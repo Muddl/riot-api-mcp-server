@@ -215,7 +215,7 @@ which also **corrects three claims this section previously made** (see below).
 | **F4** | Review loop-back | ⏳ Not started | `agent:revise` label; two-round cap counted from the append-only issue timeline; enforced by a tool-less `gate` job. |
 | **F5** | Tiered autonomy by blast radius | ⏳ Not started | Docs/KB changes need less ceremony than a change to `RiotApiClient` or a tool contract. A CI check verifies changed paths against the declared tier; `file_path_restriction` push rules are org-only. |
 
-**Three corrections this section previously got wrong**, all found by designing against it:
+**Four corrections this section previously got wrong**, all found by designing against it:
 
 - **Branch protection was never "not started."** Ruleset `8769144` has been active since 2025-10-09
   with `pull_request{1 approval}`, `deletion`, and `non_fast_forward` — but **no required status
@@ -233,6 +233,15 @@ which also **corrects three claims this section previously made** (see below).
   secrets included, into the Actions log and auto-enables under `ACTIONS_STEP_DEBUG`. This
   repository, its logs, and its artifacts are **public**. Uploading the `execution_file` artifact is
   the same content class in a different container and is rejected on the same grounds.
+- **The live eval does not run post-merge.** `live-eval.yml` is `workflow_dispatch:` only — the
+  `push` trigger was removed and never replaced. The stale claim is still live in this file (below,
+  under sub-projects 2 and 3 and in the deferred/standing-constraint tables), in `CLAUDE.md`, in
+  `README.md`, in `CONTRIBUTING.md`, and inside accepted **ADR-0012** and **ADR-0017**. It is flagged
+  here rather than fixed in place because ADRs are **amended, never edited**, so the sweep is a
+  single coherent change owned by F0 — but no reader should reach those sentences without knowing
+  they are wrong. The practical consequence is the one that matters: **merges get no live coverage
+  unless someone dispatches the workflow by hand**, and `gotchas.md` records three bug classes that
+  only the live eval has ever caught, every one of which passed the offline suite.
 
 ### Failure modes to design against
 
