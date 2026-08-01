@@ -62,20 +62,62 @@ jobs:
       - name: Open a PR if the pass changed anything
         if: steps.gate.outputs.proceed == 'true'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # A PAT, deliberately not GITHUB_TOKEN. GitHub does not fire `pull_request` events for a
+          # PR opened with GITHUB_TOKEN (recursion guard), so such a PR gets NO ci.yml run and NO
+          # claude-code-review.yml run — it would sit there looking reviewable while nothing had
+          # reviewed it. ADR-0015 says this pass opens a PR "never merging unreviewed"; honouring
+          # that means the PR must be authored by a non-Actions identity. See ADR-0018.
+          GH_TOKEN: ${{ secrets.HOUSEKEEPING_TOKEN }}
         run: |
           if [ -z "$(git status --porcelain)" ]; then
             echo "::notice title=Housekeeping::No changes to propose."
             exit 0
           fi
+
+          # Fail loudly rather than falling back to GITHUB_TOKEN: a silent fallback would still open
+          # a PR, but one that CI and the reviewer never see — the exact failure this design exists
+          # to prevent, and invisible precisely because the PR looks normal.
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error title=Housekeeping::HOUSEKEEPING_TOKEN secret is not set. Refusing to open a PR with GITHUB_TOKEN, which would skip CI and Claude Code Review. Create a fine-grained PAT (Contents: read/write, Pull requests: read/write) and add it as the HOUSEKEEPING_TOKEN repository secret."
+            exit 1
+          fi
+
           STAMP="$(date -u +%Y-W%V)"
+          # Keyed to the ISO week only. A second run in the same week — workflow_dispatch bypasses
+          # the commit gate and always proceeds — collides with the existing branch and fails at
+          # `git push` or `gh pr create`. Deliberately left to fail loudly rather than silently
+          # opening a second PR for the same week; see gotchas.md.
           BRANCH="chore/housekeeping-$STAMP"
+
+          # The commit is authored by github-actions[bot] while the push and `gh pr create` below
+          # run as the PAT's identity, so the commit author and the PR's "opened by" differ on
+          # purpose: event delivery keys off the credential, not the commit trailer (ADR-0018).
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # claude-code-action takes ownership of this repo's git credentials during its step: it
+          # deletes the `http.https://github.com/.extraheader` credential actions/checkout persisted,
+          # repoints `origin` at a URL embedding its own OIDC-derived GitHub App installation token,
+          # and then revokes that token (DELETE /installation/token) as the step ends. So by the time
+          # this step runs, `origin` carries a dead credential and checkout's fallback is gone —
+          # every push here died with "Invalid username or token" (exit 128). Setting GH_TOKEN does
+          # not help on its own: it authenticates `gh`, never `git`.
+          #
+          # Restore a clean origin, then pass the PAT as a one-shot header on the push itself. An
+          # embedded `https://x-access-token:$TOKEN@...` remote would work too, but persists the
+          # token in .git/config for the rest of the job; `actions/checkout` avoids exactly that by
+          # using an extraheader, and this step — which exists to route around a credential footgun
+          # — should hold the same bar. The URL must be credential-free or its dead inline token
+          # would still be preferred over the header.
+          # GITHUB_SERVER_URL rather than a literal github.com, and the extraheader config key is
+          # derived from the same value so host and key cannot drift apart.
+          git remote set-url origin "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git"
+          AUTH_HEADER="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+
           git checkout -b "$BRANCH"
           git add -A
           git commit -m "chore: weekly housekeeping ($STAMP)" -m "Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
-          git push -u origin "$BRANCH"
+          git -c http."${GITHUB_SERVER_URL}/".extraheader="$AUTH_HEADER" push -u origin "$BRANCH"
           gh pr create \
             --title "chore: weekly housekeeping ($STAMP)" \
             --body "Automated housekeeping pass (docs / KB / roadmap / skills / agents). Review the diff before merging." \

@@ -1,7 +1,13 @@
 # ADR-0015 — Repository maintenance automation
 
-- **Status:** Accepted
+- **Status:** Accepted (amended by [ADR-0018](ADR-0018-housekeeping-pr-review-gate.md))
 - **Date:** 2026-07-19
+
+> **Amendment (2026-08-01):** the "opens a PR — never merging unreviewed" clause below was not
+> actually enforced. The PR was opened with `GITHUB_TOKEN`, for which GitHub fires no
+> `pull_request` event, so it received neither CI nor Claude Code Review.
+> [ADR-0018](ADR-0018-housekeeping-pr-review-gate.md) moves PR authorship to a PAT so the gate
+> applies.
 
 ## Context
 

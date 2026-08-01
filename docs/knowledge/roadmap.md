@@ -127,6 +127,145 @@ key.
 Smallest surface. **Verify LoR is not in maintenance before investing.** Parts of it need a
 production key, and deck endpoints need Bearer/RSO auth, which `RiotApiClient` does not support.
 
+## Cross-cutting: the software factory ⏳
+
+A second track, orthogonal to the per-game sub-projects above. Those grow *what the repo does*; this
+grows *how change reaches `master`*.
+
+The reference model is Cole Murray's [software factory](https://murraycole.com/posts/software-factory)
+— *"a repeatable system for turning defined work into production software through standardized
+inputs, shared tooling, automated quality gates, and measurable output"* — with agents planning,
+implementing, testing, and reviewing while humans set intent and acceptance criteria. Its loop is
+**signal → intake → context → plan → build → test and review → deploy → monitor → learn**, and the
+role shift is from being *in* the loop to *on* it. Stripe's
+[minions](https://stripe.dev/blog/minions-stripes-one-shot-end-to-end-coding-agents.md)
+([part 2](https://stripe.dev/blog/minions-stripes-one-shot-end-to-end-coding-agents-part-2.md)) are
+the same shape at scale: unattended agents in isolated devboxes, an agent loop **interleaved with
+deterministic steps** for git, lint, and test, hard iteration limits, and human review before every
+merge.
+
+Local target loop: **GitHub Issue → superpowers-driven development → Claude Code Review → merge.**
+
+### The governing constraint
+
+*"Generation is cheap and getting cheaper, so your ceiling is set by how fast and how trustworthily
+you can verify output."* The bottleneck is verification, not authorship — a restatement of this
+repo's standing constraint that green tests do not prove the server serves. Every step below is
+judged on whether it strengthens verification, not on how much it automates.
+
+### The primitives, and which ones exist here
+
+Convergent-evolution argument from
+[the walkthrough](https://www.youtube.com/watch?v=lx0Eaane4Ng) (reference implementation:
+[Warren](https://app.warren.run)): independently, the companies doing this at scale have landed on
+the same handful of parts. Four in the main path — a **work queue**, a **control plane**, a
+**sandbox**, and a **handoff to a human** — over two substrate layers, an **event stream** and
+**durable memory**. Two framings there are worth stealing outright: work arrives as an *issue* that
+an agent is assigned, not as a hand-written prompt; and durable memory exists because the sandbox
+dies every run, so anything worth keeping must be git-tracked before the machine is destroyed.
+
+Auditing this repo against them — the gaps are intake and observability, not execution:
+
+| Primitive | State here |
+|---|---|
+| **Sandbox** — ephemeral, per-agent, destroyed after the task | ✅ A GitHub-hosted runner per run, discarded on completion. `--allowedTools` is the permission surface. |
+| **Durable memory** — git-tracked, survives the sandbox | ✅ `docs/knowledge/` plus the hydrate/persist protocol. This repo's strongest primitive; it is already the thing the pattern asks for. |
+| **Handoff to a human** — the PR is the output unit | ✅ [ADR-0018](decisions/ADR-0018-housekeeping-pr-review-gate.md) made this real rather than nominal. |
+| **Control plane** — queue, orchestrate, observe | ◐ GitHub Actions is a thin one: schedule, dispatch, a concurrency group. No cross-run view of what agents did or where they fail. |
+| **Work queue** — issues, assigned | ⏳ Issues are not yet the intake path. This is the next real step. |
+| **Event stream** — traces to steer, pause, fork, and analyse in aggregate | ⏳ Weakest. Only Actions logs, and `claude-code-action` hides SDK output by default (`show_full_output`), so a run's reasoning is not inspectable after the fact. Without this there is no way to find *systematic* agent failure, only individual ones. |
+
+The near-term ambition is explicitly **not** a dark factory. The argument against it is not
+capability but maturity: a human review step at the end is what keeps the system legible to the
+people responsible for it, which matches this repo's premise that the discipline is the product.
+
+### Substrate already in place
+
+Beyond the primitives, the quality gates the pattern depends on are largely built.
+
+| Factory component | Here today |
+|---|---|
+| Automated quality gates | `./gradlew build` — tests, ArchUnit, JaCoCo, Spotless — plus the post-merge live eval harness ([ADR-0012](decisions/ADR-0012-live-eval-harness.md)) |
+| Shared tooling | Agents run the same Gradle build and the same project skills a human runs; there is no agent-only path |
+| Standardized inputs | KB hydrate/persist protocol, project skills, `CLAUDE.md` |
+| Back-pressure before review | ArchUnit, Spotless, and the negative-control tests fail locally, pre-PR — Stripe's "shift feedback left" |
+| Measurable output | JaCoCo coverage; eval token cost via `eval/tools/report-cost.py` |
+| Replayability | ADRs + immutable `docs/superpowers/specs|plans/` record why a change looks the way it does |
+
+### Sequencing
+
+Incremental; each step is useful alone, and none is scheduled against a game sub-project.
+
+| Step | State | Notes |
+|---|---|---|
+| Reviewer posts real, reviewable feedback | ✅ Shipped | [ADR-0015](decisions/ADR-0015-repo-maintenance-automation.md). Was green-but-silent before. |
+| Scheduled agent work opens a PR rather than committing | ✅ Shipped | `housekeeping.yml` ([ADR-0015](decisions/ADR-0015-repo-maintenance-automation.md)). |
+| Agent-authored PRs actually receive CI + review | ✅ Shipped | [ADR-0018](decisions/ADR-0018-housekeeping-pr-review-gate.md). The `GITHUB_TOKEN` form opened PRs no workflow ever saw — the gate was intent, not mechanism. |
+| Issue → spec/plan → implementation, agent-driven | ⏳ Not started | The superpowers brainstorm → write-plan → execute-plan cycle from a labelled Issue. Spec quality is the control surface: vague inputs yield confident, wrong output. Needs a decision on where the plan artifact lives, since `docs/superpowers/plans/` is immutable history. |
+| Full run traces retained and inspectable | ⏳ Not started | The event-stream primitive. Start cheap: `show_full_output` on the housekeeping action, then somewhere durable to put run records. Prerequisite for improving agents rather than just re-running them. |
+| Review findings loop back as commits on the same PR | ⏳ Not started | Closes the cycle, and needs **suspend/resume** — an agent that pauses for CI or for reviewer feedback and then continues, rather than one-shotting and exiting. Named as the notable gap in current implementations. Also needs a **hard iteration cap** (minions allow two CI rounds); an agent revising until the reviewer goes quiet optimizes for reviewer silence, not correctness. |
+| Distinct machine identity for automated PRs | ⏳ Not started | **Prerequisite for the row below.** See "Attribution" under the constraints. |
+| Branch protection encoding the gate | ⏳ Not started | Makes the loop enforceable rather than conventional: required checks, no self-approval. Blocked on the row above. |
+| Tiered autonomy by blast radius | ⏳ Not started | Docs/KB changes need less ceremony than a change to `RiotApiClient` or a tool contract. Progressive autonomy, earned per area. |
+
+### Failure modes to design against
+
+Named in the sources, and **two are already evidenced in this repo** — which is the argument for
+treating them as design constraints rather than hypotheticals:
+
+- **Generation outpacing verification.** The reason the governing constraint above is first.
+- **Agents as lenient self-graders.** Observed 2026-08-01: a workflow validation run reported
+  `conclusion: success` while the step under test had silently skipped itself, and the "passing" run
+  proved nothing. See `gotchas.md`.
+- **Silent failure that looks like success.** Observed twice in the same incident — the 2026-07-19
+  housekeeping run went green only because the pass produced no diff and the broken push was never
+  reached ([ADR-0018](decisions/ADR-0018-housekeeping-pr-review-gate.md)).
+- **Velocity theater.** Throughput is not a goal here; this repo's value is the discipline, so
+  cycle-time metrics stay subordinate to the gates.
+
+### Attribution: automated PRs currently author as a human
+
+`HOUSEKEEPING_TOKEN` is a fine-grained PAT, and a PAT *acts as the person who owns it*. So the
+housekeeping PR is authored by `Muddl` — not because a human triggered that run, but inherently: the
+unattended Monday run will attribute itself the same way. Two costs, one of which is blocking:
+
+- **Provenance.** Machine-authored work is recorded as a person's, which muddies exactly the
+  replayability and event-stream properties this track is trying to build. "Who wrote this?" stops
+  being answerable from the PR.
+- **It blocks branch protection.** GitHub does not let the author of a PR approve it. Under a
+  required-approvals rule, a housekeeping PR authored by the repo's only human maintainer can never
+  be approved by them — the gate becomes unsatisfiable rather than merely inconvenient.
+
+The fix is a **GitHub App identity** (`actions/create-github-app-token`) rather than a PAT: App
+installation tokens *do* trigger `pull_request` events — unlike `GITHUB_TOKEN`, which is what
+[ADR-0018](decisions/ADR-0018-housekeeping-pr-review-gate.md) rejected — so the review gate survives
+the move, while authorship lands on a bot actor distinct from any human. It also retires the PAT's
+expiry.
+
+**Carry this forward when doing it:** `claude-code-review.yml` gates on actor type
+(`allowed_bots: 'dependabot'`). An App-authored PR arrives as that App's bot and will be **refused
+by the reviewer unless the App is added to `allowed_bots`** — silently, with a green run, which is
+precisely the failure class ADR-0018 exists to prevent. Change both files in the same commit.
+
+### Review-cycle cap: two revision rounds per PR
+
+A PR in this flow gets **at most two rounds of acting on reviewer findings**. After the second
+round, it merges as long as what remains is non-blocking; leftover suggestions are filed as
+follow-up issues rather than fixed in place. Mirrors the two-CI-round limit minions uses.
+
+- **Blocking findings are exempt.** Correctness, security, and "this would break on merge" are fixed
+  regardless of round count. The cap bounds polish, never soundness.
+- **Why:** reviewer findings have sharply diminishing returns — round one catches real defects, round
+  three suggests comment rewording. An unbounded revise-until-the-reviewer-is-silent loop spends
+  usage chasing asymptotic perfection, and optimizes for reviewer silence rather than correctness.
+  Each round also costs a full review run.
+- This is the same stop condition the automated loop-back step above will need; applying it to
+  human-triggered PRs now means the rule is established before it is automated.
+
+**Standing constraint for this track:** automation may *propose* but never *approve*. The repo-level
+"Allow GitHub Actions to create and approve pull requests" setting stays off, and no workflow holds
+an identity that can approve its own work ([ADR-0018](decisions/ADR-0018-housekeeping-pr-review-gate.md)).
+
 ## Deferred, with a home
 
 Real and wanted, deliberately not scheduled. Recorded so they are not re-derived:
