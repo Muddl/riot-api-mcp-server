@@ -30,12 +30,14 @@
         "require_code_owner_review": false,
         "require_last_push_approval": false,
         "required_approving_review_count": 1,
-        "required_review_thread_resolution": false
+        "required_review_thread_resolution": false,
+        "required_reviewers": []
       }
     },
     {
       "type": "required_status_checks",
       "parameters": {
+        "do_not_enforce_on_create": false,
         "required_status_checks": [
           {
             "context": "Build & verify",
