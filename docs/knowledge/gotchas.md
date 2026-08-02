@@ -550,3 +550,38 @@ Observed 2026-08-01 on probe PR #87: an assertion of `gh pr view --json author -
 `author.login` was `app/muddlbot`, not `muddlbot[bot]`. The failure looks exactly like the identity
 swap being wrong when it is not; check the REST endpoint (`gh api .../pulls/N --jq .user.login`)
 before concluding that it is.
+
+## The reviewer's flat-rate seat can hit its usage limit mid-review, and the failure names no cause
+
+`claude-code-review.yml` failed on PR #89, run `30727557013`, 2026-08-02, verbatim:
+
+```
+##[error]Claude result reported subtype success with is_error:true (run did not complete successfully)
+##[error]Action failed with error: Claude execution failed: result is_error:true
+##[error]Process completed with exit code 1.
+```
+
+The cause: the flat-rate `CLAUDE_CODE_OAUTH_TOKEN` seat hit its **max session usage** partway
+through the review. Not a code fault, not a permission problem, and not an actor refusal — the
+action simply could not finish. Confirmed by the maintainer, who recognised the error shape.
+
+This repo already has two other recorded reviewer failure modes, and this is neither of them:
+
+- "`claude-code-action` is silently skipped when the workflow file differs from the default
+  branch" — green job, an annotation, no review posted.
+- "`allowed_bots` pins a literal slug — a wrong entry fails the review job red, it does not
+  decline quietly" — fails red with an explicit `Workflow initiated by non-human actor: <slug>
+  (type: Bot)` message naming the cause.
+
+The usage-limit failure fails red like the second, but names **no** cause: the message is a
+generic `is_error:true`, visually indistinguishable from a genuine failure of the code under
+review, and it arrives with the same `@Muddl` alert as any other red job. The tell: a re-run of
+the identical job, same commit, after the usage window reset went green and posted a full review.
+
+This is one concrete mechanism behind open issue #80 ("The PR reviewer can burn a full run and
+post nothing, indistinguishably from having reviewed") — not necessarily the only one, and this
+entry does not close it.
+
+Operational consequence: the factory's review gate degrades to "not reviewed" under usage
+pressure. Because the failure is loud, the correct response is to re-run once the session window
+has reset, not to investigate the PR's code, and never to merge past it.
