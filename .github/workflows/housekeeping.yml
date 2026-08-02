@@ -114,11 +114,11 @@ jobs:
 
           # The identity is asserted, not assumed. claude-code-review.yml's `allowed_bots` pins the
           # literal slug, and that action refuses bot-triggered runs it does not recognise by
-          # RECORDING AN ANNOTATION ON A GREEN JOB. So an App swap or rename would leave every
-          # machine PR unreviewed while every run stayed green — ADR-0018's failure shape exactly.
-          # Convert that silence into a red job here, where it is one line and impossible to miss.
+          # FAILING THE JOB RED AND ALERTING THE MAINTAINER (verified 2026-08-01, run 30725572647) —
+          # not by declining quietly. This guard exists to fail earlier, at the pass itself, with a
+          # message that names the exact cause, rather than waiting for that downstream red run.
           if [ "$APP_SLUG" != "muddlbot" ]; then
-            echo "::error title=Housekeeping::App slug is '$APP_SLUG', expected 'muddlbot'. claude-code-review.yml's allowed_bots pins this slug; update BOTH or the reviewer silently declines on machine PRs. See ADR-0020."
+            echo "::error title=Housekeeping::App slug is '$APP_SLUG', expected 'muddlbot'. claude-code-review.yml's allowed_bots pins this slug; update BOTH, or every machine PR's review job fails red with 'Workflow initiated by non-human actor' and its alert step @-mentions the maintainer. See ADR-0020."
             exit 1
           fi
 

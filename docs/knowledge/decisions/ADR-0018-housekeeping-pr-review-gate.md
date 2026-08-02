@@ -1,8 +1,18 @@
 # ADR-0018 — Automated PRs are authored by a non-Actions identity so the review gate applies
 
-- **Status:** Accepted
+- **Status:** Accepted (amended by [ADR-0020](ADR-0020-machine-identity-github-app.md))
 - **Date:** 2026-08-01
 - **Amends:** [ADR-0015](ADR-0015-repo-maintenance-automation.md)
+
+> **Amendment (2026-08-01):** the rule below — a non-Actions identity must open the PR — stands.
+> Its *implementation* does not: a PAT acts as the person who owns it, so housekeeping PRs were
+> authored by `Muddl` and GitHub forbids a PR author from approving their own PR, leaving the only
+> human who could satisfy R2's approval requirement unable to satisfy it. The PAT was also an
+> `exempt` bypass actor by inheritance, which made "machine identities cannot merge red"
+> unverifiable. [ADR-0020](ADR-0020-machine-identity-github-app.md) replaces `HOUSEKEEPING_TOKEN`
+> with a `muddlbot[bot]` GitHub App installation token, taking up the "natural upgrade" this ADR's
+> own Consequences deferred. Read the "least privilege on the PAT" bullet as applying to the App's
+> permission set, Workflows still withheld.
 
 ## Context
 

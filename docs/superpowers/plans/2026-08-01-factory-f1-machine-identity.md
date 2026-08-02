@@ -8,6 +8,20 @@
 
 **Tech Stack:** GitHub Actions, GitHub Apps / installation tokens, `actions/create-github-app-token@v3`, `gh` CLI, Bash, Markdown. No application (Java) code changes.
 
+> **Amendment (2026-08-02), written after execution:** this plan's premise that `claude-code-action`
+> "declines silently on a green run" for an unlisted bot is **disproved**. Probe run `30725565375`
+> and review run `30725572647` show the job fails **red** with `Workflow initiated by non-human
+> actor: muddlbot (type: Bot)`, and `claude-code-review.yml`'s own `Alert on failure` step
+> `@`-mentions the maintainer on that failure. Several task bodies below still carry the original
+> "silent decline" wording; they are left as written because this plan is a snapshot of what was
+> executed against, not retroactively edited (`docs/knowledge/README.md`). The silent-green-decline
+> behaviour is real, but for a *different* mechanism — the `claude-code-action` workflow-validation
+> skip, unaffected by this correction. Treat [ADR-0020](../../knowledge/decisions/ADR-0020-machine-identity-github-app.md)
+> as the authority over any task body below that disagrees with it. Separately, the probe also found
+> that `gh pr view --json author --jq .author.login` renders a GitHub App actor as `app/<slug>`,
+> while the REST endpoint (`gh api .../pulls/N --jq .user.login`) gives `<slug>[bot]` — asserting
+> against the wrong surface cost the probe one run.
+
 ## Global Constraints
 
 These are facts of this repo, verified on 2026-08-01. Every task's requirements implicitly include them.
@@ -22,8 +36,9 @@ These are facts of this repo, verified on 2026-08-01. Every task's requirements 
 - **A green Actions run is not proof of success.** Four green-but-did-nothing incidents are on record (`docs/knowledge/gotchas.md`). Every verification step below asserts an *intended effect* — a PR whose author is `muddlbot[bot]`, a push that is *rejected*, a review comment that exists — never a job's exit status.
 - **`claude-code-action` is silently skipped when its workflow file differs from the default branch.** It records `Skipping action due to workflow validation` as an *annotation on a successful job*. This plan edits `claude-code-review.yml`, so:
   1. **The F1 PR will not be reviewed by Claude.** State this in the PR body (Task 5, Step 3) so it is not later misread as the reviewer silently failing.
-  2. `allowed_bots: 'dependabot,muddlbot'` cannot take effect until it is on `master`. Any pre-merge probe PR will see the reviewer *decline* — that is the expected pre-merge result, not a defect.
-- **`allowed_bots` matching strips a trailing `[bot]` and lowercases both sides** (`src/github/validation/actor.ts` in `anthropics/claude-code-action`), so `muddlbot` matches actor `muddlbot[bot]`. Keep the existing `dependabot` entry — dropping it silently disarms review on dependency PRs.
+  2. `allowed_bots: 'dependabot,muddlbot'` cannot take effect until it is on `master`. Any pre-merge probe PR will see the reviewer job **fail red and alert**, not decline quietly — that failed-red outcome is the expected pre-merge result, not a defect.
+  - **Corrected 2026-08-01, post-probe:** this bullet's original wording ("the reviewer will *decline*") implied the same silent, green-job annotation as the workflow-validation skip above. That is false for this mechanism. Observed on run `30725572647` (the review job on bot PR #87, `master`'s `allowed_bots` still `'dependabot'` only): `##[error]Action failed with error: Workflow initiated by non-human actor: muddlbot (type: Bot). Add bot to allowed_bots list or use '*' to allow all bots.` — the job failed red and `claude-code-review.yml`'s own `Alert on failure` step posted an `@Muddl` PR comment. See ADR-0020 and `gotchas.md` for the full record.
+- **`allowed_bots` matching strips a trailing `[bot]` and lowercases both sides** (`src/github/validation/actor.ts` in `anthropics/claude-code-action`), so `muddlbot` matches actor `muddlbot[bot]`. Keep the existing `dependabot` entry — dropping it means every dependency PR's review job fails red and alerts, not that it silently disarms review.
 - **A GitHub App without the Workflows permission cannot push a commit that touches `.github/workflows/`.** Cut every probe branch from `master`, never from the F1 branch (which edits two workflow files) — otherwise the probe fails at the push for a reason unrelated to what is being tested.
 - **Automation may propose but never approve, and never rewrites the rules.** Withholding Workflows is what makes that structural rather than asserted.
 - **Two credential buckets stay separate** (ADR-0012): the factory runs on `CLAUDE_CODE_OAUTH_TOKEN`; `ANTHROPIC_API_KEY` stays scoped to `live-eval.yml`. Nothing here touches `live-eval.yml`.
