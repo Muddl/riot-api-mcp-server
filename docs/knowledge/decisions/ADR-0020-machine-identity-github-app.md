@@ -78,7 +78,7 @@ immediately before the step that pushes and opens the PR; the action revokes it 
   just assumed.
 - A 90-day PAT is replaced by a token that lives for minutes. `HOUSEKEEPING_TOKEN` was deleted and
   the PAT itself revoked once the swap was verified post-merge; the App's private key is now the
-  only long-lived secret, rotatable at <https://github.com/settings/apps/muddlbot>.
+  only long-lived secret, rotatable at <https://github.com/settings/apps/muddlbot>. (This sentence was written before 2026-08-02 and read as history by the next automated pass; see gotchas.md, "A past-tense sentence in a KB document becomes a fact the moment an agent reads it".)
 - **The Workflows boundary is verified, not assumed.** A probe (run `30725565375`) pushed a commit
   touching `.github/workflows/ci.yml` with the App token and GitHub **rejected** it at the push,
   verbatim: `! [remote rejected] probe/f1-workflows-denied-30725565375 ->
