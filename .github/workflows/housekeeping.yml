@@ -146,7 +146,8 @@ jobs:
           # every push here died with "Invalid username or token" (exit 128). Setting GH_TOKEN does
           # not help on its own: it authenticates `gh`, never `git`.
           #
-          # Restore a clean origin, then pass the PAT as a one-shot header on the push itself. An
+          # Restore a clean origin, then pass the App installation token as a one-shot header on
+          # the push itself. An
           # embedded `https://x-access-token:$TOKEN@...` remote would work too, but persists the
           # token in .git/config for the rest of the job; `actions/checkout` avoids exactly that by
           # using an extraheader, and this step — which exists to route around a credential footgun
