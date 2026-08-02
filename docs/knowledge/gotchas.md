@@ -440,3 +440,86 @@ including PATs minted under the admin account. Confirming it requires an identit
 admin role, which is what a GitHub App installation (`actor_type: Integration`) provides. Until
 then, record the configuration as verified and the property as untested, rather than reading a
 viewer-relative status as evidence either way.
+
+## `allowed_bots` pins a literal slug — a wrong entry fails the review job red, it does not decline quietly
+
+`claude-code-action` refuses bot-triggered runs unless the bot's login appears in `allowed_bots`.
+Matching normalises both sides — `bot.trim().toLowerCase().replace(/\[bot\]$/, "")` in
+`src/github/validation/actor.ts` — so `muddlbot`, `MuddlBot` and `muddlbot[bot]` are all equivalent,
+and `'*'` allows every bot (never use it on a public repo).
+
+The F1 spec assumed a wrong or missing entry declines silently — "an annotation on a green job",
+the same shape as "`claude-code-action` is silently skipped when the workflow file differs from the
+default branch" (elsewhere in this file). That assumption is **false**. Observed
+2026-08-01 on run `30725572647` (the review job on bot PR #87, with `master`'s `allowed_bots:
+'dependabot'` still in force), verbatim:
+
+```
+Checking permissions for actor: muddlbot[bot]
+Actor is a GitHub App: muddlbot[bot]
+Actor type: Bot
+##[error]Action failed with error: Workflow initiated by non-human actor: muddlbot (type: Bot). Add bot to allowed_bots list or use '*' to allow all bots.
+##[error]Process completed with exit code 1.
+```
+
+The job failed red, and `claude-code-review.yml`'s own `Alert on failure` step posted an `@Muddl`
+comment on the PR. So the trap here is not silence, it is the coupling: the list holds a **literal
+slug**, and renaming the App, swapping it, or typoing the entry sends every machine PR's review job
+red and pages the maintainer — a real cost, just a loud one, and the message names the actor, not
+the config line, so tracing it back to `allowed_bots` still costs reading a run log. `housekeeping.yml`
+therefore asserts `steps.app-token.outputs.app-slug == 'muddlbot'` before the PR is even opened,
+which fails earlier and names the exact cause directly. (The silent-green-decline shape is real —
+see "`claude-code-action` is silently skipped when the workflow file differs from the default
+branch" — it is just a different mechanism than this one.)
+
+## A GitHub App without the Workflows permission cannot push *any* commit touching `.github/workflows/`
+
+The rejection is server-side and applies to the push, not to the file's final state, so it fires even
+when the commit only adds a comment line. Verified 2026-08-01 (probe run `30725565375`) by pushing a
+commit touching `.github/workflows/ci.yml` with the `muddlbot` installation token; GitHub rejected
+the push, verbatim:
+
+```
+! [remote rejected] probe/f1-workflows-denied-30725565375 -> probe/f1-workflows-denied-30725565375 (refusing to allow a GitHub App to create or update workflow `.github/workflows/ci.yml` without `workflows` permission)
+```
+
+This is the mechanism behind ADR-0018's and ADR-0020's "no agent identity can rewrite CI" claim — a
+real boundary, not a convention.
+
+Two practical consequences. An automated pass that legitimately needs to edit a workflow fails at the
+push and must be done by hand, which is intended. And **cut probe/scratch branches for App-token
+experiments from `master`, never from a feature branch that edits workflow files** — the push would
+be rejected for a reason unrelated to what you are testing, and the error message points at the
+workflow file rather than at your branch choice.
+
+## The App installation is the only identity here whose `mergeStateStatus` reading is evidence
+
+Follow-on to "`mergeStateStatus` is computed per-viewer, so an exempt account cannot falsify its own
+gate". Every PAT and OAuth credential on this repo is minted under the admin account and inherits the
+`RepositoryRole/5` `exempt` bypass, so their readings prove nothing. A GitHub App installation is
+`actor_type: Integration` and is **not** a bypass actor.
+
+Observed 2026-08-01 on probe PR #87 (`muddlbot[bot]`, app-slug `muddlbot`, installation id
+`150619173`): `Build & verify` **passed** (2m4s) — the required check does report on machine PRs, so
+R2 does not render them permanently unmergeable, it genuinely gates on the missing approval — yet
+`mergeStateStatus` as `muddlbot[bot]` still read `BLOCKED`. Seconds apart, on the same PR, the exempt
+admin account read `mergeStateStatus: UNSTABLE, mergeable: MERGEABLE`. So the way to test whether a
+rule *applies* — rather than whether it is *configured* — is to ask it with the App token, from
+inside a workflow step that already holds one. The admin can still merge red by hand; that is the
+residual F0 accepted, not a regression.
+
+## `gh pr view --json author` renders a GitHub App author differently than the REST API
+
+`gh pr view --json author --jq .author.login` returns **`app/muddlbot`** for a PR opened with a
+GitHub App installation token — `gh`'s GraphQL layer renders App actors as `app/<slug>` — while
+`gh api repos/{owner}/{repo}/pulls/{n} --jq .user.login` returns **`muddlbot[bot]`**, matching the
+REST `type: Bot` convention used everywhere else (commit trailers, `allowed_bots`, and the per-actor
+reads in "The App installation is the only identity here whose `mergeStateStatus` reading is
+evidence"). Assert against whichever surface you actually queried, not the value you remember from a
+different one.
+
+Observed 2026-08-01 on probe PR #87: an assertion of `gh pr view --json author --jq .author.login ==
+'muddlbot[bot]'` failed against a PR that was, in fact, correctly authored by the bot — the GraphQL
+`author.login` was `app/muddlbot`, not `muddlbot[bot]`. The failure looks exactly like the identity
+swap being wrong when it is not; check the REST endpoint (`gh api .../pulls/N --jq .user.login`)
+before concluding that it is.

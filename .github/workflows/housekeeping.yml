@@ -67,15 +67,37 @@ jobs:
           claude_args: |
             --allowedTools "Read,Edit,Write,Grep,Glob,Bash(grep:*),Bash(ls:*),Bash(comm:*),Bash(sort:*),Bash(wc:*),Bash(sed:*),Bash(xargs:*),Bash(basename:*),Bash(git status:*),Bash(git diff:*)"
 
+      # Mint a 1-hour installation token for the MuddlBot GitHub App, immediately before the only
+      # step that uses it — the action revokes it again in its own post-step, so the credential's
+      # live window is minutes rather than the 90 days of the PAT it replaces (ADR-0020).
+      #
+      # Omitting `owner` and `repositories` scopes the token to the current repository, which is
+      # also the only repository the App is installed on. Placed AFTER the Claude step on purpose:
+      # that step can run for up to 30 minutes, and a token minted before it would have burned a
+      # third of its life before the push.
+      - name: Mint a GitHub App installation token
+        id: app-token
+        if: steps.gate.outputs.proceed == 'true'
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
       - name: Open a PR if the pass changed anything
         if: steps.gate.outputs.proceed == 'true'
         env:
-          # A PAT, deliberately not GITHUB_TOKEN. GitHub does not fire `pull_request` events for a
-          # PR opened with GITHUB_TOKEN (recursion guard), so such a PR gets NO ci.yml run and NO
-          # claude-code-review.yml run — it would sit there looking reviewable while nothing had
-          # reviewed it. ADR-0015 says this pass opens a PR "never merging unreviewed"; honouring
-          # that means the PR must be authored by a non-Actions identity. See ADR-0018.
-          GH_TOKEN: ${{ secrets.HOUSEKEEPING_TOKEN }}
+          # A GitHub App installation token, deliberately not GITHUB_TOKEN. GitHub does not fire
+          # `pull_request` events for a PR opened with GITHUB_TOKEN (recursion guard), so such a PR
+          # gets NO ci.yml run and NO claude-code-review.yml run — it would sit there looking
+          # reviewable while nothing had reviewed it. ADR-0015 says this pass opens a PR "never
+          # merging unreviewed"; honouring that means a non-Actions identity opens it (ADR-0018).
+          #
+          # It is an App rather than the PAT ADR-0018 shipped because a PAT acts as the person who
+          # owns it: the PR was authored by Muddl, and GitHub forbids a PR author from approving
+          # their own PR — so the one human who could satisfy R2's approval requirement was
+          # structurally barred from satisfying it. See ADR-0020.
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
         run: |
           if [ -z "$(git status --porcelain)" ]; then
             echo "::notice title=Housekeeping::No changes to propose."
@@ -86,7 +108,17 @@ jobs:
           # a PR, but one that CI and the reviewer never see — the exact failure this design exists
           # to prevent, and invisible precisely because the PR looks normal.
           if [ -z "$GH_TOKEN" ]; then
-            echo "::error title=Housekeeping::HOUSEKEEPING_TOKEN secret is not set. Refusing to open a PR with GITHUB_TOKEN, which would skip CI and Claude Code Review. Create a fine-grained PAT (Contents: read/write, Pull requests: read/write) and add it as the HOUSEKEEPING_TOKEN repository secret."
+            echo "::error title=Housekeeping::No GitHub App installation token was minted. Refusing to open a PR with GITHUB_TOKEN, which would skip CI and Claude Code Review. Check vars.APP_CLIENT_ID and secrets.APP_PRIVATE_KEY for the MuddlBot App (ADR-0020)."
+            exit 1
+          fi
+
+          # The identity is asserted, not assumed. claude-code-review.yml's `allowed_bots` pins the
+          # literal slug, and that action refuses bot-triggered runs it does not recognise by
+          # FAILING THE JOB RED AND ALERTING THE MAINTAINER (verified 2026-08-01, run 30725572647) —
+          # not by declining quietly. This guard exists to fail earlier, at the pass itself, with a
+          # message that names the exact cause, rather than waiting for that downstream red run.
+          if [ "$APP_SLUG" != "muddlbot" ]; then
+            echo "::error title=Housekeeping::App slug is '$APP_SLUG', expected 'muddlbot'. claude-code-review.yml's allowed_bots pins this slug; update BOTH, or every machine PR's review job fails red with 'Workflow initiated by non-human actor' and its alert step @-mentions the maintainer. See ADR-0020."
             exit 1
           fi
 
@@ -97,11 +129,14 @@ jobs:
           # opening a second PR for the same week; see gotchas.md.
           BRANCH="chore/housekeeping-$STAMP"
 
-          # The commit is authored by github-actions[bot] while the push and `gh pr create` below
-          # run as the PAT's identity, so the commit author and the PR's "opened by" differ on
-          # purpose: event delivery keys off the credential, not the commit trailer (ADR-0018).
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Commit author and PR author are now the same identity — the App's bot user — so `git
+          # log` and the PR's "opened by" agree instead of disagreeing on purpose (ADR-0020).
+          # The numeric prefix is that bot user's id: `gh api 'users/muddlbot%5Bbot%5D' --jq .id`.
+          # GitHub only links a noreply address to an account when the id matches, so a wrong
+          # number yields commits attributed to no one. Event delivery still keys off the
+          # credential, not the trailer.
+          git config user.name  "muddlbot[bot]"
+          git config user.email "311914422+muddlbot[bot]@users.noreply.github.com"
 
           # claude-code-action takes ownership of this repo's git credentials during its step: it
           # deletes the `http.https://github.com/.extraheader` credential actions/checkout persisted,

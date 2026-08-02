@@ -58,7 +58,14 @@ jobs:
             Only post GitHub comments — do not submit review text as chat messages.
           claude_args: |
             --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
-          allowed_bots: 'dependabot'
+          # `muddlbot` is this repo's machine identity (ADR-0020): housekeeping.yml opens its PRs
+          # with a muddlbot[bot] installation token, and this action refuses bot-triggered runs
+          # unless the bot is listed — by FAILING THIS JOB RED and letting the `Alert on failure`
+          # step below page the maintainer (verified 2026-08-01, run 30725572647), not by declining
+          # quietly. Matching is case-insensitive and strips a trailing `[bot]`, so `muddlbot`
+          # matches `muddlbot[bot]`. Keep `dependabot`: dropping it means every dependency PR's
+          # review job fails red and pages too.
+          allowed_bots: 'dependabot,muddlbot'
 
       # An unattended failure nobody sees is the same as no gate at all. `gh pr comment` uses
       # this job's `pull-requests: write`; the @-mention is what makes GitHub Mobile push a
