@@ -208,8 +208,8 @@ which also **corrects three claims this section previously made** (see below).
 
 | # | Sub-project | State | Notes |
 |---|---|---|---|
-| **F0** | Harden the gate | ✅ Shipped and applied | [ADR-0019](decisions/ADR-0019-gate-hardening-and-ruleset-topology.md). Ruleset `8769144` split into R1 (`~ALL`: deletion, non_fast_forward, id preserved so the phone rollback stays valid) + R2 (`~DEFAULT_BRANCH`, new id `20203635`: `pull_request{1}` + `required_status_checks["Build & verify", integration_id 15368]`), **applied live 2026-08-01** and reconciled against GitHub's echoed defaults; `check-drift.sh` reports both matching. Also shipped: fork PRs unblocked first; timeouts, `FACTORY_ENABLED` kill switch, `@Muddl` failure alerts, the local-only apply script, and a daily drift check. #71 closed and the stale-doc sweep done. **Caveat:** the configuration is verified, the *property* is not — see the `mergeStateStatus` gotcha; every credential on this repo inherits the admin bypass, so "machine identities cannot merge red" stays untestable until **F1**. |
-| **F1** | Machine identity (GitHub App) | ⏳ Not started | Retires the PAT. Desk-only — a private key is not a phone artifact. |
+| **F0** | Harden the gate | ✅ Shipped and applied | [ADR-0019](decisions/ADR-0019-gate-hardening-and-ruleset-topology.md). Ruleset `8769144` split into R1 (`~ALL`: deletion, non_fast_forward, id preserved so the phone rollback stays valid) + R2 (`~DEFAULT_BRANCH`, new id `20203635`: `pull_request{1}` + `required_status_checks["Build & verify", integration_id 15368]`), **applied live 2026-08-01** and reconciled against GitHub's echoed defaults; `check-drift.sh` reports both matching. Also shipped: fork PRs unblocked first; timeouts, `FACTORY_ENABLED` kill switch, `@Muddl` failure alerts, the local-only apply script, and a daily drift check. #71 closed and the stale-doc sweep done. **Caveat, now closed by F1:** the configuration was verified, the *property* was not — see the `mergeStateStatus` gotcha; every credential on this repo inherited the admin bypass, so "machine identities cannot merge red" was untestable until **F1** verified it (see [ADR-0020](decisions/ADR-0020-machine-identity-github-app.md)'s Consequences). |
+| **F1** | Machine identity (GitHub App) | ✅ Shipped and applied | [ADR-0020](decisions/ADR-0020-machine-identity-github-app.md). Retires the PAT: `housekeeping.yml` mints a 1-hour installation token via `actions/create-github-app-token@v3` and PRs/commits are authored by `muddlbot[bot]`, not `Muddl`. `HOUSEKEEPING_TOKEN` was deleted post-merge. PR #87 probed the credential mechanism (the App reads `mergeStateStatus: BLOCKED` while the exempt admin reads `UNSTABLE`/`MERGEABLE` on the same PR seconds apart, and a probe push touching a workflow file was rejected at the remote for lacking the `workflows` permission); PR #89 — a real housekeeping run — is where it was verified end to end, with `ci.yml` and `claude-code-review.yml` both running and `claude[bot]` posting a full review. |
 | **F2** | Issue intake, two-phase | ⏳ Not started — [plan](../superpowers/plans/2026-08-01-factory-f2-issue-intake.md) | `agent:plan` commits a plan and posts its SHA; `agent:go` implements *that SHA*, checked by a deterministic `git diff --exit-code`. The work-queue primitive. **Needs F0 first** — the current `~ALL` PR-required rule rejects `agent:go`'s second push to an existing branch. |
 | **F3** | Machine-emitted run traces | ⏳ Not started | The event stream, restricted to facts non-agent steps emit. Blocked on #71. |
 | **F4** | Review loop-back | ⏳ Not started | `agent:revise` label; two-round cap counted from the append-only issue timeline; enforced by a tool-less `gate` job. |
@@ -259,29 +259,35 @@ treating them as design constraints rather than hypotheticals:
 - **Velocity theater.** Throughput is not a goal here; this repo's value is the discipline, so
   cycle-time metrics stay subordinate to the gates.
 
-### Attribution: automated PRs currently author as a human
+### Attribution: automated PRs now author as a bot — **Shipped** ([ADR-0020](decisions/ADR-0020-machine-identity-github-app.md))
 
-`HOUSEKEEPING_TOKEN` is a fine-grained PAT, and a PAT *acts as the person who owns it*. So the
+~~`HOUSEKEEPING_TOKEN` is a fine-grained PAT, and a PAT *acts as the person who owns it*. So the
 housekeeping PR is authored by `Muddl` — not because a human triggered that run, but inherently: the
-unattended Monday run will attribute itself the same way. Two costs, one of which is blocking:
+unattended Monday run will attribute itself the same way.~~ This was the F1 problem statement; it no
+longer holds. `housekeeping.yml` now mints a short-lived GitHub App installation token
+(`actions/create-github-app-token@v3`) immediately before pushing and opening the PR, and both the
+commit and the PR are authored by `muddlbot[bot]`, not `Muddl`. `HOUSEKEEPING_TOKEN` was deleted and
+the underlying PAT revoked post-merge — see ADR-0020 for the credential-mechanism probe (PR #87);
+the live end-to-end acceptance is PR #89, where `ci.yml` and `claude-code-review.yml` both ran and
+`claude[bot]` posted a full review.
 
-- **Provenance.** Machine-authored work is recorded as a person's, which muddies exactly the
-  replayability and event-stream properties this track is trying to build. "Who wrote this?" stops
-  being answerable from the PR.
-- **It blocks branch protection.** GitHub does not let the author of a PR approve it. Under a
-  required-approvals rule, a housekeeping PR authored by the repo's only human maintainer can never
-  be approved by them — the gate becomes unsatisfiable rather than merely inconvenient.
+The two costs this closed:
 
-The fix is a **GitHub App identity** (`actions/create-github-app-token`) rather than a PAT: App
-installation tokens *do* trigger `pull_request` events — unlike `GITHUB_TOKEN`, which is what
-[ADR-0018](decisions/ADR-0018-housekeeping-pr-review-gate.md) rejected — so the review gate survives
-the move, while authorship lands on a bot actor distinct from any human. It also retires the PAT's
-expiry.
+- **Provenance.** Machine-authored work is now recorded as the bot's, not the maintainer's —
+  "who wrote this?" is answerable from the PR again.
+- **Branch protection is satisfiable.** GitHub does not let the author of a PR approve it, so a
+  housekeeping PR authored by the repo's only human maintainer could never be approved by them.
+  Bot authorship removes that self-approval bar; ADR-0020 confirms `viewerDidAuthor: false` for the
+  maintainer on a bot-authored PR.
 
-**Carry this forward when doing it:** `claude-code-review.yml` gates on actor type
-(`allowed_bots: 'dependabot'`). An App-authored PR arrives as that App's bot and will be **refused
-by the reviewer unless the App is added to `allowed_bots`** — silently, with a green run, which is
-precisely the failure class ADR-0018 exists to prevent. Change both files in the same commit.
+`claude-code-review.yml`'s `allowed_bots` was updated (`'dependabot,muddlbot'`) in the same commit as
+the identity swap, since an App-authored PR arrives as that App's bot and is refused by the reviewer
+— loudly, per ADR-0020, not silently — unless the App is already listed.
+
+**Known leftover scope** (per ADR-0020's Consequences, still real): the `housekeeping` job still
+grants the ambient `GITHUB_TOKEN` `contents: write` and `pull-requests: write`, which nothing now
+uses. Trimming it cannot be validated before merge, so it is deferred to a standalone PR with a
+post-merge dispatch.
 
 ### Review-cycle cap: two revision rounds per PR
 

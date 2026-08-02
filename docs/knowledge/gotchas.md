@@ -441,6 +441,33 @@ admin role, which is what a GitHub App installation (`actor_type: Integration`) 
 then, record the configuration as verified and the property as untested, rather than reading a
 viewer-relative status as evidence either way.
 
+## A past-tense sentence in a KB document becomes a fact the moment an agent reads it
+
+[ADR-0020](decisions/ADR-0020-machine-identity-github-app.md)'s Consequences section describes two
+steps — deleting the `HOUSEKEEPING_TOKEN` secret and revoking the underlying PAT — in the past
+tense: "`HOUSEKEEPING_TOKEN` was deleted and the PAT itself revoked once the swap was verified
+post-merge." At the time that sentence was written, neither had happened yet; it was a plan for
+after merge, phrased as if it were already history.
+
+Days later, an automated housekeeping pass read that ADR while updating `docs/knowledge/roadmap.md`
+and faithfully carried the sentence forward as an accomplished fact in the roadmap. It was not: the
+secret still existed and the PAT was still live. The automated reviewer then read the roadmap PR,
+cross-checked its claim against ADR-0020, found the two documents consistent, and approved with
+"LGTM". Two documents agreeing with each other is not evidence that either is true, especially when
+one was derived from the other — the check was circular from the start. What caught it was a human
+comparing the claim against the live repository state (`gh api repos/OWNER/REPO/actions/secrets
+--jq '.secrets[].name'`), not any document review.
+
+Two rules follow, for a repo whose knowledge base is read by automated agents:
+
+1. **Future work belongs in future or imperative tense, or is marked pending, never past tense.**
+   "Will be deleted", "delete this after merge", or an explicit `TODO`/`pending` marker cannot be
+   misread as history by a downstream reader. Past tense asserts something already happened.
+2. **A claim about live infrastructure is verified against the infrastructure, never against
+   another document that asserts the same thing.** Mutual corroboration between two documents proves
+   nothing when one was written from the other — check the actual secret list, the actual ruleset,
+   the actual running workflow, not a second sentence that copied the first.
+
 ## `allowed_bots` pins a literal slug — a wrong entry fails the review job red, it does not decline quietly
 
 `claude-code-action` refuses bot-triggered runs unless the bot's login appears in `allowed_bots`.

@@ -6,20 +6,21 @@ consistent with the [architecture](ARCHITECTURE.md)" rather than feature breadth
 (some by ArchUnit, some by Gradle's module graph), so a PR that ignores them will fail the build.
 
 This is a Gradle monorepo: `riot-api-core` and `riot-account-core` are libraries, and
-`lol-mcp-server` is the (currently only) Spring Boot game server. Figure out which module a change
-belongs in before writing it:
+`lol-mcp-server` and `tft-mcp-server` are the Spring Boot game servers. Figure out which module a
+change belongs in before writing it:
 
 | Change | Module |
 |--------|--------|
 | HTTP/auth/error handling, routing enums, `RiotApiException` | `riot-api-core` |
 | Anything about the cross-game account context (Riot ID ↔ PUUID) | `riot-account-core` |
 | A League of Legends context (`summoner`, `match`, `spectator`, `analytics`, `league`), or that thin `account` tool | `lol-mcp-server` |
+| A Teamfight Tactics context (`summoner`, `league`, `match`, `status`, `analytics`), or that thin `account` tool | `tft-mcp-server` |
 | A new game entirely | a new server module depending on both libraries |
 
 Each module documents its own public surface and internals — see its `README.md` and
 `ARCHITECTURE.md` ([`riot-api-core`](riot-api-core/README.md), [`riot-account-core`](riot-account-core/README.md),
-[`lol-mcp-server`](lol-mcp-server/README.md)). This file and the root [ARCHITECTURE.md](ARCHITECTURE.md)
-cover only what is shared across every module.
+[`lol-mcp-server`](lol-mcp-server/README.md), [`tft-mcp-server`](tft-mcp-server/README.md)). This file
+and the root [ARCHITECTURE.md](ARCHITECTURE.md) cover only what is shared across every module.
 
 ## Prerequisites
 
