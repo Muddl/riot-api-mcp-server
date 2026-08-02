@@ -7,9 +7,10 @@ start with [README.md](README.md); the authoritative design reference is
 ## What this is
 
 A Gradle monorepo built on Spring Boot 4.1 / Spring AI 2.0 (Java 21): shared libraries plus one
-**MCP server** per Riot game, currently `lol-mcp-server`, exposing the Riot Games API to AI models
-as 13 MCP tools across 11 tool classes. It is a portfolio piece — the value is the clean
-bounded-context hexagonal architecture and the disciplined tests, not feature breadth.
+**MCP server** per Riot game — `lol-mcp-server` (League of Legends, 13 MCP tools across 11 tool
+classes) and `tft-mcp-server` (Teamfight Tactics, 11 MCP tools across 6 tool classes). It is a
+portfolio piece — the value is the clean bounded-context hexagonal architecture and the disciplined
+tests, not feature breadth.
 
 ## Knowledge base — hydrate / persist protocol
 
@@ -58,8 +59,13 @@ A Gradle monorepo. Two libraries and one server per game:
 - **`riot-account-core`** (`com.muddl.riot.account`) — the cross-game account-v1 context.
   Domain + service + outbound adapter, **no `@McpTool`** (ArchUnit-enforced).
 - **`lol-mcp-server`** (`com.muddl.riot.lol`) — bounded-context hexagons `summoner`, `match`,
-  `spectator`, `analytics`, plus a tool-only `account` package. Per context: `domain/`,
-  `application/` (+ `application/port/`), `adapter/in/mcp/`, `adapter/out/riot/`.
+  `spectator`, `analytics`, `league`, `champion`, `status`, `championmastery`, `challenges`,
+  `clash`, plus a tool-only `account` package. Per context: `domain/`, `application/`
+  (+ `application/port/`), `adapter/in/mcp/`, `adapter/out/riot/`.
+- **`tft-mcp-server`** (`com.muddl.riot.tft`) — bounded-context hexagons `summoner`, `league`,
+  `match`, `status`, `analytics`, plus a tool-only `account` package. Same per-context shape as
+  `lol-mcp-server`. Shipped on the shared core with zero changes to either library (sub-project 2;
+  see [`docs/knowledge/roadmap.md`](docs/knowledge/roadmap.md#2--tft-server-)).
 
 **Dependency rule:** servers → `riot-account-core` → `riot-api-core`, never back. Gradle enforces
 this at compile time. Within a module, ArchUnit enforces `adapter → application → domain` (inward
@@ -101,7 +107,10 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the step-by-step recipes and
 ## MCP server details
 
 - Type: SYNC. Transports: `stdio` (default) and `sse` (message endpoint `/mcp/messages`, port
-  `8080`).
+  `8080`). Both servers share this shape; the detail below is `lol-mcp-server`'s tool inventory —
+  see [`tft-mcp-server/ARCHITECTURE.md`](tft-mcp-server/ARCHITECTURE.md) and
+  [`lol-mcp-server/ARCHITECTURE.md`](lol-mcp-server/ARCHITECTURE.md) for each server's own full tool
+  list.
 - Tools are auto-discovered via Spring AI's `@McpTool` annotation scanning.
 - `lol-mcp-server` has 11 tool classes under `com.muddl.riot.lol`, one per context:
   `RiotAccountTool` (`account.adapter.in.mcp`), `SummonerTool` (`summoner.adapter.in.mcp`),

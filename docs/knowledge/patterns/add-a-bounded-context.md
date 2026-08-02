@@ -44,8 +44,10 @@ mkdir -p $base/domain \
          $base/adapter/out/riot
 ```
 
-(Omit `adapter/out/riot` for a composing context like `analytics`; omit
-`adapter/in/mcp` for a context with no MCP tool, like `match`.)
+(Omit `adapter/out/riot` for a composing context like `analytics`; omit `adapter/in/mcp` for a
+context with no MCP tool of its own — every bounded context currently in `lol-mcp-server` and
+`tft-mcp-server` happens to have one, so there is no live example to point at, but the shape stays
+valid if a future context is added purely to be composed by another, e.g. by `analytics`.)
 
 ## 2. Domain DTO — `<context>/domain/<Name>.java`
 
