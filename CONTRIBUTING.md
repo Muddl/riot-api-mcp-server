@@ -13,7 +13,7 @@ change belongs in before writing it:
 |--------|--------|
 | HTTP/auth/error handling, routing enums, `RiotApiException` | `riot-api-core` |
 | Anything about the cross-game account context (Riot ID ↔ PUUID) | `riot-account-core` |
-| A League of Legends context (`summoner`, `match`, `spectator`, `analytics`, `league`), or that thin `account` tool | `lol-mcp-server` |
+| A League of Legends context (`summoner`, `match`, `spectator`, `analytics`, `league`, `champion`, `championmastery`, `challenges`, `status`, `clash`), or that thin `account` tool | `lol-mcp-server` |
 | A Teamfight Tactics context (`summoner`, `league`, `match`, `status`, `analytics`), or that thin `account` tool | `tft-mcp-server` |
 | A new game entirely | a new server module depending on both libraries |
 
