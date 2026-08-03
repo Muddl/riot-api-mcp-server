@@ -32,7 +32,8 @@ riot-account-core/     library — com.muddl.riot.account
 
 lol-mcp-server/        Spring Boot app — com.muddl.riot.lol
   account/adapter/in/mcp/     RiotAccountTool (thin — delegates into riot-account-core)
-  summoner/, match/, spectator/, analytics/, league/   full hexagons
+  summoner/, match/, spectator/, analytics/, league/,
+  champion/, championmastery/, challenges/, status/, clash/   full hexagons
 
 tft-mcp-server/        Spring Boot app — com.muddl.riot.tft
   account/adapter/in/mcp/     RiotAccountTool (thin — delegates into riot-account-core)
@@ -170,7 +171,7 @@ deliberate:
   `com.muddl.riot.core.testsupport`), and declared as `@ArchTest` fields by each module's own
   architecture test — `HexagonalArchitectureTest` in `lol-mcp-server` (10 rules) and in
   `tft-mcp-server` (same shared rules), and `AccountArchitectureTest` in `riot-account-core`
-  (7 rules) — so a new game server inherits the architecture instead of copy-pasting it:
+  (8 rules) — so a new game server inherits the architecture instead of copy-pasting it:
   - the layered dependency rule (`domain` ⇸ `application` ⇸ `adapter`, inward only);
   - `RestClient` is referenced only within `..adapter.out.riot..` (and the core HTTP client itself);
   - `@McpTool` appears only within `..adapter.in.mcp..`;
