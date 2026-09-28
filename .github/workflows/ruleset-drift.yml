@@ -1,8 +1,8 @@
 name: Ruleset Drift
 
 on:
-  schedule:
-    - cron: '17 7 * * *'   # daily 07:17 UTC — offset off the hour to dodge cron congestion
+  #schedule:
+  #  - cron: '17 7 * * *'   # daily 07:17 UTC — offset off the hour to dodge cron congestion
   workflow_dispatch:
 
 # READ ONLY, deliberately. GITHUB_TOKEN has no `administration` scope at all — the permissions
