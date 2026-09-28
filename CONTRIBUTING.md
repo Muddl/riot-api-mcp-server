@@ -24,7 +24,7 @@ and the root [ARCHITECTURE.md](ARCHITECTURE.md) cover only what is shared across
 
 ## Prerequisites
 
-- **Java 21** (a Gradle toolchain resolves it; the wrapper pins Gradle 9.6.1).
+- **Java 21** (a Gradle toolchain resolves it; the wrapper pins Gradle 9.8.0).
 - A **Riot API key** is only needed to *run* a server or the optional [live evals](#live-evals-optional-key-gated),
   never to build or test the offline suite. The live evals additionally need an `ANTHROPIC_API_KEY`.
 
