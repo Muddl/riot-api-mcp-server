@@ -2,8 +2,8 @@
 
 Use this to test an outbound `Riot*Adapter` against a local mock Riot server — no live
 key, runs in CI. Rationale: [ADR-0003](../decisions/ADR-0003-wiremock-testing.md).
-WireMock (`org.wiremock:wiremock-standalone:3.9.2`) is already a `testImplementation`
-dependency.
+WireMock (`org.wiremock:wiremock-standalone`) is already a `testImplementation`
+dependency in every module.
 
 ## What to assert
 

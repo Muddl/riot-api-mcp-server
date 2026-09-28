@@ -39,7 +39,7 @@ public class <Name>Tool {
 
     private final <Name>Service <context>Service;
 
-    @McpTool(name = "get_<name>_by_id",
+    @McpTool(name = "<game>_<context>_by_id",
             description = "Get <Name> information by id")
     public <Name> get<Name>ById(
             @McpToolParam(description = "The Riot platform, e.g. NA1, EUW1", required = true) String platformStr,

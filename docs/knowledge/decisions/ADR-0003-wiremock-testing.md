@@ -21,7 +21,7 @@ Two complementary test styles, both runnable in CI with **no** `RIOT_API_KEY`:
   `X-RIOT-TOKEN` header, JSON→DTO parsing, and error mapping — including spectator
   `404 → null` and other `4xx/5xx → RiotApiException` with the status preserved. Canned
   JSON fixtures live in `src/test/resources/fixtures/`. Dependency:
-  `org.wiremock:wiremock-standalone:3.9.2` (`testImplementation`).
+  `org.wiremock:wiremock-standalone` (`testImplementation`).
 - **Application-service tests (port fakes).** Hand-written in-memory fakes implement the
   port interfaces — fast, no HTTP. `AnalyticsService` is tested with fake
   account/summoner/match collaborators, covering the edge cases (zero games; zero-deaths
